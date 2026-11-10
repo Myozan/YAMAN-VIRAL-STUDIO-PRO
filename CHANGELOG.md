@@ -1,67 +1,112 @@
-# Changelog
+# Changelog · Sürüm Geçmişi
 
-All notable project changes are documented here. This file tracks shipped changes separately from roadmap proposals.
+Bu dosya yayımlanmış değişiklikleri yol haritasındaki hedeflerden ayrı tutar.  
+This file separates shipped changes from planned roadmap items.
 
-## [1.2] — 2026-11-10
+## 🇹🇷 Türkçe
 
-### Added
-- Local-first video analysis workflow built around FastAPI.
-- YouTube source retrieval through yt-dlp.
+### [v1.2] — 10 Kasım 2026
+
+#### Eklenenler
+- FastAPI tabanlı, yerel öncelikli video analiz uygulaması.
+- yt-dlp ile desteklenen YouTube kaynaklarını alma.
+- Faster-Whisper ile zaman damgalı konuşma çözümleme.
+- Aday kesitleri değerlendirmek için isteğe bağlı yerel Ollama modeli ve sezgisel yedek puanlama.
+- FFmpeg ile video kesme, altyazı işleme ve dikey çıktı üretimi.
+- OpenCV tabanlı yüz algılama ve kadraj yardımcıları.
+- Yerel proje/çalışma alanı yönetimi ve performans öğrenme kayıtları.
+- Sağlık, ayarlar, sistem metrikleri, analiz görevleri, render, metaveri, ajan yardımcıları ve öğrenme için REST API uç noktaları.
+- Analiz ilerlemesi, kesitler, ayarlar ve sistem durumu için web paneli.
+- CPU/RAM ölçümleri; desteklenen sistemlerde NVIDIA GPU, VRAM ve sıcaklık telemetrisi.
+- Windows başlatma betiği ve Python bağımlılık listesi.
+
+#### İyileştirmeler
+- Hafif yerel model profili ve yapılandırılabilir Whisper model/cihaz ayarları.
+- CUDA kullanılabilir olduğunda GPU destekli Faster-Whisper başlatma; uygun olmayan durumda CPU fallback.
+- Düşük kaynaklı Windows sistemleri için daha esnek model seçenekleri.
+- Modern koyu panel tasarımı, responsive yerleşim ve daha anlaşılır görev/pipeline durumları.
+- UTF-8 ve Türkçe karakter gösterimi iyileştirmeleri.
+- Yerel çalışma varsayılanları ve makineye özel ayarların kaynak kodundan ayrılması.
+
+#### Dokümantasyon
+- Türkçe ve İngilizce README.
+- Mimari, platform entegrasyonları ve ürün yol haritası belgeleri.
+- Gerçek Studio ekran görüntüsü, üretim hattı ve mimari diyagramları.
+- Uygulanan özelliklerle gelecek hedeflerinin açık biçimde ayrılması.
+
+#### Bilinen kapsam sınırları
+- OAuth tabanlı otomatik yayınlama v1.2'nin doğrulanmış kapsamına dahil değildir.
+- Kalıcı çok ajanlı orkestrasyon, üretim seviyesinde çok kiracılı altyapı ve merkezi bulut mimarisi yol haritasındadır.
+- GPU telemetrisi, her modelin veya FFmpeg işleminin GPU kullandığı anlamına gelmez.
+
+### [Dokümantasyon yenilemesi] — 11 Kasım 2026
+
+- README bilgi mimarisi, kurulum, API referansı, güvenlik ve iki dilli içerik profesyonel biçimde yeniden düzenlendi.
+- Kapak tasarımına **Ozan Yaman** geliştirici imzası eklendi.
+- Özellik haritası, sürüm yol haritası ve dil desteği infografikleri eklendi.
+- Ayrı sürüm geçmişi dosyası oluşturuldu.
+- Varsayılan Windows portunun 8765 olduğu, farklı portların geliştirme sırasında seçilebileceği açıklandı.
+- Konuşma dili seçimi ile arayüz yerelleştirmesi arasındaki fark netleştirildi.
+
+## 🇬🇧 English
+
+### [v1.2] — 2026-11-10
+
+#### Added
+- Local-first video analysis application powered by FastAPI.
+- YouTube source ingestion through yt-dlp.
 - Timestamped speech transcription using Faster-Whisper.
-- Optional local Ollama model integration for candidate-clip evaluation, with a deterministic/heuristic fallback path.
-- FFmpeg-based clip rendering, subtitle processing, and vertical output targets for YouTube Shorts, Instagram Reels, and TikTok.
+- Optional local Ollama model for candidate-clip evaluation, with heuristic fallback scoring.
+- FFmpeg-based clipping, subtitle processing, and vertical output rendering.
 - OpenCV-assisted face detection and framing helpers.
 - Local project/workspace handling and learning/performance observations.
 - REST endpoints for health, settings, system metrics, analysis tasks, rendering, metadata, agent utilities, and learning records.
 - Browser dashboard for analysis progress, clips, settings, and system status.
-- CPU and memory metrics, plus optional NVIDIA GPU/VRAM/temperature telemetry where supported.
+- CPU and memory metrics, plus NVIDIA GPU/VRAM/temperature telemetry where supported.
 - Windows startup script and Python dependency manifest.
 
-### Improved
+#### Improved
 - Lightweight local model profile and configurable Whisper model/device settings.
-- GPU-aware Faster-Whisper initialization with CPU fallback when CUDA is unavailable or initialization fails.
-- Better low-resource configuration options for Windows systems.
-- Modernized dark dashboard, responsive layout, and clearer task/pipeline states.
-- UTF-8/Turkish character handling in the interface and progress messages.
-- Local-only defaults and clearer separation between application code and machine-specific settings.
+- CUDA-aware Faster-Whisper initialization with CPU fallback when CUDA is unavailable or initialization fails.
+- More flexible model options for resource-constrained Windows systems.
+- Modern dark dashboard, responsive layout, and clearer task/pipeline states.
+- UTF-8 and Turkish-character rendering.
+- Local-first defaults and separation of machine-specific settings from source code.
 
-### Documentation
-- Bilingual Turkish and English project documentation.
+#### Documentation
+- Turkish and English README documentation.
 - Architecture, platform integration, and product roadmap documents.
-- Product screenshots, workflow and architecture diagrams.
-- Clear distinction between implemented v1.2 capabilities and future roadmap targets.
+- Actual Studio screenshot, workflow diagram, and architecture diagram.
+- Clear separation between implemented capabilities and future targets.
 
-### Known scope limits
+#### Known scope limits
 - OAuth-based automatic publishing is not part of the verified v1.2 baseline.
-- Persistent multi-agent orchestration, production multi-tenancy, centralized cloud infrastructure, and a switchable multilingual UI remain roadmap work.
+- Persistent multi-agent orchestration, production multi-tenancy, and centralized cloud infrastructure remain roadmap work.
 - GPU telemetry does not imply that every model or FFmpeg operation runs on the GPU.
 
-## [Documentation refresh] — 2026-11-11
+### [Documentation refresh] — 2026-11-11
 
-### Added
-- Expanded feature-map, release-roadmap, and language-support SVG infographics.
-- Project author credit, **Ozan Yaman**, integrated into the hero artwork and documentation.
-- This changelog with an explicit shipped-vs-planned release policy.
-
-### Improved
-- README information architecture, navigation, installation notes, API reference, security guidance, and bilingual coverage.
-- Clarified that the default Windows launcher uses port `8765`; a developer may choose another available port for a local session.
-- Clarified speech-language selection versus user-interface localization.
-- Corrected the screenshot section to reference the actual committed Studio screenshot.
+- Reorganized the README information architecture, installation guide, API reference, security notes, and bilingual sections.
+- Added **Ozan Yaman** developer credit to the hero artwork.
+- Added feature-map, release-roadmap, and language-support infographics.
+- Added this release history file.
+- Clarified the Windows launcher's default port (8765) and the distinction between speech-language selection and UI localization.
+- Corrected the screenshot section to reference the committed Studio screenshot.
 
 ---
 
-## Planned milestones (not released)
+## Planlanan kilometre taşları · Planned milestones (not released)
 
-The following are roadmap targets, not shipped release entries:
-
-| Target | Planned scope |
+| Hedef / Target | Kapsam / Scope |
 |---|---|
-| v1.3 | Persistent agent workflow foundation, retries, cancellation, audit events |
-| v1.4 | Platform-specific SEO metadata generation and validation |
-| v1.5 | Authorized YouTube OAuth, upload/scheduling, available analytics |
-| v1.6 | Eligible Instagram and TikTok official API integrations |
-| v1.7 | Unified analytics with freshness and metric-availability indicators |
-| v1.8 | Learning from measured outcomes, content calendar, approvals and controlled automation |
+| v1.3 | Kalıcı ajan iş akışları, retry, iptal ve denetim olayları / Persistent agent workflows, retries, cancellation, audit events |
+| v1.4 | Platform bazlı SEO ve metaveri / Platform-specific SEO and metadata |
+| v1.5 | Yetkilendirilmiş YouTube OAuth, yükleme ve analitik / Authorized YouTube OAuth, uploads, analytics |
+| v1.6 | Uygun hesaplar için Instagram ve TikTok API entegrasyonları / Instagram and TikTok API integrations for eligible accounts |
+| v1.7 | Veri güncelliği göstergeli birleşik analitik / Unified analytics with data-freshness indicators |
+| v1.8 | Öğrenme, içerik takvimi, onay ve kontrollü otomasyon / Learning, content calendar, approvals, controlled automation |
 
-See [docs/ROADMAP.md](docs/ROADMAP.md) for scope and acceptance criteria.
+Bu hedefler yayımlanmış sürümler veya taahhüt edilmiş tarihler değildir.  
+These are roadmap targets, not released versions or committed dates.
+
+Ayrıntılar / Details: [docs/ROADMAP.md](docs/ROADMAP.md)
