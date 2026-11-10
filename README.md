@@ -1,4 +1,4 @@
-﻿# YAMAN VIRAL STUDIO PRO
+# YAMAN VIRAL STUDIO PRO
 
 <p align="center"><img src="docs/assets/hero.svg" alt="YAMAN VIRAL STUDIO PRO — AI video production studio" width="100%" /></p>
 
@@ -6,6 +6,8 @@
 
 <p align="center"><a href="#türkçe">Türkçe dokümantasyon</a> · <a href="#english">English documentation</a> · <a href="docs/ROADMAP.md">Yol haritası</a></p>
 
+
+**Geliştirici:** **Ozan Yaman**
 
 [![Version](https://img.shields.io/badge/version-1.2-blue)](.) [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB)](https://www.python.org/) [![Interface](https://img.shields.io/badge/Aray%C3%BCz-T%C3%BCrk%C3%A7e%20%7C%20Turkish-2E8B57)](.) [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
@@ -19,7 +21,7 @@ YAMAN VIRAL STUDIO PRO; uzun videoları analiz ederek dikkat çekici anları bel
 
 - [Öne çıkan özellikler](#öne-çıkan-özellikler)
 - [Video üretim akışı](#video-üretim-akışı)
-- [Türkçe dil desteği](#türkçe-dil-desteği)
+- [Dil desteği ve bayraklar](#dil-desteği-ve-bayraklar)
 - [Teknik mimari](#teknik-mimari)
 - [Gereksinimler](#gereksinimler)
 - [Windows kurulumu](#windows-kurulumu)
@@ -90,6 +92,15 @@ README'de kullanılan SVG çizimleri depoda sürümlenir ve GitHub üzerinde do�
 
 - [Ürün kapak görseli](docs/assets/hero.svg)
 - [İçerik üretim hattı](docs/assets/pipeline.svg)
+
+
+### Gerçek uygulama ekranı
+
+Aşağıdaki görüntü, çalışan v1.2 uygulamasından doğrudan alınmıştır. Studio panelinde üretim ilerlemesi ile CPU, RAM ve NVIDIA GPU metrikleri birlikte görünür.
+
+<p align="center">
+  <img src="docs/assets/screenshot-studio.png" alt="YAMAN VIRAL STUDIO PRO gerçek Studio paneli ve sistem performans göstergeleri" width="100%" />
+</p>
 - [Sistem mimarisi](docs/assets/architecture.svg)
 
 Gerçek uygulama ekran görüntüleri henüz bu dokümantasyon paketine eklenmemiştir; temsili çizimler ekran görüntüsü gibi sunulmamaktadır.
@@ -122,14 +133,19 @@ Gerçek uygulama ekran görüntüleri henüz bu dokümantasyon paketine eklenmem
 
 İşlemlerin ilerlemesi görev durumları üzerinden izlenir. Kaynak videolar ve üretilen dosyalar yerel `workspace/` dizininde tutulur; bu dizin Git'e gönderilmez.
 
-## Türkçe dil desteği
+## Dil desteği ve bayraklar
 
-- Web uygulamasının HTML belge dili `tr` olarak tanımlanmıştır.
-- v1.2 arayüzündeki gezinme, açıklamalar ve temel kullanım metinleri Türkçedir.
-- Analiz ekranında konuşma dili **Otomatik**, **Türkçe** veya **İngilizce** olarak seçilebilir. Bu seçim transkripsiyon/analiz isteğine iletilir.
-- Türkçe video içeriği için konuşma dili alanından **Türkçe** seçilebilir; farklı dillerdeki içerikler için **Otomatik** tercih edilebilir.
-- Bu sürümde arayüz için kullanıcı tarafından değiştirilebilen tam bir Türkçe/İngilizce dil anahtarı bulunmamaktadır. İngilizce README bölümü dokümantasyon amaçlıdır; arayüz dil seçicisi değildir.
+v1.2 sürümünde kullanıcı tarafından seçilebilen konuşma dilleri:
 
+| Bayrak | Dil | Kod | v1.2 durumu |
+|---|---|---|---|
+| 🇹🇷 | Türkçe | tr | Konuşma dili olarak seçilebilir; arayüzün ana dili |
+| 🇬🇧 | İngilizce | en | Konuşma dili olarak seçilebilir |
+| 🌐 | Otomatik algılama | auto | Konuşma dilini otomatik belirleme |
+
+**Gelecek çoklu dil hedefleri:** 🇪🇸 İspanyolca · 🇮🇳 Hintçe · 🇸🇦 Arapça · 🇫🇷 Fransızca · 🇩🇪 Almanca · 🇵🇹 Portekizce · 🇷🇺 Rusça · 🇨🇳 Çince. Bunlar mevcut v1.2 arayüzünde ayrı seçimler değildir; gelecek çoklu dil desteği için önerilen hedeflerdir.
+
+> Konuşma dili seçimi ile uygulama arayüzü dili farklıdır. v1.2 arayüzü Türkçedir; tam TR/EN arayüz geçişi henüz uygulanmamıştır.
 ## Teknik mimari
 
 <p align="center"><img src="docs/assets/architecture.svg" alt="YAMAN Viral Studio Pro v1.2 sistem mimarisi" width="100%" /></p>
@@ -343,6 +359,8 @@ Bu proje [MIT Lisansı](LICENSE) ile lisanslanmıştır. Üçüncü taraf araçl
 <p align="center"><img src="docs/assets/hero.svg" alt="YAMAN VIRAL STUDIO PRO banner" width="100%" /></p>
 
 
+**Developer: Ozan Yaman**
+
 YAMAN VIRAL STUDIO PRO is an AI-assisted, local-first video content production application. It analyzes long-form video sources, transcribes speech, ranks candidate moments, and prepares short-form vertical video outputs for YouTube Shorts, Instagram Reels, and TikTok.
 
 ### Key capabilities
@@ -356,9 +374,17 @@ YAMAN VIRAL STUDIO PRO is an AI-assisted, local-first video content production a
 - Local performance observations and system metrics for CPU, memory, and supported NVIDIA GPUs.
 - A browser-based dashboard served locally by FastAPI.
 
-### Turkish language support
+### Language support and flags
 
-The v1.2 web document declares `lang="tr"` and the current application interface is primarily Turkish. The analysis form supports **Auto**, **Turkish**, and **English** speech-language selection. Choose Turkish for Turkish speech or Auto for automatic language detection. A user-switchable, fully localized Turkish/English interface is not implemented in this version; the English section of this README is documentation only.
+| Flag | Language | Code | v1.2 status |
+|---|---|---|---|
+| 🇹🇷 | Turkish | tr | Selectable speech language; primary interface language |
+| 🇬🇧 | English | en | Selectable speech language |
+| 🌐 | Automatic detection | auto | Detects spoken language automatically |
+
+**Future multilingual targets:** 🇪🇸 Spanish · 🇮🇳 Hindi · 🇸🇦 Arabic · 🇫🇷 French · 🇩🇪 German · 🇵🇹 Portuguese · 🇷🇺 Russian · 🇨🇳 Chinese. These are proposed expansion targets, not separate v1.2 UI selections.
+
+Speech-language selection is distinct from UI localization. The v1.2 interface is Turkish; a fully switchable Turkish/English UI is not implemented yet.
 
 ### Quick start (Windows)
 
