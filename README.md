@@ -1,5 +1,12 @@
 ﻿# YAMAN VIRAL STUDIO PRO
 
+<p align="center"><img src="docs/assets/hero.svg" alt="YAMAN VIRAL STUDIO PRO — AI video production studio" width="100%" /></p>
+
+<p align="center"><strong>Uzun videolardan kısa, platforma hazır içerikler üretin.</strong><br/>Local-first AI · Akıllı kesit seçimi · Dikey video üretimi · İçerik operasyonları</p>
+
+<p align="center"><a href="#türkçe">Türkçe dokümantasyon</a> · <a href="#english">English documentation</a> · <a href="docs/ROADMAP.md">Yol haritası</a></p>
+
+
 [![Version](https://img.shields.io/badge/version-1.2-blue)](.) [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB)](https://www.python.org/) [![Interface](https://img.shields.io/badge/Aray%C3%BCz-T%C3%BCrk%C3%A7e%20%7C%20Turkish-2E8B57)](.) [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 **Türkçe** | [English](#english)
@@ -26,6 +33,67 @@ YAMAN VIRAL STUDIO PRO; uzun videoları analiz ederek dikkat çekici anları bel
 - [Lisans](#lisans)
 - [English](#english)
 
+## Sürüm kapsamı ve özellik durumu
+
+Aşağıdaki tablo, **v1.2 kaynak kodunda bulunan işlevleri** ve henüz geliştirme planında olan hedefleri birbirinden ayırır.
+
+| Alan | v1.2 durumu | Açıklama |
+|---|---|---|
+| YouTube kaynak alımı | Uygulandı | yt-dlp ile analiz için kaynak video alma |
+| Whisper transkripsiyonu | Uygulandı | Zaman damgalı konuşma segmentleri; otomatik/Türkçe/İngilizce dil seçimi |
+| Yerel AI kesit puanlama | Uygulandı | Ollama model entegrasyonu ve sezgisel yedek puanlama |
+| Dikey video render | Uygulandı | FFmpeg ile YouTube Shorts, Instagram Reels ve TikTok hedefleri |
+| Altyazı ve yüz odaklı kadraj | Uygulandı | Render akışındaki altyazı ve OpenCV yüz algılama yardımcıları |
+| Kesit bazlı SEO / ajan işlemleri | Uygulandı | Panelden metaveri ve ajan endpoint çağrıları |
+| Görev ilerlemesi / pipeline görünümü | Uygulandı | Analiz durumuna bağlı beş aşamalı ilerleme görünümü |
+| CPU / RAM / NVIDIA GPU metrikleri | Uygulandı | Sistem API'si ve panel göstergeleri; GPU yüzdesi gerçek ölçüm değeridir |
+| Yerel ayarlar ve öğrenme kayıtları | Uygulandı | Model/Whisper ayarları ve performans gözlemleri |
+| Türkçe arayüz | Uygulandı | Mevcut v1.2 arayüz metinleri Türkçedir |
+| Arayüzde TR/EN dil anahtarı | Planlandı | Tam çoklu dil altyapısı henüz yoktur |
+| OAuth ile otomatik yayınlama | Planlandı | Platform onayları, izinler ve kullanıcı onayı gerektirir |
+| Kalıcı çok ajanlı orkestrasyon | Planlandı | Gelişmiş görev grafiği, geçmiş, yeniden deneme ve denetim |
+| Çok kiracılı SaaS / merkezi kullanıcı sistemi | Planlandı | Kurumsal ve çok kullanıcılı altyapı hedefi |
+| Canlı platform analitiği ve takvim | Planlandı | Resmî API erişimi ve metrik uygunluğuna bağlı |
+
+## Bu sürüme kadar yapılan güncellemeler
+
+### v1.2 · Yerel üretim hattı ve panel iyileştirmeleri
+
+Bu depo ve çalışma oturumunda tamamlanan başlıca geliştirmeler:
+
+- v1.2 kaynak kodunun GitHub deposuna aktarılması ve mevcut dokümantasyonla birleştirilmesi.
+- Ollama için hafif yerel model profili (`qwen3:1.7b`) ve JSON biçimli model yanıtı yapılandırması.
+- Düşük bellekli Windows bilgisayarlarda daha uyumlu başlangıç için Whisper `tiny` ve CPU varsayılanlarının kullanılması.
+- Yerel çalışma ayarlarının kaynak kodundan ayrılması; `settings.local.json`, sanal ortam, medya alanı ve yedeklerin Git dışında tutulması.
+- Sistem metrikleri API'sinde NVIDIA GPU algılama, kullanım yüzdesi, VRAM ve sıcaklık alanlarının sunulması.
+- Ön yüzde GPU göstergesinin sıfır kullanımda da görünür olması ve ölçüm alınamadığında açıklayıcı durum göstermesi.
+- Beş aşamalı içerik pipeline'ının görev durumlarına bağlanması; aktif, tamamlanan ve hata durumlarının görsel olarak ayrılması.
+- Analiz sonrası kesit kartlarında render, SEO metaverisi ve ajan işlemlerine erişim.
+- Statik dosya cache sürümünün güncellenmesi ve Python/JavaScript/Git diff kontrollerinin çalıştırılması.
+- README'nin Türkçe ve İngilizce dokümantasyonla genişletilmesi.
+
+> **Test şeffaflığı:** Sözdizimi ve temel HTTP/API kontrollerinin başarılı olması, gerçek bir YouTube videosunun uçtan uca analiz edilip tüm platformlar için render edildiğini tek başına kanıtlamaz. Uçtan uca üretim doğrulaması gerçek kaynak video ve çıktı dosyalarıyla ayrıca yapılmalıdır. GPU'nun algılanması da her model veya render işleminin GPU üzerinde çalıştığı anlamına gelmez.
+
+### GitHub sürüm geçmişi
+
+| Commit | Değişiklik |
+|---|---|
+| `7129703` | v1.2 kaynak kodu içe aktarıldı |
+| `f68c5f0` | v1.2 kaynak kodu ve depo dokümantasyonu birleştirildi |
+| `ea92b40` | Yerel model, Whisper varsayılanları, GPU/pipeline ve panel iyileştirmeleri |
+| `22d95a3` | Ayrıntılı Türkçe + İngilizce README |
+| Bu commit | README görselleri, özellik matrisi ve güncelleme geçmişi |
+
+## Görsel dokümantasyon
+
+README'de kullanılan SVG çizimleri depoda sürümlenir ve GitHub üzerinde doğrudan görüntülenir:
+
+- [Ürün kapak görseli](docs/assets/hero.svg)
+- [İçerik üretim hattı](docs/assets/pipeline.svg)
+- [Sistem mimarisi](docs/assets/architecture.svg)
+
+Gerçek uygulama ekran görüntüleri henüz bu dokümantasyon paketine eklenmemiştir; temsili çizimler ekran görüntüsü gibi sunulmamaktadır.
+
 ## Öne çıkan özellikler
 
 - **Video kaynağı alma:** YouTube video bağlantısını analiz iş akışına gönderme (yt-dlp).
@@ -42,6 +110,9 @@ YAMAN VIRAL STUDIO PRO; uzun videoları analiz ederek dikkat çekici anları bel
 - **Yerel çalışma:** Web panelini varsayılan olarak `127.0.0.1` üzerinde çalıştırma; Ollama ve Whisper işlemlerini yerel makinede kullanabilme.
 
 ## Video üretim akışı
+
+<p align="center"><img src="docs/assets/pipeline.svg" alt="Beş aşamalı içerik üretim hattı" width="100%" /></p>
+
 
 1. **Kaynak:** YouTube video bağlantısı girilir ve analiz isteği oluşturulur.
 2. **Transkripsiyon:** Faster-Whisper konuşmayı zaman damgalarıyla metne dönüştürür.
@@ -60,6 +131,9 @@ YAMAN VIRAL STUDIO PRO; uzun videoları analiz ederek dikkat çekici anları bel
 - Bu sürümde arayüz için kullanıcı tarafından değiştirilebilen tam bir Türkçe/İngilizce dil anahtarı bulunmamaktadır. İngilizce README bölümü dokümantasyon amaçlıdır; arayüz dil seçicisi değildir.
 
 ## Teknik mimari
+
+<p align="center"><img src="docs/assets/architecture.svg" alt="YAMAN Viral Studio Pro v1.2 sistem mimarisi" width="100%" /></p>
+
 
 | Katman | Teknoloji | Sorumluluk |
 |---|---|---|
@@ -266,6 +340,9 @@ Bu proje [MIT Lisansı](LICENSE) ile lisanslanmıştır. Üçüncü taraf araçl
 
 ## English
 
+<p align="center"><img src="docs/assets/hero.svg" alt="YAMAN VIRAL STUDIO PRO banner" width="100%" /></p>
+
+
 YAMAN VIRAL STUDIO PRO is an AI-assisted, local-first video content production application. It analyzes long-form video sources, transcribes speech, ranks candidate moments, and prepares short-form vertical video outputs for YouTube Shorts, Instagram Reels, and TikTok.
 
 ### Key capabilities
@@ -318,3 +395,7 @@ This release focuses on local analysis and rendering. OAuth-based publishing, pr
 ### License
 
 MIT. Third-party tools and platform APIs remain subject to their own licenses and terms.
+
+---
+
+<p align="center">Built for local-first creator workflows · YAMAN VIRAL STUDIO PRO</p>
