@@ -23,15 +23,16 @@ function updateProgress(state){
  for(let i=1;i<=5;i++){
   const card=document.querySelector(`[data-pipeline-step="${i}"]`),label=$("pipelineStatus"+i);if(!card||!label)continue;
   card.classList.toggle("is-done",i<=completed&&!failed);card.classList.toggle("is-active",i===active&&!failed);card.classList.toggle("is-error",failed&&i===active);
-  const defaults={1:"Kaynak · YouTube bağlantısı",2:"Whisper · Zaman damgaları",3:"Yerel AI · Kesit seçimi",4:"Kurgu · Yüz takibi ve altyazı",5:"Çıktı · Shorts / Reels / TikTok"};
+  const defaults={1:"Kaynak · YouTube bağlantısı",2:"Whisper · Zaman damgaları",3:"Yerel AI · Kesit seçimi",4:"Kurgu · Dikey kadraj ve altyazı",5:"Çıktı · Shorts / Reels / TikTok"};
   label.textContent=failed&&i===active?"Hata · "+(state.error||state.stage):i<=completed?"Tamamlandı ✓":i===active?(state.stage||"Çalışıyor…"):"Bekliyor · "+defaults[i];
  }
 }
-async function waitForTask(taskId){
+async function waitForTask(taskId,onUpdate=null){
  while(true){
   const r=await fetch("/api/tasks/"+encodeURIComponent(taskId),{cache:"no-store"});
   const state=await r.json();if(!r.ok)throw new Error(state.detail||"İşlem durumu okunamadı");
   updateProgress(state);
+  if(typeof onUpdate==="function")onUpdate(state);
   if(state.status==="completed")return state.result;
   if(state.status==="failed")throw new Error(state.error||"İşlem başarısız");
   await new Promise(resolve=>setTimeout(resolve,900));
@@ -93,17 +94,56 @@ $("analyze").onclick=async()=>{
  }catch(e){notice("Hata: "+e.message);$("progressStage").textContent="İşlem başarısız";$("progressDetail").textContent=e.message}
  finally{b.disabled=false;b.innerHTML="Analiz et <b>→</b>"}
 };
+function createMediaCard(item, compact=false){
+ const card=document.createElement("article");card.className="media-card"+(compact?" compact":"");
+ const head=document.createElement("div");head.className="media-card-head";
+ const title=document.createElement("b");title.textContent=item.label||"Üretilen video";
+ const badge=document.createElement("span");badge.className="media-platform";badge.textContent=(item.platform||"mp4").toUpperCase();
+ head.append(title,badge);
+ const video=document.createElement("video");video.className="media-player";video.controls=true;video.preload="metadata";video.playsInline=true;video.src=item.file;
+ video.setAttribute("aria-label",(item.label||"Video")+" önizlemesi");
+ const info=document.createElement("small");info.className="media-info";
+ info.textContent="Klip #"+(item.clip_id??"—")+" · "+(item.size_mb!=null?item.size_mb+" MB":"MP4 video");
+ video.addEventListener("loadedmetadata",()=>{if(Number.isFinite(video.duration)){const mm=Math.floor(video.duration/60),ss=Math.floor(video.duration%60);info.textContent+=" · "+mm+":"+String(ss).padStart(2,"0");}});
+ video.addEventListener("error",()=>{info.textContent="Video yüklenemedi. Dosya yolu veya MP4 kodlamasını kontrol edin.";});
+ const actions=document.createElement("div");actions.className="actions media-actions";
+ const download=document.createElement("a");download.className="media-download";download.href=item.file;download.download=item.filename||("clip_"+item.clip_id+"_"+item.platform+".mp4");download.textContent="⬇ MP4 indir";
+ const open=document.createElement("a");open.className="media-open";open.href=item.file;open.target="_blank";open.rel="noopener";open.textContent="Yeni sekmede aç";
+ actions.append(download,open);card.append(head,video,info,actions);return card;
+}
+async function loadMediaLibrary(){
+ const box=$("mediaLibraryGrid");if(!box)return;
+ box.innerHTML='<div class="empty">Video kütüphanesi taranıyor…</div>';
+ try{
+  const r=await fetch("/api/media/library",{cache:"no-store"});const d=await r.json();if(!r.ok)throw new Error(d.detail||"Medya listesi alınamadı");
+  $("mediaCount").textContent=(d.count||0)+" VİDEO";
+  box.innerHTML="";
+  if(!d.items?.length){box.innerHTML='<div class="empty media-empty">Henüz render edilmiş MP4 yok. Analiz tamamlanması tek başına video üretmez; klip kartında “Üç platform için üret” seçeneğini çalıştır. Her platform tamamlandıkça oynatıcı burada görünür.</div>';return;}
+  d.items.forEach(item=>box.append(createMediaCard(item)));
+ }catch(e){box.innerHTML='<div class="empty">Video kütüphanesi yüklenemedi: '+e.message+'</div>';}
+}
+$("refreshMedia")?.addEventListener("click",loadMediaLibrary);
+loadMediaLibrary();
+
 async function renderClip(id,b){
  b.disabled=true;b.textContent="Render kuyruğa alınıyor…";
+ const box=document.createElement("div");box.className="outputs media-render-results";
+ const shown=new Set();
+ const appendOutputs=(outputs=[])=>{
+  outputs.forEach(o=>{
+   const key=o.file||o.filename||o.platform;if(shown.has(key))return;shown.add(key);
+   const item={job_id:jobId,clip_id:id,platform:o.platform,label:o.label,file:o.file,filename:o.filename||o.file.split("/").pop(),size_mb:o.size_mb};
+   box.append(createMediaCard(item,true));
+  });
+ };
  try{
   const r=await fetch("/api/render",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({job_id:jobId,clip_id:id,platforms:["youtube","instagram","tiktok"],captions:true})});
   const queued=await r.json();if(!r.ok)throw new Error(queued.detail||"Render başlatılamadı");
-  b.textContent="Render ediliyor…";
-  const d=await waitForTask(queued.task_id);
-  const box=document.createElement("div");box.className="outputs";
-  d.outputs.forEach(o=>{const a=document.createElement("a");a.href=o.file;a.download="";a.textContent="⬇ "+o.label+" MP4";box.append(a)});
-  b.parentElement.after(box);b.textContent="Üretildi ✓";
- }catch(e){b.textContent="Tekrar dene";b.disabled=false;notice("Render hatası: "+e.message);$("progressStage").textContent="Render başarısız";$("progressDetail").textContent=e.message}
+  b.parentElement.after(box);b.textContent="Render ediliyor…";
+  const d=await waitForTask(queued.task_id,state=>appendOutputs(state.outputs));
+  appendOutputs(d.outputs);b.textContent="Üretildi ✓";b.disabled=true;
+  loadMediaLibrary();
+ }catch(e){if(!box.children.length)box.remove();b.textContent="Tekrar dene";b.disabled=false;notice("Render hatası: "+e.message);$("progressStage").textContent="Render başarısız";$("progressDetail").textContent=e.message}
 }
 async function makeMetadata(id,b){
  b.disabled=true;b.textContent="Metin hazırlanıyor…";
@@ -121,12 +161,13 @@ refreshLearning();
 $("saveMetrics").onclick=async()=>{try{const body={clip_fingerprint:$("metricFingerprint").value,platform:$("metricPlatform").value,views:+$("metricViews").value,likes:+$("metricLikes").value,comments:+$("metricComments").value,shares:+$("metricShares").value,avg_watch_seconds:+$("metricWatch").value,video_seconds:+$("metricDuration").value};const r=await fetch("/api/learning/record",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});const d=await r.json();if(!r.ok)throw new Error(d.detail);notice(`Kaydedildi · Etkileşim %${(d.engagement_rate*100).toFixed(1)} · İzlenme tutma %${(d.retention_rate*100).toFixed(1)}`);refreshLearning();}catch(e){notice(e.message)}};
 
 // Main navigation: each sidebar item opens a real application workspace.
-const pageNames=["studio","content","projects","platforms","settings"];
+const pageNames=["studio","content","projects","media","platforms","settings"];
 function showPage(name){
  if(!pageNames.includes(name)) name="studio";
  document.querySelectorAll(".page").forEach(x=>x.classList.toggle("active",x.id==="page-"+name));
  document.querySelectorAll("#sidebarNav a").forEach(x=>x.classList.toggle("active",x.dataset.page===name));
  if(name==="projects") loadProjects();
+ if(name==="media") loadMediaLibrary();
  if(name==="platforms") loadPlatforms();
  if(name==="settings") loadSettings();
 }
@@ -140,10 +181,32 @@ async function loadProjects(){
  d.projects.forEach(p=>{const el=document.createElement("article");el.className="project-row";
  const info=document.createElement("div");const title=document.createElement("b");title.textContent="Proje "+p.job_id;
  const sub=document.createElement("small");sub.textContent=`${p.duration} sn kaynak · ${p.clip_count} kesit · ${p.language}`;
- info.append(title,sub);const state=document.createElement("span");state.className="state-pill";state.textContent="Analiz edildi";el.append(info,state);box.append(el);});
+ info.append(title,sub);const actions=document.createElement("div");actions.className="actions";const open=document.createElement("button");open.className="secondary";open.textContent="Klipleri aç";open.onclick=()=>openProject(p.job_id,open);actions.append(open);el.append(info,actions);box.append(el);});
  }catch(e){box.innerHTML='<div class="empty">Proje listesi alınamadı: '+e.message+'</div>';}
 }
 $("refreshProjects")?.addEventListener("click",loadProjects);
+async function openProject(id,b){
+ b.disabled=true;b.textContent="Proje yükleniyor…";
+ try{
+  const r=await fetch("/api/jobs/"+encodeURIComponent(id),{cache:"no-store"});const d=await r.json();if(!r.ok)throw new Error(d.detail||"Proje açılamadı");
+  jobId=d.job_id;showPage("studio");$("results").classList.remove("hidden");$("clipslist").innerHTML="";
+  d.clips.forEach(c=>{
+   const el=document.createElement("article");el.className="clip";
+   const left=document.createElement("div");const h=document.createElement("h4");h.textContent=c.title||"Önerilen kesit";
+   const p=document.createElement("p");p.textContent=c.text||"";
+   const meta=document.createElement("div");meta.className="meta";meta.textContent=c.start+"s–"+c.end+"s · "+c.duration+" sn · "+(c.reason||"Kayıtlı kesit");
+   const actions=document.createElement("div");actions.className="actions";
+   const render=document.createElement("button");render.textContent="Üç platform için üret";render.onclick=()=>renderClip(c.id,render);
+   const metadata=document.createElement("button");metadata.className="secondary";metadata.textContent="SEO metinleri üret";metadata.onclick=()=>makeMetadata(c.id,metadata);
+   actions.append(render,metadata);left.append(h,p,meta,actions);
+   const score=document.createElement("div");score.className="score";score.innerHTML=(c.score||0)+"<small>AI SCORE</small>";
+   el.append(left,score);$("clipslist").append(el);
+  });
+  displayShorts(d.clips);notice("Kayıtlı proje açıldı. Kesitleri yeniden render edebilir ve oynatabilirsin.");
+  $("results").scrollIntoView({behavior:"smooth"});
+ }catch(e){notice("Proje açılamadı: "+e.message);}
+ finally{b.disabled=false;b.textContent="Klipleri aç";}
+}
 async function loadPlatforms(){
  const box=$("platformList");box.innerHTML='<div class="empty">Platformlar yükleniyor…</div>';
  try{const r=await fetch("/api/platforms");const d=await r.json();box.innerHTML="";

@@ -69,6 +69,45 @@ jobs: dict[str, dict[str, Any]] = {}
 task_states: dict[str, dict[str, Any]] = {}
 _cpu_sample = None
 learning = ViralLearningEngine(WORK / "viral_learning.sqlite3")
+
+
+def load_saved_jobs():
+    """Restore completed analysis jobs so clips can still be rendered after an app restart."""
+    root = WORK.resolve()
+    for meta_file in WORK.glob("*/job.json"):
+        try:
+            folder = meta_file.parent.resolve()
+            if folder.parent != root:
+                continue
+            data = json.loads(meta_file.read_text(encoding="utf-8-sig"))
+            video = Path(data.get("video", "")).resolve()
+            if video.parent != folder or not video.is_file():
+                continue
+            if not isinstance(data.get("clips"), list) or not isinstance(data.get("segments"), list):
+                continue
+            jobs[folder.name] = {
+                "folder": str(folder), "video": str(video),
+                "duration": float(data.get("duration", 0)),
+                "language": str(data.get("language", "unknown")),
+                "segments": data["segments"], "clips": data["clips"],
+            }
+        except Exception:
+            continue
+
+
+load_saved_jobs()
+
+
+def save_job(job_id: str, job: dict):
+    folder = Path(job["folder"])
+    payload = {
+        "job_id": job_id, "folder": str(folder), "video": str(job["video"]),
+        "duration": job["duration"], "language": job["language"],
+        "segments": job["segments"], "clips": job["clips"],
+    }
+    temp = folder / "job.json.tmp"
+    temp.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+    temp.replace(folder / "job.json")
 _whisper = None
 
 class AnalyzeRequest(BaseModel):
@@ -214,7 +253,7 @@ def transcribe(path: Path, language: str, progress_callback=None, duration: floa
                 })
             if progress_callback and duration:
                 part = 36 + min(30, int(float(seg.end) / duration * 30))
-                progress_callback(part, f"Whisper konuÅŸmayÄ± Ã§Ã¶zÃ¼mlÃ¼yor Â· {part}%")
+                progress_callback(part, "KonuÅŸma Ã§Ã¶zÃ¼mleniyor Â· Whisper")
         return result, info.language
 
     result, detected_language = run_transcription(True)
@@ -385,7 +424,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 def escape_filter_path(path: Path) -> str:
     return str(path.resolve()).replace("\\", "/").replace(":", r"\:").replace("'", r"\'")
 
-def render_variant(job: dict, clip: dict, platform: str, captions: bool, face_tracking: bool = True) -> Path:
+def render_variant(job: dict, clip: dict, platform: str, captions: bool, face_tracking: bool = False) -> Path:
     profile = PLATFORMS[platform]
     folder = Path(job["folder"])
     out = folder / f"clip_{clip['id']}_{platform}.mp4"
@@ -496,6 +535,36 @@ def projects():
         })
     return {"projects": sorted(items, key=lambda x: x["created_at"], reverse=True)}
 
+@app.get("/api/media/library")
+def media_library():
+    """List rendered MP4 assets from disk, including outputs from previous app sessions."""
+    items = []
+    for folder in WORK.iterdir():
+        if not folder.is_dir():
+            continue
+        for path in folder.glob("clip_*_*.mp4"):
+            match = re.fullmatch(r"clip_(\d+)_(youtube|instagram|tiktok)\.mp4", path.name, re.IGNORECASE)
+            if not match or not path.is_file():
+                continue
+            clip_id, platform = int(match.group(1)), match.group(2).lower()
+            try:
+                stat = path.stat()
+                items.append({
+                    "job_id": folder.name,
+                    "clip_id": clip_id,
+                    "platform": platform,
+                    "label": PLATFORMS[platform]["label"],
+                    "filename": path.name,
+                    "file": f"/workspace/{folder.name}/{path.name}",
+                    "size_mb": round(stat.st_size / (1024 * 1024), 2),
+                    "modified_at": stat.st_mtime,
+                })
+            except OSError:
+                continue
+    items.sort(key=lambda item: item["modified_at"], reverse=True)
+    return {"items": items, "count": len(items)}
+
+
 @app.get("/api/settings")
 def get_settings():
     return {"ollama_url": OLLAMA_URL, "ollama_model": OLLAMA_MODEL,
@@ -545,6 +614,7 @@ def run_analyze_task(task_id: str, req: AnalyzeRequest, folder: Path):
             raise RuntimeError("Yeterli konuÅŸma iÃ§eren kesit bulunamadÄ±. Daha uzun bir video veya farklÄ± sÃ¼re seÃ§in.")
         jobs[task_id] = {"folder": str(folder), "video": str(video), "duration": duration,
                          "language": language, "segments": segments, "clips": candidates}
+        save_job(task_id, jobs[task_id])
         result = {"job_id": task_id, "duration": duration, "language": language, "clips": candidates,
                   "ai_mode": "local Ollama (fallback: heuristic)", "platforms": list(PLATFORMS)}
         set_task(task_id, 100, "Analiz tamamlandÄ± Â· Shorts listesi hazÄ±r", "completed", result=result)
@@ -559,12 +629,18 @@ def run_render_task(task_id: str, req: RenderRequest, job: dict, clip: dict, pla
         for index, platform in enumerate(platforms):
             label = PLATFORMS[platform]["label"]
             start_percent = 5 + int(index / total * 90)
-            set_task(task_id, start_percent, f"{label} Â· Kadraj ve yÃ¼z takibi")
-            path = render_variant(job, clip, platform, req.captions, face_tracking=True)
+            set_task(task_id, start_percent, f"{label} Â· Dikey kadraj ve altyazÄ± hazÄ±rlanÄ±yor")
+            path = render_variant(job, clip, platform, req.captions, face_tracking=False)
+            if not path.is_file() or path.stat().st_size <= 0:
+                raise RuntimeError(f"{label} Ã§Ä±ktÄ±sÄ± oluÅŸturulamadÄ± veya boÅŸ dosya dÃ¶ndÃ¼.")
             outputs.append({"platform": platform, "label": label,
-                            "file": f"/workspace/{req.job_id}/{path.name}"})
-            set_task(task_id, 5 + int((index + 1) / total * 90), f"{label} Â· TamamlandÄ±")
+                            "file": f"/workspace/{req.job_id}/{path.name}",
+                            "filename": path.name,
+                            "size_mb": round(path.stat().st_size / (1024 * 1024), 2)})
+            set_task(task_id, 5 + int((index + 1) / total * 90), f"{label} Â· TamamlandÄ±",
+                     outputs=list(outputs))
         set_task(task_id, 100, "TÃ¼m platform Ã§Ä±ktÄ±larÄ± hazÄ±r", "completed",
+                 outputs=list(outputs),
                  result={"outputs": outputs, "message": "DÄ±ÅŸa aktarma tamamlandÄ±."})
     except Exception as exc:
         set_task(task_id, 100, "Render baÅŸarÄ±sÄ±z", "failed", error=f"Render hatasÄ±: {exc}")
@@ -588,7 +664,7 @@ def render(req: RenderRequest, background_tasks: BackgroundTasks):
     if not platforms or any(p not in PLATFORMS for p in platforms):
         raise HTTPException(400, "GeÃ§ersiz platform seÃ§imi.")
     task_id = uuid.uuid4().hex[:10]
-    set_task(task_id, 1, "Render kuyruÄŸa alÄ±ndÄ±")
+    set_task(task_id, 1, "Render kuyruÄŸa alÄ±ndÄ±", outputs=[])
     background_tasks.add_task(run_render_task, task_id, req, job, clip, platforms)
     return {"task_id": task_id, "status": "queued"}
 
