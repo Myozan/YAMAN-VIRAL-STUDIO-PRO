@@ -1,11 +1,12 @@
 <!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>YAMAN VIRAL STUDIO PRO</title><link rel="stylesheet" href="/assets/style.css?v=pipeline3"></head>
+<title>YAMAN VIRAL STUDIO PRO</title><link rel="stylesheet" href="/assets/style.css?v=player4"></head>
 <body><div class="layout">
 <aside><div class="brand"><div class="mark">Y</div><div><b>YAMAN</b><small>VIRAL STUDIO PRO</small></div></div>
 <nav id="sidebarNav">
 <a class="active" href="#studio" data-page="studio">◈　Studio</a>
 <a href="#content" data-page="content">▣　İçerik üretimi</a>
 <a href="#projects" data-page="projects">◷　Projeler</a>
+<a href="#media" data-page="media">▶　Video kütüphanesi</a>
 <a href="#platforms" data-page="platforms">▤　Platform profilleri</a>
 <a href="#settings" data-page="settings">⚙　Ayarlar</a>
 </nav>
@@ -28,14 +29,18 @@
 <section class="page" id="page-content">
 <header><div><div class="eyebrow">CONTENT WORKSPACE</div><h1>İçerik üretimi</h1><p>Kesitleri oluştur, düzenle, SEO metinlerini hazırla ve dışa aktar.</p></div><div class="health">Çalışma alanı</div></header>
 <div class="panel"><div class="panelhead"><div><h3>Üretim akışı</h3><p>Bir video analizinden sonra her kesit için üretim ve ajan araçları burada görünür.</p></div><small>CONTENT PIPELINE</small></div>
-<div class="pipeline"><div data-pipeline-step="1"><b>01</b><strong>Kaynak</strong><small id="pipelineStatus1">Bekliyor · YouTube bağlantısı</small></div><div data-pipeline-step="2"><b>02</b><strong>Transkripsiyon</strong><small id="pipelineStatus2">Bekliyor · Whisper</small></div><div data-pipeline-step="3"><b>03</b><strong>Akıllı seçim</strong><small id="pipelineStatus3">Bekliyor · Yerel AI puanlama</small></div><div data-pipeline-step="4"><b>04</b><strong>Kurgu</strong><small id="pipelineStatus4">Bekliyor · Yüz takibi ve altyazı</small></div><div data-pipeline-step="5"><b>05</b><strong>Dışa aktarım</strong><small id="pipelineStatus5">Bekliyor · Shorts · Reels · TikTok</small></div></div>
+<div class="pipeline"><div data-pipeline-step="1"><b>01</b><strong>Kaynak</strong><small id="pipelineStatus1">Bekliyor · YouTube bağlantısı</small></div><div data-pipeline-step="2"><b>02</b><strong>Transkripsiyon</strong><small id="pipelineStatus2">Bekliyor · Whisper</small></div><div data-pipeline-step="3"><b>03</b><strong>Akıllı seçim</strong><small id="pipelineStatus3">Bekliyor · Yerel AI puanlama</small></div><div data-pipeline-step="4"><b>04</b><strong>Kurgu</strong><small id="pipelineStatus4">Bekliyor · Dikey kadraj ve altyazı</small></div><div data-pipeline-step="5"><b>05</b><strong>Dışa aktarım</strong><small id="pipelineStatus5">Bekliyor · Shorts · Reels · TikTok</small></div></div>
 <div class="notice">İçerik üretimine başlamak için Studio bölümünden video bağlantısını analiz et. Kesit sonuçları ve üretim kontrolleri Studio ekranında açılır.</div><div id="contentShortsList" class="content-shorts"><div class="empty">Henüz Shorts yok. Studio bölümünden video analizi başlat.</div></div><button class="nav-cta" data-go="studio">Studio'ya git →</button></div>
-<div class="panel"><div class="panelhead"><div><h3>AI ajanları</h3><p>Her ajan kendi görevini yürütür; raporlar kesit kartında görüntülenir.</p></div><small>MULTI-AGENT</small></div><div class="agent-grid"><article><b>◉ Video Analiz</b><p>Hook, açıklık, merak ve sonuç sinyallerini değerlendirir.</p></article><article><b>✂ Editör</b><p>9:16 kadraj, altyazı ve yüz takibi için kurgu planı hazırlar.</p></article><article><b>⌕ SEO</b><p>Platforma uygun başlık, açıklama ve etiket önerir.</p></article><article><b>⇧ Yayınlama</b><p>Dosyaları yayınlamaya hazırlar. OAuth bağlantısı olmadan otomatik yükleme yapmaz.</p></article></div></div>
+<div class="panel"><div class="panelhead"><div><h3>AI ajanları</h3><p>Her ajan kendi görevini yürütür; raporlar kesit kartında görüntülenir.</p></div><small>MULTI-AGENT</small></div><div class="agent-grid"><article><b>◉ Video Analiz</b><p>Hook, açıklık, merak ve sonuç sinyallerini değerlendirir.</p></article><article><b>✂ Editör</b><p>9:16 dikey kadraj ve altyazı için kurgu planı hazırlar.</p></article><article><b>⌕ SEO</b><p>Platforma uygun başlık, açıklama ve etiket önerir.</p></article><article><b>⇧ Yayınlama</b><p>Dosyaları yayınlamaya hazırlar. OAuth bağlantısı olmadan otomatik yükleme yapmaz.</p></article></div></div>
 </section>
 <section class="page" id="page-projects">
-<header><div><div class="eyebrow">PROJECT LIBRARY</div><h1>Projeler</h1><p>Bu oturumda analiz edilen video projeleri ve kesit sayıları.</p></div><button class="nav-cta" data-go="studio">+ Yeni proje</button></header>
-<div class="panel"><div class="panelhead"><div><h3>Son projeler</h3><p>Proje kayıtları mevcut uygulama oturumundan listelenir.</p></div><button class="secondary" id="refreshProjects">Yenile</button></div><div id="projectList" class="project-list"><div class="empty">Projeler yükleniyor…</div></div></div>
-<div class="notice">Not: Şu sürümde proje iş kayıtları RAM tabanlıdır. Uygulama yeniden başlatıldığında geçmiş işler sıfırlanır; kalıcı proje arşivi sonraki geliştirme aşamasıdır.</div>
+<header><div><div class="eyebrow">PROJECT LIBRARY</div><h1>Projeler</h1><p>Diskte saklanan analiz projeleri; uygulama yeniden başlasa da klipleri tekrar açabilirsin.</p></div><button class="nav-cta" data-go="studio">+ Yeni proje</button></header>
+<div class="panel"><div class="panelhead"><div><h3>Son projeler</h3><p>Kaydedilmiş analizleri yeniden aç, kesitleri üret ve videoları izle.</p></div><button class="secondary" id="refreshProjects">Yenile</button></div><div id="projectList" class="project-list"><div class="empty">Projeler yükleniyor…</div></div></div>
+<div class="notice">Analiz tamamlanınca kaynak, transkript ve kesit listesi diske kaydedilir. Projeyi yeniden açıp render işlemini sürdürebilirsin.</div>
+</section>
+<section class="page" id="page-media">
+<header><div><div class="eyebrow">MEDIA LIBRARY</div><h1>Video kütüphanesi</h1><p>Üretilen Shorts, Reels ve TikTok videolarını doğrudan Studio içinde izle.</p></div><button class="nav-cta" id="refreshMedia">↻ Yenile</button></header>
+<div class="panel"><div class="panelhead"><div><h3>Üretilen videolar</h3><p>Videolar yerel çalışma alanından listelenir; uygulama yeniden başlatılsa da dosyalar korunur.</p></div><small id="mediaCount">0 VİDEO</small></div><div id="mediaLibraryGrid" class="media-library-grid"><div class="empty">Video kütüphanesi yükleniyor…</div></div></div>
 </section>
 <section class="page" id="page-platforms">
 <header><div><div class="eyebrow">DISTRIBUTION CHANNELS</div><h1>Platform profilleri</h1><p>Çıktı profillerini yönet. Hesap bağlantıları henüz yapılandırılmadı.</p></div><div class="health">3 platform profili</div></header>
@@ -55,4 +60,4 @@
 <button id="saveSettings" class="nav-cta">Ayarları kaydet</button><span id="settingsFeedback" class="inline-feedback"></span></div>
 <div class="panel"><div class="panelhead"><div><h3>Bağımlılıklar</h3><p>Uygulamanın temel araçlarının erişilebilirliği.</p></div><small>SYSTEM CHECK</small></div><div id="dependencyStatus" class="dependency-grid">Kontrol ediliyor…</div></div>
 </section>
-</main></div><script src="/assets/app.js?v=pipeline3"></script></body></html>
+</main></div><script src="/assets/app.js?v=player4"></script></body></html>
