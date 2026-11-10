@@ -8,3 +8,10 @@ workspace/*
 *.log
 .DS_Store
 Thumbs.db
+
+# Local runtime configuration and recovery backups
+settings.local.json
+*.backup
+*.bak
+*.progress-backup
+README.conflict-backup-*.md

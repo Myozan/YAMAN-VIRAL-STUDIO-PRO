@@ -1,14 +1,75 @@
 const $=id=>document.getElementById(id);let jobId=null;
 async function health(){try{const r=await fetch("/api/health");const d=await r.json();$("health").textContent=`FFmpeg ${d.ffmpeg?"✓":"×"} · Ollama ${d.ollama?"✓":"×"}`;}catch{$("health").textContent="API bağlantısı yok";}}
 health();
+async function refreshSystemMetrics(){
+ try{const r=await fetch("/api/system/metrics",{cache:"no-store"});const d=await r.json();if(!r.ok||d.error)throw new Error(d.error||"Ölçüm alınamadı");
+  $("cpuValue").textContent=d.cpu_percent+"%";$("cpuBar").style.width=d.cpu_percent+"%";
+  $("ramValue").textContent=d.ram_percent+"%";$("ramBar").style.width=d.ram_percent+"%";
+  $("ramDetail").textContent=(d.ram_used_mb/1024).toFixed(1)+" GB / "+(d.ram_total_mb/1024).toFixed(1)+" GB kullanılıyor";
+  if(d.gpu_available===true&&Number.isFinite(Number(d.gpu_percent))){$("gpuValue").textContent=Number(d.gpu_percent).toFixed(0)+"%";$("gpuBar").style.width=Math.max(0,Math.min(100,Number(d.gpu_percent)))+"%";$("gpuDetail").textContent=(d.gpu_name||"NVIDIA GPU")+" · VRAM "+Math.round(d.vram_used_mb||0)+" / "+Math.round(d.vram_total_mb||0)+" MB · "+(d.gpu_temp_c??"--")+"°C";}
+  else{$("gpuValue").textContent="N/A";$("gpuBar").style.width="0%";$("gpuDetail").textContent=d.gpu_error||"GPU ölçümü kullanılamıyor";}
+ }catch(e){$("cpuValue").textContent="N/A";$("ramDetail").textContent="Sistem ölçümü alınamadı: "+e.message;$("gpuValue").textContent="N/A";$("gpuBar").style.width="0%";$("gpuDetail").textContent="GPU ölçüm hatası: "+e.message;}
+}
+refreshSystemMetrics();setInterval(refreshSystemMetrics,2000);
 function notice(t){$("notice").textContent=t}
+function updateProgress(state){
+ const box=$("globalProgress");if(box){box.classList.remove("hidden");$("progressStage").textContent=state.stage||"İşlem sürüyor";$("progressPercent").textContent=(state.percent||0)+"%";$("progressFill").style.width=(state.percent||0)+"%";$("progressDetail").textContent=state.status==="completed"?"Tamamlandı":state.status==="failed"?"Hata: "+(state.error||"Bilinmeyen hata"):"Canlı işlem durumu";}
+ const stage=(state.stage||"").toLocaleLowerCase("tr-TR");
+ let active=1, completed=0, failed=state.status==="failed";
+ if(stage.includes("whisper")||stage.includes("konuşma")||stage.includes("transkrips")){active=2;completed=1;}
+ else if(stage.includes("aday")||stage.includes("ai editör")||stage.includes("shorts")){active=3;completed=2;}
+ else if(stage.includes("kadraj")||stage.includes("render")||stage.includes("platform")||stage.includes("youtube shorts")||stage.includes("instagram reels")||stage.includes("tiktok")){active=4;completed=3;if(stage.includes("tamamlandı")||stage.includes("çıktılar hazır")){active=5;completed=4;}}
+ if(state.status==="completed"){if(stage.includes("çıktılar hazır")||stage.includes("dışa aktar")){completed=5;active=5;}else{completed=3;active=3;}}
+ for(let i=1;i<=5;i++){
+  const card=document.querySelector(`[data-pipeline-step="${i}"]`),label=$("pipelineStatus"+i);if(!card||!label)continue;
+  card.classList.toggle("is-done",i<=completed&&!failed);card.classList.toggle("is-active",i===active&&!failed);card.classList.toggle("is-error",failed&&i===active);
+  const defaults={1:"Kaynak · YouTube bağlantısı",2:"Whisper · Zaman damgaları",3:"Yerel AI · Kesit seçimi",4:"Kurgu · Yüz takibi ve altyazı",5:"Çıktı · Shorts / Reels / TikTok"};
+  label.textContent=failed&&i===active?"Hata · "+(state.error||state.stage):i<=completed?"Tamamlandı ✓":i===active?(state.stage||"Çalışıyor…"):"Bekliyor · "+defaults[i];
+ }
+}
+async function waitForTask(taskId){
+ while(true){
+  const r=await fetch("/api/tasks/"+encodeURIComponent(taskId),{cache:"no-store"});
+  const state=await r.json();if(!r.ok)throw new Error(state.detail||"İşlem durumu okunamadı");
+  updateProgress(state);
+  if(state.status==="completed")return state.result;
+  if(state.status==="failed")throw new Error(state.error||"İşlem başarısız");
+  await new Promise(resolve=>setTimeout(resolve,900));
+ }
+}
+function displayShorts(clips){
+ const box=$("contentShortsList");if(!box)return;
+ box.innerHTML="";
+ clips.forEach((clip,index)=>{
+  const card=document.createElement("article");card.className="content-short";
+  const title=document.createElement("b");title.textContent=(index+1)+". "+(clip.title||"Shorts kesiti");
+  const body=document.createElement("p");body.textContent=clip.text||"";
+  const meta=document.createElement("small");meta.textContent=clip.start+"s – "+clip.end+"s · "+clip.duration+" sn · AI skor "+clip.score;
+  const actions=document.createElement("div");actions.className="actions";
+  const render=document.createElement("button");render.textContent="Shorts / Reels / TikTok üret";
+  render.onclick=()=>renderClip(clip.id,render);
+  const metadata=document.createElement("button");metadata.className="secondary";metadata.textContent="SEO metinleri";
+  metadata.onclick=()=>makeMetadata(clip.id,metadata);
+  const agents=document.createElement("button");agents.className="secondary";agents.textContent="AI ajanlarını çalıştır";
+  agents.onclick=async()=>{
+   agents.disabled=true;agents.textContent="Ajanlar çalışıyor…";
+   try{
+    const r=await fetch("/api/agents/run",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({job_id:jobId,clip_id:clip.id,platforms:["youtube","instagram","tiktok"]})});
+    const d=await r.json();if(!r.ok)throw new Error(d.detail||"Ajanlar çalıştırılamadı");
+    const pre=document.createElement("pre");pre.textContent=JSON.stringify(d.agents,null,2);card.append(pre);agents.textContent="Ajan raporu hazır ✓";
+   }catch(e){agents.disabled=false;agents.textContent="Tekrar dene";notice(e.message);}
+  };
+  actions.append(render,metadata,agents);card.append(title,body,meta,actions);box.append(card);
+ });
+}
 $("analyze").onclick=async()=>{
  const url=$("url").value.trim();if(!url){notice("Önce bir YouTube bağlantısı gir.");return}
  const b=$("analyze");b.disabled=true;b.textContent="Analiz ediliyor…";
- notice("Video alınıyor, Whisper transkripsiyon yapıyor ve yerel AI kesitleri sıralıyor. İlk çalıştırma uzun sürebilir.");
+ notice("Analiz arka planda başlatıldı. İlerleme üst çubukta gösteriliyor.");
  try{
   const r=await fetch("/api/analyze",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url,clips:+$("clips").value,min_seconds:20,max_seconds:+$("length").value,language:$("language").value})});
-  const d=await r.json();if(!r.ok)throw new Error(d.detail||"Analiz başarısız");jobId=d.job_id;
+  const queued=await r.json();if(!r.ok)throw new Error(queued.detail||"Analiz başlatılamadı");
+  const d=await waitForTask(queued.task_id);jobId=d.job_id;
   $("results").classList.remove("hidden");$("clipslist").innerHTML="";
   d.clips.forEach(c=>{
    const el=document.createElement("article");el.className="clip";
@@ -26,19 +87,23 @@ $("analyze").onclick=async()=>{
    const score=document.createElement("div");score.className="score";score.innerHTML=`${c.score}<small>AI SCORE</small>`;
    el.append(left,score);$("clipslist").append(el);
   });
+  displayShorts(d.clips);
   notice(`Tamamlandı · ${d.language} · ${Math.round(d.duration)} saniye · ${d.clips.length} kesit önerildi.`);
   $("results").scrollIntoView({behavior:"smooth"});
- }catch(e){notice("Hata: "+e.message)}finally{b.disabled=false;b.innerHTML="Analiz et <b>→</b>"}
+ }catch(e){notice("Hata: "+e.message);$("progressStage").textContent="İşlem başarısız";$("progressDetail").textContent=e.message}
+ finally{b.disabled=false;b.innerHTML="Analiz et <b>→</b>"}
 };
 async function renderClip(id,b){
- b.disabled=true;b.textContent="Render ediliyor…";
+ b.disabled=true;b.textContent="Render kuyruğa alınıyor…";
  try{
   const r=await fetch("/api/render",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({job_id:jobId,clip_id:id,platforms:["youtube","instagram","tiktok"],captions:true})});
-  const d=await r.json();if(!r.ok)throw new Error(d.detail||"Render başarısız");
+  const queued=await r.json();if(!r.ok)throw new Error(queued.detail||"Render başlatılamadı");
+  b.textContent="Render ediliyor…";
+  const d=await waitForTask(queued.task_id);
   const box=document.createElement("div");box.className="outputs";
   d.outputs.forEach(o=>{const a=document.createElement("a");a.href=o.file;a.download="";a.textContent="⬇ "+o.label+" MP4";box.append(a)});
   b.parentElement.after(box);b.textContent="Üretildi ✓";
- }catch(e){b.textContent="Tekrar dene";b.disabled=false;notice("Render hatası: "+e.message)}
+ }catch(e){b.textContent="Tekrar dene";b.disabled=false;notice("Render hatası: "+e.message);$("progressStage").textContent="Render başarısız";$("progressDetail").textContent=e.message}
 }
 async function makeMetadata(id,b){
  b.disabled=true;b.textContent="Metin hazırlanıyor…";

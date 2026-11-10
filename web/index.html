@@ -1,5 +1,5 @@
 <!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>YAMAN VIRAL STUDIO PRO</title><link rel="stylesheet" href="/assets/style.css"></head>
+<title>YAMAN VIRAL STUDIO PRO</title><link rel="stylesheet" href="/assets/style.css?v=pipeline3"></head>
 <body><div class="layout">
 <aside><div class="brand"><div class="mark">Y</div><div><b>YAMAN</b><small>VIRAL STUDIO PRO</small></div></div>
 <nav id="sidebarNav">
@@ -11,6 +11,8 @@
 </nav>
 <div class="local"><i></i><div><b>LOCAL AI ENGINE</b><small>Veriler bilgisayarında işlenir</small></div></div></aside>
 <main>
+<div id="globalProgress" class="global-progress hidden" aria-live="polite"><div class="progress-top"><strong id="progressStage">Hazırlanıyor…</strong><b id="progressPercent">0%</b></div><div class="progress-track"><span id="progressFill"></span></div><small id="progressDetail">İşlem başlatılıyor</small></div>
+<div class="system-monitor" aria-live="off"><div class="metric-card"><div class="metric-head"><b>GPU KULLANIMI</b><strong id="gpuValue">--%</strong></div><div class="metric-track"><i id="gpuBar"></i></div><small id="gpuDetail">NVIDIA GPU bekleniyor…</small></div><div class="metric-card"><div class="metric-head"><b>CPU KULLANIMI</b><strong id="cpuValue">--%</strong></div><div class="metric-track"><i id="cpuBar"></i></div></div><div class="metric-card"><div class="metric-head"><b>RAM KULLANIMI</b><strong id="ramValue">--</strong></div><div class="metric-track"><i id="ramBar"></i></div><small id="ramDetail">Bellek ölçülüyor…</small></div></div>
 <section class="page active" id="page-studio"><header><div><div class="eyebrow">AI CONTENT OPERATING SYSTEM</div><h1>İçeriğini çoğalt.</h1><p>Uzun videoları analiz et, güçlü anları seç ve tüm dikey platformlara hazırla.</p></div><div class="health" id="health">Kontrol ediliyor…</div></header>
 <section class="hero"><div><span class="tag">✦ LOCAL-FIRST AI CLIPPING</span><h2>Bir video.<br><em>Her platform için hazır.</em></h2><p>Whisper transkripsiyon · Ollama içerik zekâsı · FFmpeg render</p></div><div class="hero-art"><div class="play">▶</div><span>9:16</span></div></section>
 <section class="panel"><div class="panelhead"><div><h3>Yeni video projesi</h3><p>Yalnızca indirme ve yeniden yayınlama hakkına sahip olduğun videoları kullan.</p></div><small>01 / SOURCE</small></div>
@@ -26,8 +28,8 @@
 <section class="page" id="page-content">
 <header><div><div class="eyebrow">CONTENT WORKSPACE</div><h1>İçerik üretimi</h1><p>Kesitleri oluştur, düzenle, SEO metinlerini hazırla ve dışa aktar.</p></div><div class="health">Çalışma alanı</div></header>
 <div class="panel"><div class="panelhead"><div><h3>Üretim akışı</h3><p>Bir video analizinden sonra her kesit için üretim ve ajan araçları burada görünür.</p></div><small>CONTENT PIPELINE</small></div>
-<div class="pipeline"><div><b>01</b><strong>Kaynak</strong><small>YouTube bağlantısı</small></div><div><b>02</b><strong>Transkripsiyon</strong><small>Whisper zaman damgaları</small></div><div><b>03</b><strong>Akıllı seçim</strong><small>Yerel AI puanlama</small></div><div><b>04</b><strong>Kurgu</strong><small>Yüz takibi ve altyazı</small></div><div><b>05</b><strong>Dışa aktarım</strong><small>Shorts · Reels · TikTok</small></div></div>
-<div class="notice">İçerik üretimine başlamak için Studio bölümünden video bağlantısını analiz et. Kesit sonuçları ve üretim kontrolleri Studio ekranında açılır.</div><button class="nav-cta" data-go="studio">Studio'ya git →</button></div>
+<div class="pipeline"><div data-pipeline-step="1"><b>01</b><strong>Kaynak</strong><small id="pipelineStatus1">Bekliyor · YouTube bağlantısı</small></div><div data-pipeline-step="2"><b>02</b><strong>Transkripsiyon</strong><small id="pipelineStatus2">Bekliyor · Whisper</small></div><div data-pipeline-step="3"><b>03</b><strong>Akıllı seçim</strong><small id="pipelineStatus3">Bekliyor · Yerel AI puanlama</small></div><div data-pipeline-step="4"><b>04</b><strong>Kurgu</strong><small id="pipelineStatus4">Bekliyor · Yüz takibi ve altyazı</small></div><div data-pipeline-step="5"><b>05</b><strong>Dışa aktarım</strong><small id="pipelineStatus5">Bekliyor · Shorts · Reels · TikTok</small></div></div>
+<div class="notice">İçerik üretimine başlamak için Studio bölümünden video bağlantısını analiz et. Kesit sonuçları ve üretim kontrolleri Studio ekranında açılır.</div><div id="contentShortsList" class="content-shorts"><div class="empty">Henüz Shorts yok. Studio bölümünden video analizi başlat.</div></div><button class="nav-cta" data-go="studio">Studio'ya git →</button></div>
 <div class="panel"><div class="panelhead"><div><h3>AI ajanları</h3><p>Her ajan kendi görevini yürütür; raporlar kesit kartında görüntülenir.</p></div><small>MULTI-AGENT</small></div><div class="agent-grid"><article><b>◉ Video Analiz</b><p>Hook, açıklık, merak ve sonuç sinyallerini değerlendirir.</p></article><article><b>✂ Editör</b><p>9:16 kadraj, altyazı ve yüz takibi için kurgu planı hazırlar.</p></article><article><b>⌕ SEO</b><p>Platforma uygun başlık, açıklama ve etiket önerir.</p></article><article><b>⇧ Yayınlama</b><p>Dosyaları yayınlamaya hazırlar. OAuth bağlantısı olmadan otomatik yükleme yapmaz.</p></article></div></div>
 </section>
 <section class="page" id="page-projects">
@@ -53,4 +55,4 @@
 <button id="saveSettings" class="nav-cta">Ayarları kaydet</button><span id="settingsFeedback" class="inline-feedback"></span></div>
 <div class="panel"><div class="panelhead"><div><h3>Bağımlılıklar</h3><p>Uygulamanın temel araçlarının erişilebilirliği.</p></div><small>SYSTEM CHECK</small></div><div id="dependencyStatus" class="dependency-grid">Kontrol ediliyor…</div></div>
 </section>
-</main></div><script src="/assets/app.js"></script></body></html>
+</main></div><script src="/assets/app.js?v=pipeline3"></script></body></html>

@@ -5,3 +5,4 @@ faster-whisper>=1.1.0
 requests>=2.32
 pydantic>=2.8
 opencv-python-headless>=4.10
+av==18.1.0
