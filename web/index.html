@@ -1,26 +1,46 @@
 <!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>YAMAN VIRAL STUDIO PRO</title><link rel="stylesheet" href="/assets/style.css?v=player4"></head>
+<title>YAMAN VIRAL STUDIO PRO</title><link rel="stylesheet" href="/assets/style.css?v=pro2026"></head>
 <body><div class="layout">
 <aside><div class="brand"><div class="mark">Y</div><div><b>YAMAN</b><small>VIRAL STUDIO PRO</small></div></div>
+<div class="theme-control"><label for="themeSelect">GÖRÜNÜM TEMASI</label><select id="themeSelect" aria-label="Tema seç"><option value="dark">Gece / Dark</option><option value="light">Açık / Light</option><option value="ocean">Okyanus / Ocean</option></select></div>
 <nav id="sidebarNav">
-<a class="active" href="#studio" data-page="studio">◈　Studio</a>
-<a href="#content" data-page="content">▣　İçerik üretimi</a>
-<a href="#projects" data-page="projects">◷　Projeler</a>
-<a href="#media" data-page="media">▶　Video kütüphanesi</a>
-<a href="#platforms" data-page="platforms">▤　Platform profilleri</a>
-<a href="#settings" data-page="settings">⚙　Ayarlar</a>
+<a class="active" href="#studio" data-page="studio">â—ˆã€€Studio</a>
+<a href="#content" data-page="content">â–£ã€€İçerik üretimi</a>
+<a href="#projects" data-page="projects">â—·ã€€Projeler</a>
+<a href="#media" data-page="media">â–¶ã€€Video kütüphanesi</a>
+<a href="#platforms" data-page="platforms">â–¤ã€€Platform profilleri</a>
+<a href="#settings" data-page="settings">âš™ã€€Ayarlar</a>
 </nav>
 <div class="local"><i></i><div><b>LOCAL AI ENGINE</b><small>Veriler bilgisayarında işlenir</small></div></div></aside>
 <main>
 <div id="globalProgress" class="global-progress hidden" aria-live="polite"><div class="progress-top"><strong id="progressStage">Hazırlanıyor…</strong><b id="progressPercent">0%</b></div><div class="progress-track"><span id="progressFill"></span></div><small id="progressDetail">İşlem başlatılıyor</small></div>
-<div class="system-monitor" aria-live="off"><div class="metric-card"><div class="metric-head"><b>GPU KULLANIMI</b><strong id="gpuValue">--%</strong></div><div class="metric-track"><i id="gpuBar"></i></div><small id="gpuDetail">NVIDIA GPU bekleniyor…</small></div><div class="metric-card"><div class="metric-head"><b>CPU KULLANIMI</b><strong id="cpuValue">--%</strong></div><div class="metric-track"><i id="cpuBar"></i></div></div><div class="metric-card"><div class="metric-head"><b>RAM KULLANIMI</b><strong id="ramValue">--</strong></div><div class="metric-track"><i id="ramBar"></i></div><small id="ramDetail">Bellek ölçülüyor…</small></div></div>
-<section class="page active" id="page-studio"><header><div><div class="eyebrow">AI CONTENT OPERATING SYSTEM</div><h1>İçeriğini çoğalt.</h1><p>Uzun videoları analiz et, güçlü anları seç ve tüm dikey platformlara hazırla.</p></div><div class="health" id="health">Kontrol ediliyor…</div></header>
-<section class="hero"><div><span class="tag">✦ LOCAL-FIRST AI CLIPPING</span><h2>Bir video.<br><em>Her platform için hazır.</em></h2><p>Whisper transkripsiyon · Ollama içerik zekâsı · FFmpeg render</p></div><div class="hero-art"><div class="play">▶</div><span>9:16</span></div></section>
-<section class="panel"><div class="panelhead"><div><h3>Yeni video projesi</h3><p>Yalnızca indirme ve yeniden yayınlama hakkına sahip olduğun videoları kullan.</p></div><small>01 / SOURCE</small></div>
-<label>YouTube video bağlantısı</label><div class="urlrow"><input id="url" placeholder="https://www.youtube.com/watch?v=..." /><button id="analyze">Analiz et <b>→</b></button></div>
+<section class="system-monitor" aria-label="Canlı sistem kaynakları">
+<div class="metric-card"><div class="metric-gauge" id="gpuGauge" style="--value:0"><div class="gauge-center"><strong id="gpuValue">--%</strong><small>GPU</small></div></div><div class="metric-label">GPU KULLANIMI</div><small id="gpuDetail">NVIDIA GPU bekleniyor…</small></div>
+<div class="metric-card cpu-metric"><div class="metric-gauge" id="cpuGauge" style="--value:0"><div class="gauge-center"><strong id="cpuValue">--%</strong><small>CPU</small><small id="cpuGaugeInfo">4C / 8T</small></div></div><div class="metric-label">&#304;&#350;LEMC&#304; KULLANIMI</div><small id="cpuDetail">&#304;&#351;lemci kullan&#305;m&#305;</small></div>
+<div class="metric-card"><div class="metric-gauge" id="ramGauge" style="--value:0"><div class="gauge-center"><strong id="ramValue">--%</strong><small>RAM</small></div></div><div class="metric-label">BELLEK</div><small id="ramDetail">Bellek ölçülüyor…</small></div>
+<div class="metric-card"><div class="metric-gauge" id="vramGauge" style="--value:0"><div class="gauge-center"><strong id="vramValue">--%</strong><small>VRAM</small></div></div><div class="metric-label">GPU BELLEÄİ</div><small id="vramDetail">VRAM bekleniyor…</small></div>
+</section>
+<section class="hardware-details" aria-label="CPU ve sistem donan&#305;m bilgileri">
+<div class="hardware-item"><span>CPU SICAKLI&#286;I</span><strong id="cpuTemp">-- &#176;C</strong><small id="cpuTempSource">Sens&#246;r bekleniyor</small></div>
+<div class="hardware-item"><span>&#304;&#350;LEMC&#304; MODEL&#304;</span><strong id="cpuName">Okunuyor...</strong><small id="cpuClock">Saat h&#305;z&#305; bekleniyor</small></div>
+<div class="hardware-item"><span>&#199;EK&#304;RDEK / THREAD</span><strong id="cpuCores">-- / --</strong><small>Fiziksel / Mant&#305;ksal</small></div>
+<div class="hardware-item"><span>GPU SICAKLI&#286;I</span><strong id="gpuTemp">-- &#176;C</strong><small id="gpuTempSource">NVIDIA telemetrisi</small></div>
+</section><section class="page active" id="page-studio">
+<header><div><div class="eyebrow">AI CONTENT OPERATING SYSTEM</div><h1>&#304;&#231;eri&#287;ini &#231;o&#287;alt.</h1><p>Uzun videolar&#305; analiz et, g&#252;&#231;l&#252; anlar&#305; se&#231; ve t&#252;m dikey platformlara haz&#305;rla.</p></div><div class="health" id="health">Kontrol ediliyor...</div></header>
+<section class="hero"><div><span class="tag">&#10022; LOCAL-FIRST AI CLIPPING</span><h2>Bir video.<br><em>Her platform i&#231;in haz&#305;r.</em></h2><p>Whisper transkripsiyon &#183; Ollama i&#231;erik zek&#226;s&#305; &#183; FFmpeg render</p></div><div class="hero-art"><div class="play">&#9654;</div><span>9:16</span></div></section>
+<section class="panel"><div class="panelhead"><div><h3>Yeni video projesi</h3><p>Yaln&#305;zca indirme ve yeniden yay&#305;nlama hakk&#305;na sahip oldu&#287;un videolar&#305; kullan.</p></div><small>01 / SOURCE</small></div>
+<label>YouTube video ba&#287;lant&#305;s&#305;</label><div class="urlrow"><input id="url" placeholder="https://www.youtube.com/watch?v=..." /><button id="analyze">Analiz et <b>&#8594;</b></button></div>
+<div class="panel local-import-panel"><div class="panelhead"><div><h3>&#304;ndirilen videolar</h3><p>Windows &#304;ndirilenler klas&#246;r&#252;ndeki videolar&#305; tara; se&#231;ti&#287;in dosyay&#305; Whisper ile transkribe et ve AI kesit analizine aktar.</p></div><small>LOCAL FILES</small></div><div class="urlrow"><button type="button" class="secondary" id="scanDownloads">&#304;ndirilenler klas&#246;r&#252;n&#252; tara</button><small id="downloadsFolder" class="muted"></small></div><div id="downloadsList" class="downloads-list"><div class="empty">Video listesi hen&#252;z taranmad&#305;.</div></div></div>
 <div class="options"><div><label>Short adedi</label><select id="clips"><option>3</option><option>5</option><option selected>8</option><option>12</option><option>20</option></select></div><div><label>Hedef klip uzunluğu</label><select id="length"><option value="30">20–30 saniye</option><option value="55" selected>20–55 saniye</option><option value="90">20–90 saniye</option><option value="180">20–180 saniye</option></select></div><div><label>Konuşma dili</label><select id="language"><option value="auto">Otomatik</option><option value="tr">Türkçe</option><option value="en">İngilizce</option></select></div></div>
-<div id="notice" class="notice">ⓘ Yerel Ollama servisi ve Whisper ilk kullanımda model indirebilir.</div></section>
+<div id="notice" class="notice">â“˜ Yerel Ollama servisi ve Whisper ilk kullanımda model indirebilir.</div></section>
 <section class="panel hidden" id="results"><div class="panelhead"><div><h3>AI tarafından seçilen anlar</h3><p>Skorlar editoryal tahmindir; viral olma garantisi değildir.</p></div><small>02 / SELECT</small></div><div id="clipslist"></div></section>
+<section class="panel hidden" id="transcriptPanel"><div class="panelhead"><div><h3>Video transkripsiyonu</h3><p>Whisper konuşma metni ve zaman damgaları.</p></div><button class="secondary" id="downloadTranscript">Transkripti TXT indir</button></div><pre id="transcriptText" class="transcript-text"></pre></section>
+<section class="panel hidden" id="summaryPanel">
+<div class="panelhead"><div><h3>Videodan ak&#305;ll&#305; &#246;zet &#252;ret</h3><p>Yerel AI &#246;nemli anlar&#305; se&#231;er ve tek bir k&#305;sa &#246;zet videosunda birle&#351;tirir.</p></div><small>AI SUMMARY VIDEO</small></div>
+<div class="summary-controls"><div><label>&#214;zet video hedef s&#252;resi</label><select id="summaryLength"><option value="60">Yakla&#351;&#305;k 60 saniye</option><option value="90" selected>Yakla&#351;&#305;k 90 saniye</option><option value="120">Yakla&#351;&#305;k 2 dakika</option><option value="180">Yakla&#351;&#305;k 3 dakika</option></select></div><button id="generateSummary">Ak&#305;ll&#305; &#246;zet videosu olu&#351;tur &#8594;</button></div>
+<div id="summaryFeedback" class="notice">&#214;nce videoyu analiz et. Ard&#305;ndan &#246;zet videosunu olu&#351;turabilirsin.</div>
+<div id="summaryResult" class="summary-result hidden"></div>
+</section>
 <section class="panel"><div class="panelhead"><div><h3>Viral Learning Engine</h3><p>Gerçek istatistikleri gir; sistem performanstan öğrensin.</p></div><small>03 / LEARN</small></div>
 <div class="options"><div><label>Platform</label><select id="metricPlatform"><option value="youtube">YouTube</option><option value="instagram">Instagram</option><option value="tiktok">TikTok</option></select></div><div><label>Görüntülenme</label><input id="metricViews" type="number" value="1000"></div><div><label>Beğeni</label><input id="metricLikes" type="number" value="80"></div></div>
 <div class="options"><div><label>Yorum</label><input id="metricComments" type="number" value="8"></div><div><label>Paylaşım</label><input id="metricShares" type="number" value="12"></div><div><label>Ort. izlenme (sn)</label><input id="metricWatch" type="number" value="18"></div></div>
@@ -30,8 +50,17 @@
 <header><div><div class="eyebrow">CONTENT WORKSPACE</div><h1>İçerik üretimi</h1><p>Kesitleri oluştur, düzenle, SEO metinlerini hazırla ve dışa aktar.</p></div><div class="health">Çalışma alanı</div></header>
 <div class="panel"><div class="panelhead"><div><h3>Üretim akışı</h3><p>Bir video analizinden sonra her kesit için üretim ve ajan araçları burada görünür.</p></div><small>CONTENT PIPELINE</small></div>
 <div class="pipeline"><div data-pipeline-step="1"><b>01</b><strong>Kaynak</strong><small id="pipelineStatus1">Bekliyor · YouTube bağlantısı</small></div><div data-pipeline-step="2"><b>02</b><strong>Transkripsiyon</strong><small id="pipelineStatus2">Bekliyor · Whisper</small></div><div data-pipeline-step="3"><b>03</b><strong>Akıllı seçim</strong><small id="pipelineStatus3">Bekliyor · Yerel AI puanlama</small></div><div data-pipeline-step="4"><b>04</b><strong>Kurgu</strong><small id="pipelineStatus4">Bekliyor · Dikey kadraj ve altyazı</small></div><div data-pipeline-step="5"><b>05</b><strong>Dışa aktarım</strong><small id="pipelineStatus5">Bekliyor · Shorts · Reels · TikTok</small></div></div>
-<div class="notice">İçerik üretimine başlamak için Studio bölümünden video bağlantısını analiz et. Kesit sonuçları ve üretim kontrolleri Studio ekranında açılır.</div><div id="contentShortsList" class="content-shorts"><div class="empty">Henüz Shorts yok. Studio bölümünden video analizi başlat.</div></div><button class="nav-cta" data-go="studio">Studio'ya git →</button></div>
-<div class="panel"><div class="panelhead"><div><h3>AI ajanları</h3><p>Her ajan kendi görevini yürütür; raporlar kesit kartında görüntülenir.</p></div><small>MULTI-AGENT</small></div><div class="agent-grid"><article><b>◉ Video Analiz</b><p>Hook, açıklık, merak ve sonuç sinyallerini değerlendirir.</p></article><article><b>✂ Editör</b><p>9:16 dikey kadraj ve altyazı için kurgu planı hazırlar.</p></article><article><b>⌕ SEO</b><p>Platforma uygun başlık, açıklama ve etiket önerir.</p></article><article><b>⇧ Yayınlama</b><p>Dosyaları yayınlamaya hazırlar. OAuth bağlantısı olmadan otomatik yükleme yapmaz.</p></article></div></div>
+<div class="notice">İçerik üretimine başlamak için Studio bölümünden video bağlantısını analiz et. Kesit sonuçları ve üretim kontrolleri Studio ekranında açılır.</div><div id="contentShortsList" class="content-shorts"><div class="empty">Henüz Shorts yok. Studio bölümünden video analizi başlat.</div></div><button class="nav-cta" data-go="studio">Studio'ya git â†’</button></div>
+<div class="panel"><div class="panelhead"><div><h3>AI ajanları</h3><p>Her ajan kendi görevini yürütür; raporlar kesit kartında görüntülenir.</p></div><small>MULTI-AGENT</small></div><div class="agent-grid">
+<article><b>01 · Viral Stratejist</b><p>Hook, açıklık, duygu, merak ve izleyici tutma potansiyelini puanlar.</p><small>YEREL AI</small></article>
+<article><b>02 · Hook & Açılış Yazarı</b><p>Üç alternatif açılış, merak unsuru ve CTA üretir.</p><small>YEREL AI</small></article>
+<article><b>03 · Kurgu Yönetmeni</b><p>Tempo, vurgu, altyazı, kadraj ve B-roll kurgu planını hazırlar.</p><small>YEREL AI</small></article>
+<article><b>04 · SEO & Dağıtım Uzmanı</b><p>YouTube, Instagram ve TikTok için ayrı başlık, açıklama ve hashtag üretir.</p><small>YEREL AI</small></article>
+<article><b>05 · İçerik Risk Denetçisi</b><p>Doğrulanması gereken iddiaları ve bağlamından koparma risklerini işaretler.</p><small>YEREL AI</small></article>
+<article><b>06 · Altyazı Kalite Kontrolü</b><p>Kelime yoğunluğu, okunabilirlik ve aşırı uzun metinleri kontrol eder.</p><small>KURAL TABANLI</small></article>
+<article><b>07 · Kesit Teknik Kontrolü</b><p>Süreyi, zaman aralığını, kaynak sınırlarını ve platform koşullarını doğrular.</p><small>KURAL TABANLI</small></article>
+<article><b>08 · Yayın Koordinatörü</b><p>Platform yayın kontrol listesini hazırlar; kullanıcı onayı olmadan paylaşım yapmaz.</p><small>KURAL TABANLI</small></article>
+</div></div>
 </section>
 <section class="page" id="page-projects">
 <header><div><div class="eyebrow">PROJECT LIBRARY</div><h1>Projeler</h1><p>Diskte saklanan analiz projeleri; uygulama yeniden başlasa da klipleri tekrar açabilirsin.</p></div><button class="nav-cta" data-go="studio">+ Yeni proje</button></header>
@@ -60,4 +89,4 @@
 <button id="saveSettings" class="nav-cta">Ayarları kaydet</button><span id="settingsFeedback" class="inline-feedback"></span></div>
 <div class="panel"><div class="panelhead"><div><h3>Bağımlılıklar</h3><p>Uygulamanın temel araçlarının erişilebilirliği.</p></div><small>SYSTEM CHECK</small></div><div id="dependencyStatus" class="dependency-grid">Kontrol ediliyor…</div></div>
 </section>
-</main></div><script src="/assets/app.js?v=player4"></script></body></html>
+</main></div><script src="/assets/app.js?v=pro2026"></script></body></html>
