@@ -4,107 +4,98 @@
 
 # YAMAN VIRAL STUDIO PRO
 
-**Local-first AI video production studio**
+**Yerel öncelikli yapay zekâ video üretim stüdyosu**
 
-[![Version](https://img.shields.io/badge/version-1.3.0-6478ff?style=for-the-badge)](CHANGELOG.md)
+[TR Türkçe](README.md) | [EN English](README.en.md) | [DE Deutsch](README.de.md) | [ES Español](README.es.md) | [Sürüm geçmişi](CHANGELOG.md)
+
+[![Version](https://img.shields.io/badge/version-1.4.0-6478ff?style=for-the-badge)](CHANGELOG.md)
 [![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/API-FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![License](https://img.shields.io/badge/License-MIT-2ea44f?style=for-the-badge)](LICENSE)
-[![Language](https://img.shields.io/badge/Interface-Turkish-ef4444?style=for-the-badge)](#language--dil)
 
-**Designed & developed by [Ozan Yaman](https://github.com/Myozan)**
-
-[TR T?rk?e](#t?rk?e) ? [EN English](#english) ? [Changelog](CHANGELOG.md)
+**Geliştirici: [Ozan Yaman](https://github.com/Myozan)**
 
 </div>
 
 ---
 
-## T?rk?e
+## Proje hakkında
 
-YAMAN VIRAL STUDIO PRO; uzun videolar? yerel bilgisayarda analiz eden, konu?malar? metne d?n??t?ren, k?sa video kesitleri se?en, videodan ak?ll? ?zet haz?rlayan ve YouTube Shorts, Instagram Reels ve TikTok i?in d??a aktarma yapan yerel ?ncelikli bir i?erik ?retim st?dyosudur.
+YAMAN VIRAL STUDIO PRO; videoları yerel bilgisayarda analiz eden, konuşmaları zaman damgalı metne dönüştüren, kısa video kesitleri seçen, akıllı özet videosu oluşturan ve YouTube Shorts, Instagram Reels ile TikTok için dışa aktarma sağlayan yerel öncelikli bir üretim stüdyosudur.
 
-### Ekran g?r?nt?leri
+## 1.4.0 özellikleri
 
-<div align="center">
+- **Video analizi:** YouTube bağlantısı veya Windows Downloads klasöründen yerel video içe aktarma.
+- **Transkripsiyon:** Faster-Whisper ile zaman damgalı konuşma metni ve TXT dışa aktarma.
+- **Akıllı kesit:** Kısa ve az konuşmalı videolar için esnek kesit adayı ve yedek seçim.
+- **Akıllı özet videosu:** Önemli anları seçerek dikey MP4, altyazı, giriş ve kapanış üretme.
+- **12 uzman AI ajanı:** Viral strateji, hook, kurgu, SEO, risk kontrolü, altyazı QA, klip QA, yayın hazırlığı, izleyici tutma, kapak/görsel, yerelleştirme ve erişilebilirlik.
+- **Kalıcı ajan orkestrasyonu:** SQLite görev geçmişi, olay günlüğü, iptal, yeniden deneme ve uygulama yeniden başladığında kesintiye uğrayan görevleri kurtarma.
+- **Çok dilli arayüz:** Türkçe / İngilizce dil seçimi.
+- **OAuth hesap bağlantısı:** YouTube, TikTok ve Instagram için resmî OAuth akışları; kimlik bilgileri ve erişim tokenları yerel olarak şifrelenir.
+- **Kullanıcı onaylı yayın:** Her yükleme açık kullanıcı onayı ister. YouTube ve TikTok yerel MP4 dosyasını yükleyebilir. Instagram Reels için herkese açık HTTPS video adresi gerekir.
+- **Platform profilleri:** 9:16, 1:1, 16:9; 720p/1080p ve azami süre ayarları.
+- **Sistem izleme:** GPU, CPU, RAM ve VRAM kullanım göstergeleri. CPU kartında yalnızca işlemci modeli ve işlemci kullanımı gösterilir.
+- **Mobil uyumlu arayüz:** Küçük ekranlarda kaydırılabilir menü, esnek kartlar ve uyarlanabilir göstergeler.
 
-| Studio | ?zellik haritas? |
-|:--:|:--:|
-| <img src="docs/assets/screenshot-studio.png" alt="Studio paneli" width="100%"> | <img src="docs/assets/feature-map.svg" alt="?zellik haritas?" width="100%"> |
-
-</div>
-
-### v1.3.0 ?zellikleri
-
-- **Video analizi:** YouTube ba?lant?s? veya Windows Downloads klas?r?nden yerel video tarama.
-- **Transkripsiyon:** Faster-Whisper ile zaman damgal? konu?ma metni ve TXT d??a aktarma.
-- **Ak?ll? kesit:** Konu?ma yo?unlu?u d???k veya k?sa videolarda daha esnek aday ?retimi ve yedek kesit mant???.
-- **Ak?ll? ?zet videosu:** Transkriptteki ?nemli anlar? se?erek dikey MP4, altyaz?, giri? ve kapan?? olu?turma.
-- **12 uzman AI ajan?:** Viral strateji, hook, kurgu, SEO, risk kontrol?, altyaz? QA, klip QA, yay?n haz?rl???, izleyici tutma, kapak/g?rsel, yerelle?tirme ve eri?ilebilirlik.
-- **Platform profilleri:** YouTube Shorts, Instagram Reels ve TikTok i?in oran, ??z?n?rl?k ve azami s?re ayarlar?. Bu profiller ger?ek render i?leminde kullan?l?r.
-- **Sistem izleme:** CPU, GPU, RAM, VRAM, i?lemci modeli, ?ekirdek/thread, saat h?z? ve desteklenen sens?rlerden s?cakl?k.
-- **Mobil uyumlu aray?z:** Dar ekranlarda kayd?r?labilir men?, iki s?tunlu g?stergeler ve esnek kartlar.
-- **Yerel AI:** Ollama ?zerinden yerel model; video ve ses i?leme yerel ?al??ma alan?nda yap?l?r.
-
-### Mimari
-
-<img src="docs/assets/architecture.svg" alt="YAMAN Viral Studio mimarisi" width="100%">
+## Mimari
 
 | Katman | Teknoloji |
 |---|---|
 | API | Python 3.12, FastAPI, Uvicorn |
-| AI | Ollama, Qwen uyumlu yerel modeller |
-| Speech-to-text | Faster-Whisper |
+| Yerel AI | Ollama, Qwen |
+| Konuşma tanıma | Faster-Whisper |
 | Video | FFmpeg / FFprobe, yt-dlp |
-| Aray?z | HTML, CSS, JavaScript |
-| Kal?c? i? verisi | Yerel JSON proje kay?tlar? ve SQLite ??renme verisi |
+| Arayüz | HTML, CSS, JavaScript |
+| Görev geçmişi | SQLite |
+| OAuth gizli verileri | Fernet şifreleme |
 
-### Kurulum (Windows)
+## Windows kurulumu
 
-1. Python 3.12 ve FFmpeg/FFprobe kurun.
-2. Ollama'y? ba?lat?n ve qwen3:1.7b modelini indirin.
-3. Proje klas?r?nde run_windows.bat dosyas?n? ?al??t?r?n veya a?a??daki komutlar? kullan?n:
+1. Python 3.12, FFmpeg ve Ollama kurun.
+2. Yerel modeli indirin: ollama pull qwen3:1.7b
+3. Proje klasöründe run_windows.bat dosyasını çalıştırın.
+4. Tarayıcıdan http://127.0.0.1:8765 adresini açın.
 
-    .venv\Scriptsctivate
+Bağımlılıkları elle kurmak için:
+
+    .venv\Scripts\activate
     pip install -r requirements.txt
-    python -m uvicorn app.main:app --host 127.0.0.1 --port 8765
 
-4. Taray?c?dan http://127.0.0.1:8765 adresini a??n.
+## OAuth ve otomatik yayınlama kurulumu
 
-### Platform hesaplar? hakk?nda
+Platform Profilleri sayfasında her sağlayıcı için geliştirici uygulaması kimlik bilgilerini kaydedin. Bu bilgiler uygulama tarafından yerel diskte şifrelenir.
 
-Platform profilleri video d??a aktarma ayarlar?n? y?netir. TikTok/Instagram/YouTube hesaplar?na otomatik y?kleme bu s?r?mde etkin de?ildir; ger?ek yay?n i?in resmi geli?tirici uygulamalar?, OAuth izinleri ve kullan?c? onay? gerekir. Uygulama bu ba?lant?lar?n kurulu oldu?unu iddia etmez.
+| Platform | Geliştirici değişkenleri | Gerekli izin |
+|---|---|---|
+| YouTube | YAMAN_GOOGLE_CLIENT_ID / YAMAN_GOOGLE_CLIENT_SECRET | youtube.upload |
+| TikTok | YAMAN_TIKTOK_CLIENT_KEY / YAMAN_TIKTOK_CLIENT_SECRET | video.publish |
+| Instagram | YAMAN_META_APP_ID / YAMAN_META_APP_SECRET | instagram_basic, instagram_content_publish, pages_show_list |
 
-### Donan?m telemetrisi
+Platform Profilleri ekranında gösterilen OAuth Callback adresini ilgili geliştirici konsoluna birebir ekleyin. İsteğe bağlı olarak YAMAN_PUBLIC_BASE_URL tanımlayabilirsiniz.
 
-GPU s?cakl??? NVIDIA s?r?c?s? ve nvidia-smi ?zerinden okunur. CPU s?cakl???, donan?m sens?r sa?lay?c?s? (LibreHardwareMonitor veya OpenHardwareMonitor) eri?ilebilir oldu?unda g?sterilir; sens?r yoksa N/A g?sterilir. CPU model/?ekirdek/thread ve kullan?m verileri ayr? olarak al?n?r.
+- YouTube yüklemeleri varsayılan olarak **private** gizlilik düzeyinde başlar.
+- TikTok Direct Post için Content Posting API ve onaylı video.publish izni gerekir. Denetlenmemiş uygulamalar yalnızca özel gönderi oluşturabilir.
+- Instagram Reels için profesyonel hesap, Facebook Sayfası bağlantısı ve Meta tarafından erişilebilen herkese açık HTTPS video adresi gerekir.
+- Yayınlama düğmesi her seferinde kullanıcı onayı ister; sessiz veya arka planda otomatik paylaşım yapılmaz.
 
-### G?venlik ve veri
+## Güvenlik
 
-- settings.local.json, platform_profiles.json, .env, ?al??ma alan? videolar? ve g?nl?kler Git'e eklenmez.
-- Yaln?zca sahibi oldu?unuz veya i?leme/yay?nlama hakk?n?z bulunan i?erikleri kullan?n.
-- Otomatik sosyal medya y?klemesi veya DRM a?ma i?levi bulunmaz.
+- OAuth istemci sırları ve tokenlar şifreli yerel dosyalarda tutulur.
+- .oauth.key, OAuth token kasası, uygulama kimlik bilgileri, yerel ayarlar ve workspace Git'e eklenmez.
+- OAuth anahtar dosyasını yedekleyin; kaybolursa kayıtlı tokenları çözmek mümkün olmaz.
+- Yalnızca sahibi olduğunuz veya dağıtım hakkına sahip olduğunuz içerikleri yayınlayın.
 
-## English
+## Sınırlamalar
 
-YAMAN VIRAL STUDIO PRO is a local-first video workflow for transcription, short-clip selection, AI-generated video summaries and platform-ready exports. It runs with FastAPI, Ollama, Faster-Whisper and FFmpeg on the user's own computer.
+- Instagram Graph API yerel localhost dosyasını çekemez; Reels için genel erişilebilir HTTPS medya URL'si gereklidir.
+- TikTok'un denetlenmemiş geliştirici uygulamaları herkese açık yayın yapamaz.
+- OAuth bağlantısı için her platformda kayıtlı geliştirici uygulaması, doğru callback adresi ve onaylı izinler gereklidir.
 
-### Version 1.3.0 highlights
+## Teknik araştırma
 
-- YouTube URL and local Downloads video ingestion.
-- Timestamped Whisper transcript with TXT export.
-- More tolerant short/sparse-speech clip candidate generation.
-- AI summary MP4 with selected moments, captions, intro and outro.
-- Twelve specialist agents with structured per-agent reports.
-- Editable YouTube Shorts, Instagram Reels and TikTok export profiles.
-- CPU/GPU/RAM/VRAM telemetry and responsive mobile layout.
+Ajan mimarisi ve platform entegrasyonu kararları için [AI Agent / OAuth araştırma notları](docs/AI-AGENTS-RESEARCH.md) dosyasına bakın.
 
-### Important limitations
+## Lisans
 
-Platform profiles configure exported files; direct account publishing is not enabled. CPU temperature requires a supported hardware-monitor sensor provider. The application does not bypass DRM or upload content without configured official platform authorization.
-
----
-
-## License
-
-This project is released under the MIT License. See LICENSE.
+MIT. Ayrıntılar için LICENSE dosyasına bakın.

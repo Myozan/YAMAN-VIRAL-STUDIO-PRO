@@ -29,20 +29,25 @@ AGENT_CATALOG = [
 
 def _run_ai(llm, agent_id, name, role, prompt, fallback, timeout=90):
     started = time.perf_counter()
-    try:
-        result = llm(prompt, timeout=timeout)
-        if not isinstance(result, dict):
-            raise ValueError("Model JSON nesnesi döndürmedi.")
-        status = "completed"
-        error = None
-    except Exception as exc:  # local model can be stopped or busy
-        result = fallback
-        status = "fallback"
-        error = str(exc)[:240]
+    error=None
+    result=fallback
+    status="fallback"
+    attempts=0
+    for attempt in range(2):
+        attempts=attempt+1
+        try:
+            result=llm(prompt,timeout=timeout)
+            if not isinstance(result,dict):raise ValueError("Model JSON object expected")
+            status="completed";error=None;break
+        except Exception as exc:
+            error=str(exc)[:240]
+            if "cancelled by user" in error.lower():raise
+            if attempt==0:time.sleep(0.6)
+    if status!="completed":result=fallback
     return {
         "id": agent_id, "agent": name, "role": role, "status": status,
         "duration_ms": round((time.perf_counter() - started) * 1000),
-        "result": result, "error": error,
+        "attempts": attempts, "result": result, "error": error,
     }
 
 
@@ -72,10 +77,7 @@ def run_agent_team(llm, job, clip, platforms, progress_callback=None):
 
     def notify(agent_id, status):
         if progress_callback:
-            try:
-                progress_callback(agent_id, status)
-            except Exception:
-                pass
+            progress_callback(agent_id, status)
 
     strategist_fallback = {
         "score": int(clip.get("score", 0)), "verdict": "Mevcut kesit puanı korundu",

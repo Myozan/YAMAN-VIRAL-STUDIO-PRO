@@ -206,3 +206,69 @@ html[data-theme="ocean"] .pipeline>div,html[data-theme="ocean"] .agent-grid arti
 @media(max-width:1050px){.layout{grid-template-columns:220px minmax(0,1fr)}main{padding:28px 20px}.hardware-details{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:760px){.layout{display:block}aside{position:relative;top:auto;height:auto;display:block;padding:14px 12px;border-right:0;border-bottom:1px solid var(--line)}.brand{padding:0 5px}nav{display:flex;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;margin-top:14px;gap:6px;padding-bottom:4px}nav a{flex:0 0 auto;white-space:nowrap;padding:10px 12px;font-size:12px}.theme-control{margin:12px 2px 0;max-width:220px}.local{display:none}main{padding:18px 12px 36px}.system-monitor{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.hardware-details{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.metric-card{padding:12px 7px}.metric-gauge{width:100px;height:100px}.hero{padding:20px;min-height:160px}.hero h2{font-size:26px}.hero-art{width:70px;height:70px}.panel{padding:16px}.panelhead{flex-wrap:wrap}.platform-grid,.agent-grid{grid-template-columns:1fr}.platform-profile-fields{grid-template-columns:1fr 1fr}.pipeline{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:420px){.hardware-details{grid-template-columns:1fr 1fr}.hardware-item{padding:10px}.platform-profile-fields{grid-template-columns:1fr}.hero-art{display:none}.health{display:none}.pipeline{grid-template-columns:1fr 1fr}}
+
+.language-control{margin-top:10px}
+.state-pill.connected{background:rgba(37,190,130,.13);color:#43d39e;border:1px solid rgba(37,190,130,.25)}
+.media-actions button{min-height:34px}
+.platform-card .actions{display:flex;flex-wrap:wrap;gap:8px}
+@media(max-width:760px){.language-control{display:flex;max-width:220px}.platform-card .actions button{flex:1 1 100%}.media-actions button{flex:1 1 100%}}
+
+.task-history-list{display:grid;gap:9px}.task-history-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px;border:1px solid var(--line);border-radius:12px;min-width:0}.task-history-row>div:first-child{display:grid;gap:5px;min-width:0}.task-history-row small{color:var(--muted);overflow-wrap:anywhere}.task-history-row .actions{display:flex;flex-wrap:wrap}
+@media(max-width:620px){.task-history-row{align-items:stretch;flex-direction:column}.task-history-row .actions button{flex:1}}
+
+/* v1.4.0 mobile width containment */
+*,*::before,*::after{box-sizing:border-box}
+@media(max-width:760px){
+ html,body{width:100%;max-width:100%;overflow-x:hidden}
+ .layout{display:block!important;width:100%;max-width:100%;min-width:0;overflow-x:hidden}
+ aside{width:100%;max-width:100%;min-width:0}
+ main{display:block;width:100%;max-width:100%;min-width:0;margin:0;padding:16px 12px 32px;overflow-x:hidden}
+ .system-monitor{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px;width:100%;max-width:100%;min-width:0}
+ .system-monitor>.metric-card{display:flex;min-width:0;max-width:100%;width:100%;flex:initial;overflow:hidden;padding:10px 5px}
+ .metric-gauge{width:clamp(72px,22vw,92px);height:clamp(72px,22vw,92px);flex:0 1 auto}
+ .gauge-center strong{font-size:clamp(17px,5vw,22px)}
+ .metric-label{font-size:8px;letter-spacing:.2px;white-space:normal;text-align:center}
+ .metric-card>small{font-size:9px;text-align:center;overflow-wrap:anywhere}
+ .hero,.panel,.platform-card,.agent-report{min-width:0;max-width:100%;width:100%}
+ .hero h2{font-size:clamp(22px,7vw,28px)}
+ .urlrow{min-width:0;max-width:100%;flex-wrap:wrap}
+ .urlrow input{min-width:0;flex:1 1 100%}
+ .urlrow button{flex:1 1 100%}
+ .downloads-list,.media-grid,.project-grid,.platform-grid{min-width:0;max-width:100%}
+}
+@media(max-width:380px){
+ main{padding-left:8px;padding-right:8px}
+ .system-monitor{gap:6px}
+ .system-monitor>.metric-card{padding:8px 3px}
+ .metric-gauge{width:74px;height:74px}
+}
+
+@media(max-width:760px){
+ html,body{min-width:0!important;width:100%!important;max-width:100vw!important}
+ body{overflow-x:hidden!important}
+ .layout,aside,main{width:100vw!important;max-width:100vw!important;min-width:0!important}
+ main{padding-left:12px!important;padding-right:12px!important}
+ .system-monitor{width:calc(100vw - 24px)!important;max-width:calc(100vw - 24px)!important;grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ .system-monitor>.metric-card{min-width:0!important;width:100%!important;max-width:100%!important}
+ .metric-card>small{white-space:normal!important;word-break:break-word!important;overflow-wrap:anywhere!important}
+}
+
+@media(max-width:420px){
+ .system-monitor{display:grid!important;grid-template-columns:minmax(0,1fr)!important;width:calc(100vw - 24px)!important;max-width:calc(100vw - 24px)!important}
+ .system-monitor>.metric-card{width:100%!important;max-width:100%!important;min-width:0!important;display:grid!important;grid-template-columns:96px minmax(0,1fr);grid-template-rows:auto auto;column-gap:14px;align-items:center;text-align:left}
+ .system-monitor>.metric-card .metric-gauge{grid-row:1/3;grid-column:1;width:88px;height:88px}
+ .system-monitor>.metric-card .metric-label,.system-monitor>.metric-card>small{grid-column:2;text-align:left;max-width:100%;overflow-wrap:anywhere}
+}
+
+/* Touch-first small devices: use device width as a fallback for embedded browsers. */
+@media(max-device-width:480px){
+ html,body,.layout,main{min-width:0!important;width:100%!important;max-width:100%!important;overflow-x:hidden!important}
+ .system-monitor{display:grid!important;grid-template-columns:minmax(0,1fr)!important;width:100%!important;max-width:100%!important}
+ .system-monitor>.metric-card{display:grid!important;grid-template-columns:96px minmax(0,1fr);grid-template-rows:auto auto;min-width:0!important;width:100%!important;max-width:100%!important}
+ .system-monitor>.metric-card .metric-gauge{grid-row:1/3;grid-column:1;width:88px;height:88px}
+ .system-monitor>.metric-card .metric-label,.system-monitor>.metric-card>small{grid-column:2;text-align:left;overflow-wrap:anywhere}
+}
+@media(max-width:480px) and (pointer:coarse){
+ .system-monitor{display:grid!important;grid-template-columns:minmax(0,1fr)!important}
+ .system-monitor>.metric-card{display:grid!important;grid-template-columns:96px minmax(0,1fr);grid-template-rows:auto auto}
+}

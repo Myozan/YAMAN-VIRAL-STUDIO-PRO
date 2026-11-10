@@ -17,3 +17,8 @@ settings.local.json
 README.conflict-backup-*.md
 
 platform_profiles.json
+
+.oauth.key
+workspace/oauth_tokens.enc
+workspace/orchestration.sqlite3
+workspace/oauth_apps.enc

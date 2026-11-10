@@ -1,4 +1,40 @@
 const $=id=>document.getElementById(id);let jobId=null;
+const UI_TEXT={
+ tr:{
+  "nav.studio":"\u25c8\u3000Studio","nav.content":"\u25a3\u3000\u0130\u00e7erik \u00fcretimi","nav.projects":"\u25f7\u3000Projeler","nav.media":"\u25b6\u3000Video k\u00fct\u00fcphanesi","nav.platforms":"\u25a4\u3000Platform profilleri","nav.settings":"\u2699\u3000Ayarlar",
+  "appearance.label":"G\u00d6R\u00dcN\u00dcM TEMASI","language.label":"ARAY\u00dcZ D\u0130L\u0130","local.name":"LOCAL AI ENGINE","local.info":"Veriler bilgisayar\u0131nda i\u015flenir",
+  "studio.title":"\u0130\u00e7eri\u011fini \u00e7o\u011falt.","studio.subtitle":"Uzun videolar\u0131 analiz et, g\u00fc\u00e7l\u00fc anlar\u0131 se\u00e7 ve t\u00fcm dikey platformlara haz\u0131rla.","studio.newProject":"Yeni video projesi","studio.youtubeUrl":"YouTube video ba\u011flant\u0131s\u0131","studio.analyze":"Analiz et","studio.downloads":"\u0130ndirilen videolar","studio.scan":"\u0130ndirilenler klas\u00f6r\u00fcn\u00fc tara","studio.clipCount":"Short adedi","studio.speechLanguage":"Konu\u015fma dili",
+  "projects.title":"Projeler","media.title":"Video k\u00fct\u00fcphanesi","platforms.title":"Platform profilleri","settings.title":"Ayarlar","settings.localAI":"Yerel AI motoru","settings.whisper":"Whisper transkripsiyon",
+  "content.title":"\u0130\u00e7erik \u00fcretimi","content.subtitle":"Kesitleri olu\u015ftur, d\u00fczenle, SEO metinlerini haz\u0131rla ve d\u0131\u015fa aktar.","projects.subtitle":"Diskte saklanan analiz projeleri; uygulama yeniden ba\u015flasa da klipleri tekrar a\u00e7abilirsin.","media.subtitle":"\u00dcretilen Shorts, Reels ve TikTok videolar\u0131n\u0131 do\u011frudan Studio i\u00e7inde izle.","platforms.subtitle":"D\u0131\u015fa aktarma ayarlar\u0131n\u0131 d\u00fczenle, geli\u015ftirici bilgilerini kaydet ve resm\u00ee OAuth ile hesaplar\u0131n\u0131 ba\u011fla.","settings.subtitle":"Yerel AI motoru ve transkripsiyon tercihlerini yap\u0131land\u0131r.","tasks.title":"Kal\u0131c\u0131 g\u00f6rev ge\u00e7mi\u015fi","tasks.subtitle":"\u00c7ok ajanl\u0131 g\u00f6revler, ilerleme olaylar\u0131, iptal ve yeniden deneme kay\u0131tlar\u0131.","tasks.refresh":"Ge\u00e7mi\u015fi yenile",
+  "content.title":"#page-content header h1","content.subtitle":"#page-content header p","projects.subtitle":"#page-projects header p","media.subtitle":"#page-media header p","platforms.subtitle":"#page-platforms header p","settings.subtitle":"#page-settings header p","tasks.title":"#tasksTitle","tasks.subtitle":"#tasksSubtitle","tasks.refresh":"#refreshTaskHistory",
+ "metric.gpu":"GPU KULLANIMI","metric.cpu":"\u0130\u015eLEMC\u0130 KULLANIMI","metric.ram":"BELLEK","metric.vram":"GPU BELLE\u011e\u0130"
+ },
+ en:{
+  "nav.studio":"\u25c8\u3000Studio","nav.content":"\u25a3\u3000Content","nav.projects":"\u25f7\u3000Projects","nav.media":"\u25b6\u3000Media library","nav.platforms":"\u25a4\u3000Platform profiles","nav.settings":"\u2699\u3000Settings",
+  "appearance.label":"APPEARANCE","language.label":"INTERFACE LANGUAGE","local.name":"LOCAL AI ENGINE","local.info":"Your data is processed on this computer",
+  "studio.title":"Create more from every video.","studio.subtitle":"Analyze long videos, find the strongest moments and prepare vertical content for every platform.","studio.newProject":"New video project","studio.youtubeUrl":"YouTube video URL","studio.analyze":"Analyze","studio.downloads":"Downloaded videos","studio.scan":"Scan Downloads folder","studio.clipCount":"Number of Shorts","studio.speechLanguage":"Speech language",
+  "projects.title":"Projects","media.title":"Video library","platforms.title":"Platform profiles","settings.title":"Settings","settings.localAI":"Local AI engine","settings.whisper":"Whisper transcription",
+  "content.title":"Content workspace","content.subtitle":"Create clips, edit them, prepare SEO metadata and export.","projects.subtitle":"Analysis projects are stored on disk and can be reopened after a restart.","media.subtitle":"Watch exported Shorts, Reels and TikTok videos directly in Studio.","platforms.subtitle":"Edit export settings, save developer credentials and connect accounts with official OAuth.","settings.subtitle":"Configure the local AI engine and transcription preferences.","tasks.title":"Persistent task history","tasks.subtitle":"Multi-agent tasks, progress events, cancellations and retry records.","tasks.refresh":"Refresh history",
+  "metric.gpu":"GPU USAGE","metric.cpu":"CPU USAGE","metric.ram":"MEMORY","metric.vram":"GPU MEMORY"
+ }
+};
+const LOCALE_SELECTORS={
+ "nav.studio":'#sidebarNav [data-page="studio"]',"nav.content":'#sidebarNav [data-page="content"]',"nav.projects":'#sidebarNav [data-page="projects"]',"nav.media":'#sidebarNav [data-page="media"]',"nav.platforms":'#sidebarNav [data-page="platforms"]',"nav.settings":'#sidebarNav [data-page="settings"]',
+ "appearance.label":'label[for="themeSelect"]',"language.label":'label[for="languageSelect"]',"local.name":'.local b',"local.info":'.local small',
+ "studio.title":'#page-studio header h1',"studio.subtitle":'#page-studio header p',"studio.newProject":'#page-studio .panelhead h3',"studio.youtubeUrl":'#page-studio label[data-i18n="studio.youtubeUrl"]',"studio.analyze":'#analyze span',"studio.downloads":'#page-studio h3[data-i18n="studio.downloads"]',"studio.scan":'#scanDownloads',"studio.clipCount":'label[data-i18n="studio.clipCount"]',"studio.speechLanguage":'label[data-i18n="studio.speechLanguage"]',
+ "projects.title":'#page-projects header h1',"media.title":'#page-media header h1',"platforms.title":'#page-platforms header h1',"settings.title":'#page-settings header h1',"settings.localAI":'#page-settings h3[data-i18n="settings.localAI"]',"settings.whisper":'#page-settings h3[data-i18n="settings.whisper"]',
+ "metric.gpu":'.system-monitor .metric-card:nth-child(1) .metric-label',"metric.cpu":'.system-monitor .metric-card:nth-child(2) .metric-label',"metric.ram":'.system-monitor .metric-card:nth-child(3) .metric-label',"metric.vram":'.system-monitor .metric-card:nth-child(4) .metric-label'
+};
+function applyLocale(locale){
+ const lang=UI_TEXT[locale]?locale:"tr";document.documentElement.lang=lang;
+ const picker=$("languageSelect");if(picker&&picker.value!==lang)picker.value=lang;
+ const dict=UI_TEXT[lang];
+ Object.entries(LOCALE_SELECTORS).forEach(([key,selector])=>{const el=document.querySelector(selector);if(el&&dict[key])el.textContent=dict[key];});
+ try{localStorage.setItem("yaman-viral-locale",lang);}catch{}
+}
+const savedLocale=(()=>{try{return localStorage.getItem("yaman-viral-locale")||"tr";}catch{return "tr";}})();
+$("languageSelect")?.addEventListener("change",e=>applyLocale(e.target.value));
+
 async function health(){try{const r=await fetch("/api/health");const d=await r.json();$("health").textContent=`FFmpeg ${d.ffmpeg?"✓":"×"} · Ollama ${d.ollama?"✓":"×"}`;}catch{$("health").textContent="API bağlantısı yok";}}
 health();
 function setGauge(id,value){
@@ -11,24 +47,17 @@ async function refreshSystemMetrics(){
   const r=await fetch("/api/system/metrics",{cache:"no-store"}),d=await r.json();
   if(!r.ok||d.error)throw new Error(d.error||"Sistem ölçümü alınamadı");
   $("cpuValue").textContent=Math.round(d.cpu_percent)+"%";setGauge("cpuGauge",d.cpu_percent);
-  $("cpuTemp").textContent=d.cpu_temp_c===null||d.cpu_temp_c===undefined?"N/A":Number(d.cpu_temp_c).toFixed(1)+" °C";
-  $("cpuTempSource").textContent=d.cpu_temp_c===null?"LibreHardwareMonitor / OpenHardwareMonitor gerekli":(d.cpu_temp_source||"CPU sensörü");
-  $("cpuName").textContent=d.cpu_name||"CPU";
-  $("cpuClock").textContent=d.cpu_clock_mhz?Number(d.cpu_clock_mhz).toLocaleString("tr-TR")+" MHz":"Anlık saat hızı alınamadı";
-  $("cpuCores").textContent=String(d.cpu_cores == null ? "--" : d.cpu_cores)+" / "+String(d.cpu_threads == null ? "--" : d.cpu_threads);
-  $("cpuGaugeInfo").textContent=String(d.cpu_cores == null ? "--" : d.cpu_cores)+"C / "+String(d.cpu_threads == null ? "--" : d.cpu_threads)+"T";
-  $("gpuTemp").textContent=d.gpu_available&&Number.isFinite(Number(d.gpu_temp_c))?Number(d.gpu_temp_c).toFixed(1)+" °C":"N/A";
-  $("gpuTempSource").textContent=d.gpu_available?"NVIDIA GPU sensörü":"GPU sıcaklık sensörü yok";
+   $("cpuDetail").textContent=d.cpu_name||"CPU";
   $("ramValue").textContent=Math.round(d.ram_percent)+"%";setGauge("ramGauge",d.ram_percent);
   $("ramDetail").textContent=(d.ram_used_mb/1024).toFixed(1)+" GB / "+(d.ram_total_mb/1024).toFixed(1)+" GB kullanılıyor";
   if(d.gpu_available===true&&Number.isFinite(Number(d.gpu_percent))){
    $("gpuValue").textContent=Math.round(d.gpu_percent)+"%";setGauge("gpuGauge",d.gpu_percent);
-   $("gpuDetail").textContent=(d.gpu_name||"NVIDIA GPU")+" \u00b7 "+Math.round(d.gpu_temp_c == null ? 0 : d.gpu_temp_c)+"\u00b0C";
+    $("gpuDetail").textContent=d.gpu_name||"NVIDIA GPU";
    const vp=d.vram_total_mb?d.vram_used_mb/d.vram_total_mb*100:0;
    $("vramValue").textContent=Math.round(vp)+"%";setGauge("vramGauge",vp);
    $("vramDetail").textContent=Math.round(d.vram_used_mb)+" / "+Math.round(d.vram_total_mb)+" MB";
   }else{
-   $("gpuValue").textContent="N/A";setGauge("gpuGauge",0);$("gpuDetail").textContent=d.gpu_error||"GPU telemetrisi kullanılamıyor";
+    $("gpuDetail").textContent=d.gpu_name||"NVIDIA GPU";
    $("vramValue").textContent="N/A";setGauge("vramGauge",0);$("vramDetail").textContent="VRAM verisi yok";
   }
  }catch(e){
@@ -38,7 +67,6 @@ async function refreshSystemMetrics(){
  }
 }
 refreshSystemMetrics();setInterval(refreshSystemMetrics,2000);
-
 // Theme preference is stored locally in this browser only.
 function applyTheme(theme){
  const allowed=["dark","light","ocean"],chosen=allowed.includes(theme)?theme:"dark";
@@ -76,46 +104,35 @@ async function waitForTask(taskId,onUpdate=null){
   await new Promise(resolve=>setTimeout(resolve,900));
  }
 }
-
 async function executeAgentTeam(job,clip,button,anchor){
- button.disabled=true;button.textContent="Ajanlar gorev aldi...";
+ button.disabled=true;button.textContent="Ajanlar ba\u015flat\u0131l\u0131yor...";
  const pending=document.createElement("section");pending.className="agent-report";
  const h=document.createElement("div");h.className="agent-report-head";
- const name=document.createElement("b");name.textContent="AI ajan ekibi \u00b7 Gorev kuyrugu";
- const state=document.createElement("small");state.textContent="8 uzman ajan hazirlaniyor...";
+ const name=document.createElement("b");name.textContent="AI ajan ekibi \u00b7 G\u00f6rev kuyru\u011fu";
+ const state=document.createElement("small");state.textContent="12 uzman ajan haz\u0131rlan\u0131yor...";
  h.append(name,state);pending.append(h);
  const list=document.createElement("div");list.className="agent-live-list";
- const agentLabels=[["viral-strategist","Viral Stratejist"],["hook-writer","Hook & Acilis Yazari"],["editor-director","Kurgu Yonetmeni"],["seo-specialist","SEO & Dagitim Uzmani"],["claim-reviewer","Icerik Risk Denetcisi"],["caption-qa","Altyazi Kalite Kontrolu"],["clip-qa","Kesit Teknik Kontrolu"],["publishing-coordinator","Yayin Koordinatoru"]];
- agentLabels.forEach(([id,label],i)=>{
-  const row=document.createElement("div");row.className="agent-live-row";row.dataset.agentId=id;
-  const n=document.createElement("b");n.textContent=String(i+1).padStart(2,"0")+" \u00b7 "+label;
-  const st=document.createElement("span");st.className="agent-status queued";st.textContent="Sirada";
-  row.append(n,st);list.append(row);
- });
+ const agentLabels=[
+ ["viral-strategist","Viral Stratejist"],["hook-writer","Hook ve A\u00e7\u0131l\u0131\u015f Yazar\u0131"],["editor-director","Kurgu Y\u00f6netmeni"],["seo-specialist","SEO ve Da\u011f\u0131t\u0131m Uzman\u0131"],["claim-reviewer","\u0130\u00e7erik Risk Denet\u00e7isi"],["caption-qa","Altyaz\u0131 Kalite Kontrol\u00fc"],["clip-qa","Kesit Teknik Kontrol\u00fc"],["publishing-coordinator","Yay\u0131n Koordinat\u00f6r\u00fc"],["audience-retention","\u0130zleyici Tutma Analisti"],["thumbnail-director","Kapak ve G\u00f6rsel Y\u00f6netmeni"],["localization-specialist","\u00c7ok Dilli Yerelle\u015ftirme Uzman\u0131"],["accessibility-reviewer","Eri\u015filebilirlik Denet\u00e7isi"]];
+ agentLabels.forEach(([id,label],i)=>{const row=document.createElement("div");row.className="agent-live-row";row.dataset.agentId=id;const n=document.createElement("b");n.textContent=String(i+1).padStart(2,"0")+" \u00b7 "+label;const st=document.createElement("span");st.className="agent-status queued";st.textContent="S\u0131rada";row.append(n,st);list.append(row);});
  pending.append(list);anchor.after(pending);
+ let taskId=null;
  try{
   const r=await fetch("/api/agents/run",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({job_id:job,clip_id:clip,platforms:["youtube","instagram","tiktok"]})});
-  const q=await r.json();if(!r.ok)throw new Error(q.detail||"Ajan gorevi baslatilamadi");
-  state.textContent="Ajanlar calisiyor \u00b7 Gorev "+q.task_id;
-  const report=await waitForTask(q.task_id,task=>{
-   if(task.agent_statuses){
-    Object.entries(task.agent_statuses).forEach(([id,status])=>{
-     const row=list.querySelector('[data-agent-id="'+id+'"]');if(!row)return;
-     const badge=row.querySelector(".agent-status");badge.className="agent-status "+status;
-     badge.textContent=status==="completed"?"Tamamland\u0131":"\u00c7al\u0131\u015f\u0131yor";
-    });
-    state.textContent=(task.completed_agents||0)+"/8 ajan tamamlandi \u00b7 "+(task.stage||"Calisiyor");
-   }
+  const q=await r.json();if(!r.ok)throw new Error(q.detail||"Ajan g\u00f6revi ba\u015flat\u0131lamad\u0131");taskId=q.task_id;
+  const cancel=document.createElement("button");cancel.className="secondary";cancel.textContent="G\u00f6revi iptal et";cancel.onclick=async()=>{cancel.disabled=true;await fetch("/api/tasks/"+encodeURIComponent(taskId)+"/cancel",{method:"POST"});state.textContent="\u0130ptal iste\u011fi g\u00f6nderildi";};h.append(cancel);
+  state.textContent="Ajanlar \u00e7al\u0131\u015f\u0131yor \u00b7 G\u00f6rev "+taskId;
+  const report=await waitForTask(taskId,task=>{
+   if(task.agent_statuses)Object.entries(task.agent_statuses).forEach(([id,status])=>{const row=list.querySelector('[data-agent-id="'+id+'"]');if(!row)return;const badge=row.querySelector(".agent-status");badge.className="agent-status "+status;badge.textContent=status==="completed"?"Tamamland\u0131":status==="running"?"\u00c7al\u0131\u015f\u0131yor":status==="fallback"?"Yedek":"S\u0131rada";});
+   state.textContent=(task.completed_agents||0)+"/12 ajan tamamland\u0131 \u00b7 "+(task.stage||"\u00c7al\u0131\u015f\u0131yor");
   });
-  pending.replaceWith(renderAgentReport(report));
-  button.textContent="Ajan raporu hazir";
+  pending.replaceWith(renderAgentReport(report));button.textContent="Ajan raporu haz\u0131r";
  }catch(e){
-  state.textContent="Gorev basarisiz";
-  const err=document.createElement("small");err.className="agent-error";err.textContent=e.message;pending.append(err);
-  button.disabled=false;button.textContent="Tekrar calistir";notice("Ajan hatasi: "+e.message);
+  state.textContent="G\u00f6rev durdu";const err=document.createElement("small");err.className="agent-error";err.textContent=e.message;pending.append(err);
+  if(taskId){const retry=document.createElement("button");retry.className="secondary";retry.textContent="G\u00f6revi yeniden dene";retry.onclick=async()=>{retry.disabled=true;try{const r=await fetch("/api/tasks/"+encodeURIComponent(taskId)+"/retry",{method:"POST"});const d=await r.json();if(!r.ok)throw new Error(d.detail||"Retry failed");pending.remove();executeAgentTeam(job,clip,button,anchor);}catch(x){err.textContent=x.message;retry.disabled=false;}};pending.append(retry);}
+  button.disabled=false;button.textContent="Tekrar \u00e7al\u0131\u015ft\u0131r";notice("Ajan hatas\u0131: "+e.message);
  }
 }
-
 function renderAgentReport(payload){
  const wrap=document.createElement("section");wrap.className="agent-report";
  const head=document.createElement("div");head.className="agent-report-head";
@@ -188,7 +205,7 @@ $("analyze").onclick=async()=>{
   notice(`Tamamlandı · ${d.language} · ${Math.round(d.duration)} saniye · ${d.clips.length} kesit önerildi.`);
   $("results").scrollIntoView({behavior:"smooth"});
  }catch(e){notice("Hata: "+e.message);$("progressStage").textContent="İşlem başarısız";$("progressDetail").textContent=e.message}
- finally{b.disabled=false;b.innerHTML="Analiz et <b>â†’</b>"}
+ finally{b.disabled=false;b.innerHTML="Analiz et <b>→</b>"}
 };
 function createMediaCard(item, compact=false){
  const card=document.createElement("article");card.className="media-card"+(compact?" compact":"");
@@ -203,9 +220,34 @@ function createMediaCard(item, compact=false){
  video.addEventListener("loadedmetadata",()=>{if(Number.isFinite(video.duration)){const mm=Math.floor(video.duration/60),ss=Math.floor(video.duration%60);info.textContent+=" · "+mm+":"+String(ss).padStart(2,"0");}});
  video.addEventListener("error",()=>{info.textContent="Video yüklenemedi. Dosya yolu veya MP4 kodlamasını kontrol edin.";});
  const actions=document.createElement("div");actions.className="actions media-actions";
- const download=document.createElement("a");download.className="media-download";download.href=item.file;download.download=item.filename||("clip_"+item.clip_id+"_"+item.platform+".mp4");download.textContent="â¬‡ MP4 indir";
+ const download=document.createElement("a");download.className="media-download";download.href=item.file;download.download=item.filename||("clip_"+item.clip_id+"_"+item.platform+".mp4");download.textContent="⬇ MP4 indir";
  const open=document.createElement("a");open.className="media-open";open.href=item.file;open.target="_blank";open.rel="noopener";open.textContent="Yeni sekmede aç";
- actions.append(download,open);card.append(head,video,info,actions);return card;
+ const en=document.documentElement.lang==="en";
+ const publish=document.createElement("button");publish.className="secondary";publish.textContent=en?"Publish to platform":"Platformda yay\u0131nla";
+ publish.addEventListener("click",async()=>{
+   publish.disabled=true;
+   try{
+    const titleText=prompt(en?"Post title:":"Yay\u0131n ba\u015fl\u0131\u011f\u0131:",item.label||"YAMAN Viral Studio");if(titleText===null||!titleText.trim())return;
+    const caption=prompt(en?"Description / hashtags (optional):":"A\u00e7\u0131klama / hashtag (iste\u011fe ba\u011fl\u0131):","");if(caption===null)return;
+    let mediaUrl=null;if(item.platform==="instagram"){mediaUrl=prompt(en?"Public HTTPS video URL for Instagram Reels:":"Instagram Reels i\u00e7in herkese a\u00e7\u0131k HTTPS video URL'si:");if(!mediaUrl)return;}
+    let privacy="private";
+    if(item.platform==="tiktok"){
+     const creatorResponse=await fetch("/api/publish/tiktok/creator");const creator=await creatorResponse.json();
+     if(!creatorResponse.ok)throw new Error(creator.detail||"TikTok creator info unavailable");
+     const options=creator.privacy_level_options||[];if(!options.length)throw new Error("TikTok privacy options unavailable");
+     const choice=prompt((en?"Account: ":"Hesap: ")+(creator.creator_nickname||creator.creator_username||"TikTok")+"\n"+(en?"Choose a privacy option:\n":"Gizlilik se\u00e7ene\u011fini se\u00e7in:\n")+options.join("\n"),options.includes("SELF_ONLY")?"SELF_ONLY":options[0]);
+     if(choice===null||!options.includes(choice)){notice(en?"Choose a valid TikTok privacy option.":"Ge\u00e7erli bir TikTok gizlilik se\u00e7ene\u011fi girin.");return;}
+     privacy=choice;
+    }
+    const isAigc=item.platform==="tiktok"?confirm(en?"Add the AI-generated label to this TikTok post?":"TikTok g\u00f6nderisine AI-generated etiketi eklensin mi?"):false;
+    if(!confirm(en?"Start uploading to "+item.platform.toUpperCase()+" with "+privacy+" visibility?":item.platform.toUpperCase()+" hesab\u0131na "+privacy+" gizlilik d\u00fczeyinde y\u00fckleme ba\u015flat\u0131ls\u0131n m\u0131?"))return;
+    publish.textContent=en?"Uploading...":"Y\u00fckleniyor...";
+    const response=await fetch("/api/publish/"+item.platform,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({job_id:item.job_id,clip_id:item.clip_id,title:titleText,description:caption,privacy,media_url:mediaUrl,is_aigc:isAigc,confirm_publish:true})});
+    const result=await response.json();if(!response.ok)throw new Error(result.detail||"Publish failed");
+    info.textContent=result.published?(en?"Published to platform.":"Platforma g\u00f6nderildi."):(result.note||"Upload processing");
+   }catch(e){info.textContent=e.message;}finally{publish.disabled=false;publish.textContent=en?"Publish to platform":"Platformda yay\u0131nla";}
+  });
+  actions.append(download,open,publish);card.append(head,video,info,actions);return card;
 }
 async function loadMediaLibrary(){
  const box=$("mediaLibraryGrid");if(!box)return;
@@ -219,8 +261,8 @@ async function loadMediaLibrary(){
  }catch(e){box.innerHTML='<div class="empty">Video kütüphanesi yüklenemedi: '+e.message+'</div>';}
 }
 $("refreshMedia")?.addEventListener("click",loadMediaLibrary);
+$("refreshPlatforms")?.addEventListener("click",loadPlatforms);
 loadMediaLibrary();
-
 async function renderClip(id,b){
  b.disabled=true;b.textContent="Render kuyruğa alınıyor…";
  const box=document.createElement("div");box.className="outputs media-render-results";
@@ -251,11 +293,9 @@ async function makeMetadata(id,b){
   b.parentElement.after(box);b.textContent="Metinler hazır ✓";
  }catch(e){b.textContent="Tekrar dene";b.disabled=false;notice(e.message)}
 }
-
 async function refreshLearning(){try{const r=await fetch("/api/learning");const d=await r.json();$("learningSummary").textContent=`Kayıt: ${d.samples} · Platformlar: ${JSON.stringify(d.platforms)}`;}catch{}}
 refreshLearning();
 $("saveMetrics").onclick=async()=>{try{const body={clip_fingerprint:$("metricFingerprint").value,platform:$("metricPlatform").value,views:+$("metricViews").value,likes:+$("metricLikes").value,comments:+$("metricComments").value,shares:+$("metricShares").value,avg_watch_seconds:+$("metricWatch").value,video_seconds:+$("metricDuration").value};const r=await fetch("/api/learning/record",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});const d=await r.json();if(!r.ok)throw new Error(d.detail);notice(`Kaydedildi · Etkileşim %${(d.engagement_rate*100).toFixed(1)} · İzlenme tutma %${(d.retention_rate*100).toFixed(1)}`);refreshLearning();}catch(e){notice(e.message)}};
-
 // Main navigation: each sidebar item opens a real application workspace.
 const pageNames=["studio","content","projects","media","platforms","settings"];
 function showPage(name){
@@ -266,6 +306,7 @@ function showPage(name){
  if(name==="media") loadMediaLibrary();
  if(name==="platforms") loadPlatforms();
  if(name==="settings") loadSettings();
+  if(name==="content") loadTaskHistory();
 }
 document.querySelectorAll("#sidebarNav a").forEach(a=>a.addEventListener("click",e=>{e.preventDefault();showPage(a.dataset.page);}));
 document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>showPage(b.dataset.go)));
@@ -305,27 +346,43 @@ async function openProject(id,b){
  finally{b.disabled=false;b.textContent="Klipleri aç";}
 }
 async function loadPlatforms(){
- const box=$("platformList");if(!box)return;box.innerHTML='<div class="empty">Platform profilleri y\u00fckleniyor\u2026</div>';
- try{const r=await fetch("/api/platforms",{cache:"no-store"}),d=await r.json();if(!r.ok)throw new Error(d.detail||"Profiller al\u0131namad\u0131");box.innerHTML="";
- const labels={youtube:"YouTube Shorts",instagram:"Instagram Reels",tiktok:"TikTok"};
- Object.entries(d).forEach(([key,p])=>{
-  const card=document.createElement("article");card.className="platform-card";
-  const head=document.createElement("div");head.className="platform-card-head";
-  const title=document.createElement("h3");title.textContent=labels[key]||p.label;
-  const status=document.createElement("span");status.className="state-pill pending";status.textContent="D\u0131\u015fa aktarma haz\u0131r";head.append(title,status);
-  const desc=document.createElement("p");desc.textContent="Bu profil render s\u0131ras\u0131nda kullan\u0131lacak. Hesaba otomatik yay\u0131n ba\u011flant\u0131s\u0131 ayr\u0131 OAuth kurulumu gerektirir.";
-  const fields=document.createElement("div");fields.className="platform-profile-fields";
-  const makeField=(labelText,control)=>{const wrap=document.createElement("label");wrap.className="profile-field";const label=document.createElement("span");label.textContent=labelText;wrap.append(label,control);fields.append(wrap);};
-  const ratio=document.createElement("select");[["9:16","Dikey \u00b7 9:16"],["1:1","Kare \u00b7 1:1"],["16:9","Yatay \u00b7 16:9"]].forEach(([v,t])=>{const o=document.createElement("option");o.value=v;o.textContent=t;ratio.append(o)});ratio.value=p.aspect_ratio||"9:16";
-  const resolution=document.createElement("select");[1080,720].forEach(v=>{const o=document.createElement("option");o.value=String(v);o.textContent=v+"p";resolution.append(o)});resolution.value=String(p.width===720?720:1080);
-  const max=document.createElement("select");[15,30,60,90,120,180].forEach(v=>{const o=document.createElement("option");o.value=String(v);o.textContent=v+" saniye";max.append(o)});max.value=String(p.max_seconds);
-  makeField("Video oran\u0131",ratio);makeField("\u00c7\u00f6z\u00fcn\u00fcrl\u00fck",resolution);makeField("Azami s\u00fcre",max);
-  const save=document.createElement("button");save.className="secondary profile-save";save.textContent="Profili kaydet";
-  const feedback=document.createElement("small");feedback.className="profile-feedback";feedback.textContent="Mevcut \u00e7\u0131kt\u0131: "+p.width+" \u00d7 "+p.height+" \u00b7 "+p.max_seconds+" sn";
-  save.addEventListener("click",async()=>{save.disabled=true;save.textContent="Kaydediliyor\u2026";try{const response=await fetch("/api/platforms/profile",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({platform:key,aspect_ratio:ratio.value,resolution:Number(resolution.value),max_seconds:Number(max.value)})});const result=await response.json();if(!response.ok)throw new Error(result.detail||"Profil kaydedilemedi");feedback.textContent="Kaydedildi: "+result.width+" \u00d7 "+result.height+" \u00b7 "+result.max_seconds+" sn";status.textContent="Profil kaydedildi";status.className="state-pill";}catch(e){feedback.textContent=e.message;}finally{save.disabled=false;save.textContent="Profili kaydet";}});
-  card.append(head,desc,fields,save,feedback);box.append(card);
- });
- }catch(e){box.textContent="Platform profilleri y\u00fcklenemedi: "+e.message;}
+ const box=$("platformList");if(!box)return;const en=document.documentElement.lang==="en";
+ box.textContent=en?"Loading platform accounts...":"Platform hesaplar\u0131 y\u00fckleniyor...";
+ try{
+  const [r,sr,cr]=await Promise.all([fetch("/api/platforms",{cache:"no-store"}),fetch("/api/oauth/status",{cache:"no-store"}),fetch("/api/oauth/config/status",{cache:"no-store"})]);
+  const profiles=await r.json(),oauth=await sr.json(),configs=await cr.json();if(!r.ok)throw new Error(profiles.detail||"Platform profiles unavailable");box.innerHTML="";
+  const labels={youtube:"YouTube Shorts",instagram:"Instagram Reels",tiktok:"TikTok"};
+  Object.entries(profiles).forEach(([key,profile])=>{
+   const card=document.createElement("article");card.className="platform-card";
+   const head=document.createElement("div");head.className="platform-card-head";const title=document.createElement("h3");title.textContent=labels[key]||profile.label;
+   const connected=!!oauth[key]?.connected;const status=document.createElement("span");status.className="state-pill "+(connected?"connected":"pending");status.textContent=connected?(en?"Account connected":"Hesap ba\u011fl\u0131"):(en?"Not connected":"Ba\u011flant\u0131 bekleniyor");head.append(title,status);
+   const desc=document.createElement("p");
+   desc.textContent=key==="instagram"?(en?"Instagram Reels requires a professional account and a public HTTPS media URL.":"Instagram Reels i\u00e7in profesyonel hesap ve herkese a\u00e7\u0131k HTTPS video adresi gerekir."):(key==="tiktok"?(en?"TikTok Direct Post requires approved video.publish permission. Unaudited apps are limited to private posts.":"TikTok Direct Post i\u00e7in onayl\u0131 video.publish izni gerekir. Denetlenmemi\u015f uygulamalar \u00f6zel g\u00f6nderiyle s\u0131n\u0131rl\u0131d\u0131r."):(en?"YouTube Data API and youtube.upload permission are required. Default visibility is private.":"YouTube Data API ve youtube.upload izni gerekir. Varsay\u0131lan gizlilik \u00f6zeldir."));
+   const credentialFields=document.createElement("div");credentialFields.className="platform-profile-fields";
+   const client=document.createElement("input");client.type="text";client.autocomplete="off";client.placeholder="Developer Client ID / Key";client.value=configs[key]?.client_id||"";
+   const secret=document.createElement("input");secret.type="password";secret.autocomplete="new-password";secret.placeholder="Developer Client Secret";
+   const field=(labelText,control)=>{const wrap=document.createElement("label");wrap.className="profile-field";const label=document.createElement("span");label.textContent=labelText;wrap.append(label,control);credentialFields.append(wrap);};
+   field(en?"Developer Client ID":"Geli\u015ftirici Client ID",client);field(en?"Developer Client Secret":"Geli\u015ftirici Client Secret",secret);
+   const callback=document.createElement("small");callback.className="profile-feedback";callback.textContent="OAuth Callback: "+location.origin+"/api/oauth/callback/"+key;
+   const accountActions=document.createElement("div");accountActions.className="actions";
+   const saveCredentials=document.createElement("button");saveCredentials.className="secondary";saveCredentials.textContent=configs[key]?.configured?(en?"Update credentials":"Kimlik bilgilerini g\u00fcncelle"):(en?"Save credentials securely":"Kimlik bilgilerini g\u00fcvenli kaydet");
+   saveCredentials.onclick=async()=>{saveCredentials.disabled=true;try{const response=await fetch("/api/oauth/config",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({platform:key,client_id:client.value.trim(),client_secret:secret.value})});const result=await response.json();if(!response.ok)throw new Error(result.detail||"Credential save failed");secret.value="";callback.textContent=en?"Developer app credentials encrypted and saved locally.":"Geli\u015ftirici uygulamas\u0131 bilgileri \u015fifrelenerek yerel diske kaydedildi.";}catch(e){callback.textContent=e.message;}finally{saveCredentials.disabled=false;}};
+   const connect=document.createElement("button");connect.className="secondary";connect.textContent=connected?(en?"Reconnect account":"Hesab\u0131 yeniden ba\u011fla"):(en?"Connect account with OAuth":"OAuth ile hesap ba\u011fla");
+   connect.onclick=async()=>{connect.disabled=true;const popup=window.open("about:blank","yaman-oauth","width=620,height=760");try{const response=await fetch("/api/oauth/start/"+key);const auth=await response.json();if(!response.ok)throw new Error(auth.detail||"OAuth could not start");if(popup)popup.location=auth.authorization_url;else callback.textContent=auth.authorization_url;callback.textContent=(en?"Register this exact callback URL in the developer console: ":"Bu callback adresini geli\u015ftirici konsoluna birebir ekleyin: ")+auth.redirect_uri;}catch(e){if(popup)popup.close();callback.textContent=e.message;}finally{connect.disabled=false;}};
+   accountActions.append(saveCredentials,connect);
+   if(connected){const disconnect=document.createElement("button");disconnect.className="secondary";disconnect.textContent=en?"Disconnect account":"Hesap ba\u011flant\u0131s\u0131n\u0131 kes";disconnect.onclick=async()=>{if(!confirm(en?"Disconnect this platform account?":"Bu platform hesab\u0131n\u0131n ba\u011flant\u0131s\u0131 kesilsin mi?"))return;await fetch("/api/oauth/"+key,{method:"DELETE"});loadPlatforms();};accountActions.append(disconnect);}
+   const profileFields=document.createElement("div");profileFields.className="platform-profile-fields";
+   const ratio=document.createElement("select");[["9:16",en?"Vertical ? 9:16":"Dikey ? 9:16"],["1:1",en?"Square ? 1:1":"Kare ? 1:1"],["16:9",en?"Landscape ? 16:9":"Yatay ? 16:9"]].forEach(([v,t])=>{const o=document.createElement("option");o.value=v;o.textContent=t;ratio.append(o)});ratio.value=profile.aspect_ratio||"9:16";
+   const resolution=document.createElement("select");[1080,720].forEach(v=>{const o=document.createElement("option");o.value=String(v);o.textContent=v+"p";resolution.append(o)});resolution.value=String(profile.width===720?720:1080);
+   const max=document.createElement("select");[15,30,60,90,120,180].forEach(v=>{const o=document.createElement("option");o.value=String(v);o.textContent=v+(en?" sec":" saniye");max.append(o)});max.value=String(profile.max_seconds);
+   const profileField=(labelText,control)=>{const wrap=document.createElement("label");wrap.className="profile-field";const label=document.createElement("span");label.textContent=labelText;wrap.append(label,control);profileFields.append(wrap);};
+   profileField(en?"Aspect ratio":"Video oran\u0131",ratio);profileField(en?"Resolution":"\u00c7\u00f6z\u00fcn\u00fcrl\u00fck",resolution);profileField(en?"Maximum duration":"Azami s\u00fcre",max);
+   const saveProfile=document.createElement("button");saveProfile.className="secondary";saveProfile.textContent=en?"Save export profile":"D\u0131\u015fa aktarma profilini kaydet";
+   const feedback=document.createElement("small");feedback.className="profile-feedback";feedback.textContent=(en?"Current output: ":"Mevcut \u00e7\u0131kt\u0131: ")+profile.width+" x "+profile.height+" / "+profile.max_seconds+(en?" sec":" sn");
+   saveProfile.onclick=async()=>{saveProfile.disabled=true;try{const response=await fetch("/api/platforms/profile",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({platform:key,aspect_ratio:ratio.value,resolution:Number(resolution.value),max_seconds:Number(max.value)})});const result=await response.json();if(!response.ok)throw new Error(result.detail||"Profile save failed");feedback.textContent=(en?"Saved: ":"Kaydedildi: ")+result.width+" x "+result.height+" / "+result.max_seconds+(en?" sec":" sn");}catch(e){feedback.textContent=e.message;}finally{saveProfile.disabled=false;}};
+   card.append(head,desc,credentialFields,accountActions,callback,profileFields,saveProfile,feedback);box.append(card);
+  });
+ }catch(e){box.textContent=(en?"Platform profiles unavailable: ":"Platform profilleri y\u00fcklenemedi: ")+e.message;}
 }
 async function loadSettings(){
  try{const r=await fetch("/api/settings");const d=await r.json();
@@ -344,7 +401,6 @@ $("saveSettings")?.addEventListener("click",async()=>{
  $("settingsFeedback").textContent="Ayarlar kaydedildi ✓";$("ollamaSettingStatus").textContent="Model tercihi kaydedildi: "+d.settings.ollama_model;
  }catch(e){$("settingsFeedback").textContent=e.message;}finally{btn.disabled=false;btn.textContent="Ayarları kaydet";}
 });
-
 // Local Downloads scanner and Whisper transcription
 let latestTranscriptText="";
 function showTranscript(segments){
@@ -358,7 +414,7 @@ $("downloadTranscript")?.addEventListener("click",()=>{
 });
 function revealSummaryPanel(){
  const panel=$("summaryPanel");
- if(panel){panel.classList.remove("hidden");$("summaryFeedback").textContent="Video analiz edildi. \\u00d6zet s\u00fcresini se\u00e7ip ak\u0131ll\u0131 \u00f6zet videosu olu\u015fturabilirsin.";}
+ if(panel){panel.classList.remove("hidden");$("summaryFeedback").textContent="Video analiz edildi. \u00d6zet s\u00fcresini se\u00e7ip ak\u0131ll\u0131 \u00f6zet videosu olu\u015fturabilirsin.";}
 }
 function showSummaryResult(data){
  const box=$("summaryResult");box.innerHTML="";box.classList.remove("hidden");
@@ -369,7 +425,7 @@ function showSummaryResult(data){
  (data.moments||[]).forEach((m,i)=>{const row=document.createElement("div");row.className="summary-moment";row.textContent=(i+1)+". "+Number(m.start).toFixed(1)+"s - "+Number(m.end).toFixed(1)+"s \u00b7 "+(m.reason||"\u00d6nemli an");moments.append(row);});
  const video=document.createElement("video");video.className="summary-player";video.controls=true;video.preload="metadata";video.src=data.output.file;
  const actions=document.createElement("div");actions.className="actions";
- const download=document.createElement("a");download.className="summary-download";download.href=data.output.file;download.download=data.output.filename||"summary_video.mp4";download.textContent="\u00d6zet MP4 indir";
+ const download=document.createElement("a");download.className="summary-download";download.href=data.output.file;download.download=data.output.filename||"summary_video.mp4";download.textContent="Özet MP4 indir";
  const method=document.createElement("small");method.className="muted";method.textContent="AI y\u00f6ntemi: "+(data.method||"Yerel transkript analizi")+" \u00b7 "+data.output.size_mb+" MB";
  actions.append(download,method);box.append(title,desc,points,moments,video,actions);
 }
@@ -386,7 +442,6 @@ async function generateSummaryVideo(){
  finally{button.disabled=false;button.textContent="Tekrar \u00f6zet olu\u015ftur";}
 }
 $("generateSummary")?.addEventListener("click",generateSummaryVideo);
-
 async function scanDownloads(){
  const box=$("downloadsList");if(!box)return;box.innerHTML='<div class="empty">İndirilenler taranıyor…</div>';
  try{
@@ -416,3 +471,31 @@ async function analyzeLocalVideo(filename,button){
  }catch(e){notice("Yerel video hatası: "+e.message);}
  finally{button.disabled=false;button.textContent="Tekrar analiz et";}
 }
+
+applyLocale(savedLocale);
+
+window.addEventListener("focus",()=>{if(document.querySelector("#page-platforms.active"))loadPlatforms();});
+
+async function loadTaskHistory(){
+ const box=$("taskHistoryList");if(!box)return;box.textContent="G\u00f6rev ge\u00e7mi\u015fi y\u00fckleniyor...";
+ try{const r=await fetch("/api/tasks/history?limit=80",{cache:"no-store"}),d=await r.json();if(!r.ok)throw new Error(d.detail||"G\u00f6rev ge\u00e7mi\u015fi al\u0131namad\u0131");box.innerHTML="";
+  if(!d.tasks?.length){box.textContent="Hen\u00fcz kaydedilmi\u015f g\u00f6rev yok.";return;}
+  d.tasks.forEach(t=>{const row=document.createElement("article");row.className="task-history-row";const meta=document.createElement("div");const title=document.createElement("b");title.textContent=(t.task_type==="agents"?"AI ajan g\u00f6revi":"\u0130\u015flem")+" \u00b7 "+t.task_id;const detail=document.createElement("small");detail.textContent=(t.stage||t.status)+" \u00b7 %"+(t.percent||0)+" \u00b7 "+(t.updated_at||"");meta.append(title,detail);const actions=document.createElement("div");actions.className="actions";const events=document.createElement("button");events.className="secondary";events.textContent="Olaylar";events.onclick=async()=>{const x=await fetch("/api/tasks/"+encodeURIComponent(t.task_id)+"/events");const v=await x.json();detail.textContent=(v.events||[]).map(e=>e.event+" \u00b7 "+e.state.stage).join(" | ");};actions.append(events);if(t.task_type==="agents"&&["failed","cancelled","interrupted"].includes(t.status)){const retry=document.createElement("button");retry.className="secondary";retry.textContent="Yeniden dene";retry.onclick=async()=>{retry.disabled=true;const x=await fetch("/api/tasks/"+encodeURIComponent(t.task_id)+"/retry",{method:"POST"});const v=await x.json();detail.textContent=x.ok?"Yeni g\u00f6rev: "+v.task_id:(v.detail||"Retry failed");retry.disabled=false;loadTaskHistory();};actions.append(retry);}row.append(meta,actions);box.append(row);});
+ }catch(e){box.textContent=e.message;}
+}
+$("refreshTaskHistory")?.addEventListener("click",loadTaskHistory);
+function applyResponsiveMonitor(){
+ const mobileUA=/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+ const screenWidth=Number(screen.width)||window.innerWidth||document.documentElement.clientWidth;
+ const viewport=Math.min(Number(window.innerWidth)||screenWidth,Number(document.documentElement.clientWidth)||screenWidth,screenWidth);
+ if(!mobileUA&&viewport>760)return;
+ const layout=document.querySelector(".layout"),aside=document.querySelector("aside"),main=document.querySelector("main"),monitor=document.querySelector(".system-monitor");
+ const width=Math.max(280,Math.min(viewport,screenWidth));
+ [document.documentElement,document.body,layout,aside,main].filter(Boolean).forEach(el=>{el.style.minWidth="0";el.style.maxWidth=width+"px";el.style.width=width+"px";el.style.overflowX="hidden";});
+ if(monitor){
+  monitor.style.display="grid";monitor.style.gridTemplateColumns="minmax(0,1fr)";monitor.style.width=Math.max(260,width-24)+"px";monitor.style.maxWidth="100%";monitor.style.minWidth="0";
+  monitor.querySelectorAll(".metric-card").forEach(card=>{card.style.minWidth="0";card.style.width="100%";card.style.maxWidth="100%";card.style.display="grid";card.style.gridTemplateColumns="96px minmax(0,1fr)";card.style.gridTemplateRows="auto auto";card.style.columnGap="14px";card.style.alignItems="center";card.style.textAlign="left";const gauge=card.querySelector(".metric-gauge");if(gauge){gauge.style.gridColumn="1";gauge.style.gridRow="1 / 3";gauge.style.width="88px";gauge.style.height="88px";}card.querySelectorAll(".metric-label,small").forEach(el=>{el.style.gridColumn="2";el.style.textAlign="left";el.style.whiteSpace="normal";el.style.overflowWrap="anywhere";});});
+ }
+}
+window.addEventListener("resize",applyResponsiveMonitor);
+applyResponsiveMonitor();
