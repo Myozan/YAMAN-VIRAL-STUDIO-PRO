@@ -1,222 +1,156 @@
+<div align="center">
+
+<img src="docs/assets/hero.svg" alt="YAMAN VIRAL STUDIO PRO — Designed and developed by Ozan Yaman" width="100%" />
+
 # YAMAN VIRAL STUDIO PRO
 
-<p align="center"><img src="docs/assets/hero.svg" alt="YAMAN VIRAL STUDIO PRO — AI video production studio" width="100%" /></p>
+### Local-first AI video production · Smart clipping · Short-form publishing workflow
 
-<p align="center"><strong>Uzun videolardan kısa, platforma hazır içerikler üretin.</strong><br/>Local-first AI · Akıllı kesit seçimi · Dikey video üretimi · İçerik operasyonları</p>
+[![Version](https://img.shields.io/badge/version-1.2-6478ff?style=for-the-badge)](CHANGELOG.md)
+[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/API-FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![License](https://img.shields.io/badge/License-MIT-2ea44f?style=for-the-badge)](LICENSE)
+[![Interface](https://img.shields.io/badge/Interface-Turkish-ef4444?style=for-the-badge)](#-language-support--dil-desteği)
 
-<p align="center"><a href="#türkçe">Türkçe dokümantasyon</a> · <a href="#english">English documentation</a> · <a href="docs/ROADMAP.md">Yol haritası</a></p>
+**Designed & developed by [Ozan Yaman](https://github.com/Myozan)**
 
+[🇹🇷 Türkçe](#-türkçe) · [🇬🇧 English](#-english) · [Release notes](CHANGELOG.md) · [Roadmap](docs/ROADMAP.md)
 
-**Geliştirici:** **Ozan Yaman**
+</div>
 
-[![Version](https://img.shields.io/badge/version-1.2-blue)](.) [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB)](https://www.python.org/) [![Interface](https://img.shields.io/badge/Aray%C3%BCz-T%C3%BCrk%C3%A7e%20%7C%20Turkish-2E8B57)](.) [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+---
 
-**Türkçe** | [English](#english)
+## 🇹🇷 Türkçe
 
-YAMAN VIRAL STUDIO PRO; uzun videoları analiz ederek dikkat çekici anları belirlemeyi, kısa dikey video içerikleri hazırlamayı ve YouTube Shorts, Instagram Reels ve TikTok için üretim sürecini tek bir yerel web panelinden yönetmeyi amaçlayan yapay zekâ destekli içerik üretim uygulamasıdır.
+### Proje hakkında
 
-> **v1.2 notu:** Bu depo, çalışan yerel video analiz ve render uygulamasının mevcut kapsamını içerir. Yol haritasında bulunan OAuth ile otomatik yayınlama, gelişmiş çok ajanlı orkestrasyon ve merkezi çok kullanıcılı altyapı gibi özellikler, uygulanıp test edilmeden mevcut özellik olarak değerlendirilmemelidir.
+**YAMAN VIRAL STUDIO PRO**, uzun video kaynaklarını analiz ederek öne çıkan anları belirlemeyi, konuşmaları zaman damgalı metne dönüştürmeyi ve kısa/dikey video içerikleri hazırlamayı amaçlayan yerel öncelikli (local-first) bir yapay zekâ destekli içerik üretim stüdyosudur.
 
-## İçindekiler
+Uygulama; video alma, konuşma çözümleme, akıllı kesit değerlendirme, altyazı ve dikey video render süreçlerini tek bir yerel web panelinde birleştirir. Hedef çıktı platformları YouTube Shorts, Instagram Reels ve TikTok'tur.
 
-- [Öne çıkan özellikler](#öne-çıkan-özellikler)
-- [Video üretim akışı](#video-üretim-akışı)
-- [Dil desteği ve bayraklar](#dil-desteği-ve-bayraklar)
-- [Teknik mimari](#teknik-mimari)
-- [Gereksinimler](#gereksinimler)
-- [Windows kurulumu](#windows-kurulumu)
-- [Ayarlar ve yerel yapay zekâ](#ayarlar-ve-yerel-yapay-zekâ)
-- [API uç noktaları](#api-uç-noktaları)
-- [Proje dizini](#proje-dizini)
-- [Sorun giderme](#sorun-giderme)
-- [Güvenlik ve gizlilik](#güvenlik-ve-gizlilik)
-- [Bilinen sınırlar ve yol haritası](#bilinen-sınırlar-ve-yol-haritası)
-- [Katkıda bulunma](#katkıda-bulunma)
-- [Lisans](#lisans)
-- [English](#english)
+> **Sürüm notu:** Bu depo v1.2 uygulama temelini ve dokümantasyonunu içerir. README'de “planlandı” olarak belirtilen özellikler mevcut sürümde tamamlanmış kabul edilmemelidir.
 
-## Sürüm kapsamı ve özellik durumu
+### Ürün görselleri
 
-Aşağıdaki tablo, **v1.2 kaynak kodunda bulunan işlevleri** ve henüz geliştirme planında olan hedefleri birbirinden ayırır.
+<div align="center">
 
-| Alan | v1.2 durumu | Açıklama |
+| Studio paneli | Ürün yetenek haritası |
+|:--:|:--:|
+| <img src="docs/assets/screenshot-studio.png" alt="YAMAN Viral Studio gerçek Studio paneli" width="100%"> | <img src="docs/assets/feature-map.svg" alt="Ürün özellik haritası" width="100%"> |
+
+</div>
+
+**İçerik üretim hattı**
+
+<img src="docs/assets/pipeline.svg" alt="Kaynak videodan platforma hazır kısa videoya beş aşamalı üretim hattı" width="100%">
+
+**Teknik mimari**
+
+<img src="docs/assets/architecture.svg" alt="YAMAN Viral Studio v1.2 teknik mimarisi" width="100%">
+
+### Öne çıkan özellikler
+
+| Modül | v1.2 durumu | Açıklama |
 |---|---|---|
-| YouTube kaynak alımı | Uygulandı | yt-dlp ile analiz için kaynak video alma |
-| Whisper transkripsiyonu | Uygulandı | Zaman damgalı konuşma segmentleri; otomatik/Türkçe/İngilizce dil seçimi |
-| Yerel AI kesit puanlama | Uygulandı | Ollama model entegrasyonu ve sezgisel yedek puanlama |
-| Dikey video render | Uygulandı | FFmpeg ile YouTube Shorts, Instagram Reels ve TikTok hedefleri |
-| Altyazı ve yüz odaklı kadraj | Uygulandı | Render akışındaki altyazı ve OpenCV yüz algılama yardımcıları |
-| Kesit bazlı SEO / ajan işlemleri | Uygulandı | Panelden metaveri ve ajan endpoint çağrıları |
-| Görev ilerlemesi / pipeline görünümü | Uygulandı | Analiz durumuna bağlı beş aşamalı ilerleme görünümü |
-| CPU / RAM / NVIDIA GPU metrikleri | Uygulandı | Sistem API'si ve panel göstergeleri; GPU yüzdesi gerçek ölçüm değeridir |
-| Yerel ayarlar ve öğrenme kayıtları | Uygulandı | Model/Whisper ayarları ve performans gözlemleri |
-| Türkçe arayüz | Uygulandı | Mevcut v1.2 arayüz metinleri Türkçedir |
-| Arayüzde TR/EN dil anahtarı | Planlandı | Tam çoklu dil altyapısı henüz yoktur |
-| OAuth ile otomatik yayınlama | Planlandı | Platform onayları, izinler ve kullanıcı onayı gerektirir |
-| Kalıcı çok ajanlı orkestrasyon | Planlandı | Gelişmiş görev grafiği, geçmiş, yeniden deneme ve denetim |
-| Çok kiracılı SaaS / merkezi kullanıcı sistemi | Planlandı | Kurumsal ve çok kullanıcılı altyapı hedefi |
-| Canlı platform analitiği ve takvim | Planlandı | Resmî API erişimi ve metrik uygunluğuna bağlı |
+| Kaynak video alma | <span>Uygulandı</span> | yt-dlp ile desteklenen YouTube kaynaklarını analiz iş akışına alma |
+| Konuşma çözümleme | Uygulandı | Faster-Whisper ile zaman damgalı transkripsiyon |
+| Yerel AI değerlendirmesi | Uygulandı | Ollama model entegrasyonu ve sezgisel yedek puanlama |
+| Akıllı kesit seçimi | Uygulandı | Aday video bölümlerini metin ve model değerlendirmesiyle sıralama |
+| Dikey video render | Uygulandı | FFmpeg ile Shorts, Reels ve TikTok hedeflerine uygun çıktı |
+| Altyazı | Uygulandı | Transkripsiyon verisinden altyazı üretimi ve render |
+| Kadraj yardımcıları | Uygulandı | OpenCV tabanlı yüz algılama/kadraj desteği |
+| İçerik metaverisi | Uygulandı | Kesitler için başlık, açıklama ve etiket önerileri |
+| Ajan yardımcıları | Uygulandı | İçerik görevlerinde yardımcı ajan endpoint'leri |
+| Görev takibi | Uygulandı | Analiz görev durumu ve beş aşamalı pipeline görünümü |
+| Sistem izleme | Uygulandı | CPU, RAM ve desteklenen NVIDIA sistemlerinde GPU/VRAM telemetrisi |
+| Yerel öğrenme kayıtları | Uygulandı | Performans gözlemlerini yerel olarak kaydetme |
+| Otomatik OAuth yayınlama | Planlandı | Resmî platform API'leri, izinler ve kullanıcı onayı gerektirir |
+| Kalıcı çok ajanlı orkestrasyon | Planlandı | İş akışı geçmişi, retry, iptal ve denetim olayları |
+| Çok kiracılı SaaS altyapısı | Planlandı | Merkezi kullanıcı ve kurum izolasyonu |
+| Değiştirilebilir çok dilli arayüz | Planlandı | Türkçe/İngilizce arayüz anahtarı ve ek yerelleştirmeler |
 
-## Bu sürüme kadar yapılan güncellemeler
+### Üretim akışı
 
-### v1.2 · Yerel üretim hattı ve panel iyileştirmeleri
+<img src="docs/assets/pipeline.svg" alt="YAMAN Viral Studio pipeline" width="100%">
 
-Bu depo ve çalışma oturumunda tamamlanan başlıca geliştirmeler:
-
-- v1.2 kaynak kodunun GitHub deposuna aktarılması ve mevcut dokümantasyonla birleştirilmesi.
-- Ollama için hafif yerel model profili (`qwen3:1.7b`) ve JSON biçimli model yanıtı yapılandırması.
-- Düşük bellekli Windows bilgisayarlarda daha uyumlu başlangıç için Whisper `tiny` ve CPU varsayılanlarının kullanılması.
-- Yerel çalışma ayarlarının kaynak kodundan ayrılması; `settings.local.json`, sanal ortam, medya alanı ve yedeklerin Git dışında tutulması.
-- Sistem metrikleri API'sinde NVIDIA GPU algılama, kullanım yüzdesi, VRAM ve sıcaklık alanlarının sunulması.
-- Ön yüzde GPU göstergesinin sıfır kullanımda da görünür olması ve ölçüm alınamadığında açıklayıcı durum göstermesi.
-- Beş aşamalı içerik pipeline'ının görev durumlarına bağlanması; aktif, tamamlanan ve hata durumlarının görsel olarak ayrılması.
-- Analiz sonrası kesit kartlarında render, SEO metaverisi ve ajan işlemlerine erişim.
-- Statik dosya cache sürümünün güncellenmesi ve Python/JavaScript/Git diff kontrollerinin çalıştırılması.
-- README'nin Türkçe ve İngilizce dokümantasyonla genişletilmesi.
-
-> **Test şeffaflığı:** Sözdizimi ve temel HTTP/API kontrollerinin başarılı olması, gerçek bir YouTube videosunun uçtan uca analiz edilip tüm platformlar için render edildiğini tek başına kanıtlamaz. Uçtan uca üretim doğrulaması gerçek kaynak video ve çıktı dosyalarıyla ayrıca yapılmalıdır. GPU'nun algılanması da her model veya render işleminin GPU üzerinde çalıştığı anlamına gelmez.
-
-### GitHub sürüm geçmişi
-
-| Commit | Değişiklik |
-|---|---|
-| `7129703` | v1.2 kaynak kodu içe aktarıldı |
-| `f68c5f0` | v1.2 kaynak kodu ve depo dokümantasyonu birleştirildi |
-| `ea92b40` | Yerel model, Whisper varsayılanları, GPU/pipeline ve panel iyileştirmeleri |
-| `22d95a3` | Ayrıntılı Türkçe + İngilizce README |
-| Bu commit | README görselleri, özellik matrisi ve güncelleme geçmişi |
-
-## Görsel dokümantasyon
-
-README'de kullanılan SVG çizimleri depoda sürümlenir ve GitHub üzerinde doğrudan görüntülenir:
-
-- [Ürün kapak görseli](docs/assets/hero.svg)
-- [İçerik üretim hattı](docs/assets/pipeline.svg)
-
-
-### Gerçek uygulama ekranı
-
-Aşağıdaki görüntü, çalışan v1.2 uygulamasından doğrudan alınmıştır. Studio panelinde üretim ilerlemesi ile CPU, RAM ve NVIDIA GPU metrikleri birlikte görünür.
-
-<p align="center">
-  <img src="docs/assets/screenshot-studio.png" alt="YAMAN VIRAL STUDIO PRO gerçek Studio paneli ve sistem performans göstergeleri" width="100%" />
-</p>
-- [Sistem mimarisi](docs/assets/architecture.svg)
-
-Gerçek uygulama ekran görüntüleri henüz bu dokümantasyon paketine eklenmemiştir; temsili çizimler ekran görüntüsü gibi sunulmamaktadır.
-
-## Öne çıkan özellikler
-
-- **Video kaynağı alma:** YouTube video bağlantısını analiz iş akışına gönderme (yt-dlp).
-- **Konuşmayı metne dönüştürme:** Faster-Whisper ile zaman damgalı konuşma segmentleri oluşturma.
-- **Akıllı kesit seçimi:** Aday bölümleri konuşma içeriğine ve yerel Ollama modelinin değerlendirmesine göre sıralama; model kullanılamadığında sezgisel yedek puanlama.
-- **Dikey video hazırlama:** FFmpeg ile platform odaklı video varyantları oluşturma.
-- **Altyazı:** Transkripsiyon segmentlerinden altyazı üretme ve videoya işleme.
-- **Kadraj / yüz takibi:** Render akışında dikey kadrajı iyileştirmek için OpenCV tabanlı yüz algılama desteği.
-- **Platform odaklı çıktı:** YouTube Shorts, Instagram Reels ve TikTok için ayrı render hedefleri.
-- **SEO metaverisi:** Kesitler için platforma göre başlık, açıklama ve etiket önerileri oluşturma.
-- **Ajan araçları:** İçerik görevlerinde yardımcı ajan işlevlerini çalıştırma.
-- **Öğrenme kayıtları:** Görüntülenme, beğeni, yorum, paylaşım ve izlenme süresi verilerini kaydedip temel performans içgörüleri üretme.
-- **Sistem izleme:** CPU, RAM ve desteklenen NVIDIA sistemlerinde GPU/VRAM metriklerini görüntüleme.
-- **Yerel çalışma:** Web panelini varsayılan olarak `127.0.0.1` üzerinde çalıştırma; Ollama ve Whisper işlemlerini yerel makinede kullanabilme.
-
-## Video üretim akışı
-
-<p align="center"><img src="docs/assets/pipeline.svg" alt="Beş aşamalı içerik üretim hattı" width="100%" /></p>
-
-
-1. **Kaynak:** YouTube video bağlantısı girilir ve analiz isteği oluşturulur.
+1. **Kaynak:** Kullanıcı video bağlantısını girer; kaynak alma işlemi yt-dlp üzerinden yürütülür.
 2. **Transkripsiyon:** Faster-Whisper konuşmayı zaman damgalarıyla metne dönüştürür.
-3. **Akıllı seçim:** Aday kesitler değerlendirilir ve puanlanır. Ollama yapılandırılmışsa yerel model kullanılabilir; aksi durumda sezgisel yöntem devreye girebilir.
-4. **Kurgu:** Seçilen kesitler FFmpeg ile işlenir; altyazı ve dikey kadraj seçenekleri uygulanır.
-5. **Dışa aktarım:** Seçilen platformlar için çıktı dosyaları hazırlanır.
+3. **Değerlendirme:** Aday kesitler yerel Ollama modeliyle puanlanabilir. Model kullanılamıyorsa sezgisel yedek yöntem kullanılabilir.
+4. **Kurgu:** FFmpeg kesitleri işler; altyazı ve dikey çıktı ayarları uygulanır. OpenCV kadraj yardımcıları kullanılabilir.
+5. **Dışa aktarım:** Seçilen hedefler için yerel çıktı dosyaları oluşturulur.
 
-İşlemlerin ilerlemesi görev durumları üzerinden izlenir. Kaynak videolar ve üretilen dosyalar yerel `workspace/` dizininde tutulur; bu dizin Git'e gönderilmez.
+### Dil desteği
 
-## Dil desteği ve bayraklar
-
-v1.2 sürümünde kullanıcı tarafından seçilebilen konuşma dilleri:
+<img src="docs/assets/language-support.svg" alt="Mevcut konuşma dili seçenekleri ve gelecekteki dil hedefleri" width="100%">
 
 | Bayrak | Dil | Kod | v1.2 durumu |
 |---|---|---|---|
-| 🇹🇷 | Türkçe | tr | Konuşma dili olarak seçilebilir; arayüzün ana dili |
-| 🇬🇧 | İngilizce | en | Konuşma dili olarak seçilebilir |
-| 🌐 | Otomatik algılama | auto | Konuşma dilini otomatik belirleme |
+| 🇹🇷 | Türkçe | `tr` | Seçilebilir konuşma dili; arayüzün ana dili |
+| 🇬🇧 | İngilizce | `en` | Seçilebilir konuşma dili |
+| 🌐 | Otomatik algılama | `auto` | Konuşma dilini otomatik algılama |
 
-**Gelecek çoklu dil hedefleri:** 🇪🇸 İspanyolca · 🇮🇳 Hintçe · 🇸🇦 Arapça · 🇫🇷 Fransızca · 🇩🇪 Almanca · 🇵🇹 Portekizce · 🇷🇺 Rusça · 🇨🇳 Çince. Bunlar mevcut v1.2 arayüzünde ayrı seçimler değildir; gelecek çoklu dil desteği için önerilen hedeflerdir.
+**Gelecek dil hedefleri:** 🇪🇸 İspanyolca · 🇫🇷 Fransızca · 🇩🇪 Almanca · 🇸🇦 Arapça · 🇵🇹 Portekizce · 🇷🇺 Rusça · 🇨🇳 Çince · 🇮🇳 Hintçe.
 
-> Konuşma dili seçimi ile uygulama arayüzü dili farklıdır. v1.2 arayüzü Türkçedir; tam TR/EN arayüz geçişi henüz uygulanmamıştır.
-## Teknik mimari
+Önemli ayrım: Konuşma dilinin seçilebilmesi, uygulama arayüzünün o dilde çevrildiği anlamına gelmez. v1.2 arayüzünün ana dili Türkçedir; tam TR/EN arayüz geçişi yol haritasındadır.
 
-<p align="center"><img src="docs/assets/architecture.svg" alt="YAMAN Viral Studio Pro v1.2 sistem mimarisi" width="100%" /></p>
+### Teknik mimari
 
+<img src="docs/assets/architecture.svg" alt="Yerel web arayüzü, FastAPI, medya motorları ve yerel AI mimarisi" width="100%">
 
 | Katman | Teknoloji | Sorumluluk |
 |---|---|---|
-| Web arayüzü | HTML, CSS, JavaScript | Studio paneli, analiz, kesitler, ayarlar ve sistem metrikleri |
-| API | Python, FastAPI | İstek doğrulama, görev başlatma, durum ve sonuç uç noktaları |
-| Video indirme | yt-dlp | Desteklenen kaynaklardan video alma |
+| Web arayüzü | HTML, CSS, JavaScript | Studio paneli, kesitler, ayarlar ve sistem metrikleri |
+| API | Python, FastAPI | REST uç noktaları, görev başlatma ve durum yönetimi |
+| Kaynak alma | yt-dlp | Desteklenen kaynak videoları alma |
 | Konuşma tanıma | Faster-Whisper | Zaman damgalı transkripsiyon |
-| Yerel dil modeli | Ollama | Aday kesitlerin yerel modelle değerlendirilmesi ve yapılandırılmış yanıtlar |
-| Video işleme | FFmpeg / FFprobe | Kesme, dönüştürme, altyazı ve çıktı üretimi |
-| Görüntü işleme | OpenCV | Kadraj ve yüz algılama yardımcıları |
-| Öğrenme verisi | Yerel SQLite | Performans kayıtları ve öğrenme gözlemleri |
+| Yerel dil modeli | Ollama | Kesit değerlendirme ve yapılandırılmış model yanıtları |
+| Medya işleme | FFmpeg / FFprobe | Kesme, altyazı, dönüştürme ve render |
+| Görüntü işleme | OpenCV | Yüz algılama ve kadraj yardımcıları |
+| Yerel veri | SQLite / dosya sistemi | Öğrenme gözlemleri, iş ve medya dosyaları |
 
-### Mimari belgeler
+**Mimari kapsam uyarısı:** PostgreSQL, Redis, LangGraph, bulut nesne depolama, OAuth yayınlama ve gelişmiş tenant izolasyonu gibi bileşenler hedef mimari/yol haritası kapsamındadır; v1.2 yerel uygulamasının tümünde etkin oldukları varsayılmamalıdır.
 
-- [Sistem mimarisi](docs/ARCHITECTURE.md)
-- [Platform entegrasyon planı](docs/PLATFORM-INTEGRATIONS.md)
-- [Ürün yol haritası](docs/ROADMAP.md)
+### Gereksinimler
 
-**Mimari not:** Belgelerde tarif edilen PostgreSQL, Redis, LangGraph, nesne depolama ve OAuth tabanlı yayınlama gibi bazı bileşenler hedef mimari/yol haritası kapsamındadır. Bunların tümü v1.2 yerel uygulamasında etkin değildir.
-
-## Gereksinimler
-
-- Windows 10/11 (kurulum betiği Windows içindir).
+- Windows 10/11 (hazır başlatma betiği Windows içindir).
 - Python 3.10 veya üzeri.
-- Git (kaynak kodunu almak ve güncellemek için).
-- FFmpeg ve FFprobe; ikisi de `PATH` üzerinden erişilebilir olmalıdır.
-- Ollama (yerel model tabanlı değerlendirme için isteğe bağlı).
-- Transkripsiyon modeli için ilk indirmede internet bağlantısı ve yeterli disk alanı.
-- Video işleme ve Whisper için yeterli RAM/CPU; GPU kullanımı donanım, sürücü ve kütüphane uyumluluğuna bağlıdır.
+- Git.
+- FFmpeg ve FFprobe, Windows PATH üzerinde erişilebilir olmalıdır.
+- Ollama, yerel LLM tabanlı değerlendirme için isteğe bağlıdır.
+- Whisper model dosyalarının ilk indirilmesi için internet bağlantısı gerekebilir.
+- GPU hızlandırması donanım, sürücü ve Python kütüphanelerinin uyumuna bağlıdır; CPU fallback desteklenir.
 
-## Windows kurulumu
+### Windows kurulumu
 
-### 1. Depoyu klonlayın
+**1. Depoyu klonlayın**
 
 ```powershell
 git clone https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO.git
 cd YAMAN-VIRAL-STUDIO-PRO
-```
-
-Çalıştırmak istediğiniz dalı seçin:
-
-```powershell
 git checkout import/v1.2-source
 ```
 
-### 2. FFmpeg kurun
+**2. FFmpeg'i kurun**
 
-FFmpeg ve FFprobe'u kurup `bin` dizinini Windows `PATH` değişkenine ekleyin. Yeni bir terminal açtıktan sonra doğrulayın:
+FFmpeg ve FFprobe'u yükleyin, `bin` dizinini PATH'e ekleyin ve yeni terminalde doğrulayın:
 
 ```powershell
 ffmpeg -version
 ffprobe -version
 ```
 
-### 3. Uygulamayı başlatın
-
-Proje kök dizininde:
+**3. Uygulamayı başlatın**
 
 ```powershell
 .\run_windows.bat
 ```
 
-Betik sanal ortamı oluşturur, `requirements.txt` bağımlılıklarını yükler ve FastAPI sunucusunu başlatır. Ardından tarayıcıdan şu adresi açın:
+Başlatma betiği sanal ortamı hazırlar, bağımlılıkları yükler ve FastAPI sunucusunu başlatır.
 
-**http://127.0.0.1:8765**
+**Varsayılan yerel adres:** http://127.0.0.1:8765  
+**API dokümantasyonu:** http://127.0.0.1:8765/docs
 
-### 4. Elle kurulum (alternatif)
+**4. Elle kurulum (alternatif)**
 
 ```powershell
 python -m venv .venv
@@ -226,202 +160,256 @@ pip install -r requirements.txt
 python -m uvicorn app.main:app --host 127.0.0.1 --port 8765
 ```
 
-PowerShell betik çalıştırma ilkesi sanal ortamı etkinleştirmeyi engellerse, etkinleştirme adımını atlayıp sanal ortamdaki Python'u doğrudan kullanabilirsiniz:
+PowerShell yürütme ilkesi sanal ortamı etkinleştirmeyi engelliyorsa:
 
 ```powershell
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 .\.venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8765
 ```
 
-## Ayarlar ve yerel yapay zekâ
+> Port bilgisi: Depodaki Windows başlatma betiğinin varsayılan portu 8765'tir. Geliştirme sırasında port 8766 gibi başka bir boş porta alınabilir; tarayıcı ve API adresleri de seçilen porta göre değiştirilmelidir.
 
-### Ollama
+### Yerel AI ayarları
 
-Ollama'yı [resmî Windows indirme sayfasından](https://ollama.com/download/windows) kurun. Örnek model indirme:
+Ollama'yı [resmî Windows kurulum sayfasından](https://ollama.com/download/windows) yükleyin. Örnek:
 
 ```powershell
 ollama pull qwen3:1.7b
 ollama list
 ```
 
-Uygulama ayarlarında Ollama adresi ve model adını yapılandırın. Yerel servis varsayılan olarak `http://127.0.0.1:11434` adresindedir. Model kullanılamazsa kesit puanlaması sezgisel yedek yönteme düşebilir.
+Uygulama ayarlarında Ollama adresini ve model adını belirtin. Varsayılan yerel servis adresi `http://127.0.0.1:11434` şeklindedir.
 
-### Ortam değişkenleri
+Örnek yapılandırma değişkenleri:
 
-`.env.example` dosyası örnek ayarları gösterir. İhtiyaç halinde `.env` dosyası oluşturabilirsiniz:
-
-| Değişken | Açıklama | Örnek |
+| Ayar | Açıklama | Örnek |
 |---|---|---|
 | `OLLAMA_URL` | Ollama servis adresi | `http://127.0.0.1:11434` |
-| `OLLAMA_MODEL` | Kullanılacak model | `qwen3:1.7b` |
+| `OLLAMA_MODEL` | Yerel model | `qwen3:1.7b` |
 | `WHISPER_MODEL` | Whisper model boyutu | `tiny` |
-| `WHISPER_DEVICE` | Transkripsiyon cihaz tercihi | `cpu` |
+| `WHISPER_DEVICE` | Cihaz tercihi | `auto`, `cuda`, `cpu` |
 | `MAX_DOWNLOAD_MB` | İndirme boyutu sınırı | `2048` |
 
-Donanımınız desteklemiyorsa Whisper için CUDA/GPU kullanımını zorlamayın; CPU seçeneği daha uyumlu olabilir ancak daha yavaştır. NVIDIA GPU algılanması, her işin GPU üzerinde çalıştığı anlamına gelmez.
+GPU algılama, her AI veya FFmpeg işleminin GPU'da çalıştığını garanti etmez. CUDA başlatılamazsa CPU fallback davranışı yapılandırmaya bağlıdır.
 
-## API uç noktaları
+### API referansı
 
-Yerel API'nin temel uç noktaları:
-
-| Metot | Yol | Açıklama |
+| Metot | Endpoint | Açıklama |
 |---|---|---|
-| `GET` | `/api/health` | Uygulama ve temel bağımlılık sağlık durumu |
-| `GET` | `/api/system/metrics` | CPU, RAM ve desteklenen GPU metrikleri |
-| `GET` | `/api/platforms` | Platform hedefleri |
-| `GET` | `/api/projects` | Yerel proje listesi |
-| `GET` | `/api/settings` | Mevcut uygulama ayarları |
-| `POST` | `/api/settings` | Ayarları güncelleme |
-| `POST` | `/api/analyze` | Video analiz görevi başlatma |
-| `GET` | `/api/tasks/{task_id}` | Görev ilerlemesini sorgulama |
-| `GET` | `/api/jobs/{job_id}` | Analiz işi ve kesit sonuçlarını alma |
-| `POST` | `/api/render` | Seçilen kesiti platform hedefleri için işleme |
-| `POST` | `/api/metadata` | Platforma göre SEO metaverisi oluşturma |
-| `POST` | `/api/agents/run` | Ajan görevlerini çalıştırma |
-| `GET` | `/api/learning` | Öğrenme/performance içgörüleri |
-| `POST` | `/api/learning/record` | Performans verisi kaydetme |
+| GET | `/api/health` | Uygulama ve temel bağımlılık sağlık durumu |
+| GET | `/api/system/metrics` | CPU, RAM ve desteklenen GPU metrikleri |
+| GET | `/api/platforms` | Platform hedefleri |
+| GET | `/api/projects` | Yerel proje listesi |
+| GET / POST | `/api/settings` | Ayarları okuma ve güncelleme |
+| POST | `/api/analyze` | Video analiz görevi başlatma |
+| GET | `/api/tasks/{task_id}` | Görev ilerlemesini sorgulama |
+| GET | `/api/jobs/{job_id}` | Analiz işi ve kesit sonuçları |
+| POST | `/api/render` | Seçilen kesiti render etme |
+| POST | `/api/metadata` | SEO metaverisi oluşturma |
+| POST | `/api/agents/run` | Yardımcı ajan görevlerini çalıştırma |
+| GET | `/api/learning` | Öğrenme/performance kayıtları |
+| POST | `/api/learning/record` | Performans gözlemi kaydetme |
 
-Geliştirme ve entegrasyon sırasında FastAPI şemalarını `/docs` adresinden inceleyebilirsiniz: **http://127.0.0.1:8765/docs**.
+Çalışan API şemaları için yerel Swagger arayüzü: `/docs`.
 
-## Proje dizini
+### Proje dizini
 
 ```text
 YAMAN-VIRAL-STUDIO-PRO/
 ├── app/
-│   ├── main.py          # FastAPI uygulaması ve medya iş akışları
-│   ├── agents.py        # Ajan yardımcıları
-│   ├── framing.py       # Kadraj yardımcıları
-│   └── learning.py      # Performans/öğrenme mantığı
+│   ├── main.py
+│   ├── agents.py
+│   ├── framing.py
+│   └── learning.py
 ├── docs/
+│   ├── assets/
+│   │   ├── hero.svg
+│   │   ├── screenshot-studio.png
+│   │   ├── pipeline.svg
+│   │   ├── architecture.svg
+│   │   ├── feature-map.svg
+│   │   ├── roadmap.svg
+│   │   └── language-support.svg
 │   ├── ARCHITECTURE.md
 │   ├── PLATFORM-INTEGRATIONS.md
 │   └── ROADMAP.md
 ├── web/
-│   ├── index.html       # Web arayüzü
-│   ├── app.js           # İstemci tarafı davranışları
-│   └── style.css        # Arayüz stilleri
-├── workspace/           # Yerel medya ve iş verileri (Git'e eklenmez)
-├── .env.example         # Örnek ortam değişkenleri
-├── requirements.txt     # Python bağımlılıkları
-├── run_windows.bat      # Windows başlatma betiği
+│   ├── index.html
+│   ├── app.js
+│   └── style.css
+├── workspace/              # Local media and generated work; do not commit
+├── .env.example
+├── requirements.txt
+├── run_windows.bat
+├── CHANGELOG.md
 └── README.md
 ```
 
-## Sorun giderme
+### Sürüm geçmişi
 
-- **`ffmpeg` veya `ffprobe` bulunamadı:** FFmpeg `bin` dizinini `PATH` içine ekleyin ve terminali yeniden açın.
-- **Ollama bağlantısı yok:** Ollama uygulamasının çalıştığını, `ollama list` çıktısını ve model adının ayarlarla eşleştiğini kontrol edin.
-- **Whisper ilk çalıştırmada yavaş:** Model dosyaları ilk kullanımda indirilebilir; küçük `tiny` modeli daha az kaynak tüketir ancak doğruluk seviyesi daha düşük olabilir.
-- **GPU kullanımı %0:** Bu değer GPU'nun o anda iş yükü almadığını gösterebilir. GPU'nun algılanması, Whisper veya FFmpeg işlemlerinin GPU kullandığını garanti etmez.
-- **Bellek yetersizliği:** Aynı anda çalışan ağır uygulamaları azaltın, daha küçük Whisper/Ollama modeli seçin ve kısa bir kaynak video ile deneyin.
-- **Port dolu:** `8765` portunu kullanan işlemi kontrol edin veya Uvicorn portunu değiştirin; tarayıcı adresini de buna göre güncelleyin.
-- **YouTube indirme hatası:** Video erişim izinlerini, yaş/bölge kısıtlarını, yt-dlp sürümünü ve platform koşullarını kontrol edin.
+**v1.2 — 10 Kasım 2026**
 
-## Güvenlik ve gizlilik
+- Yerel video analiz ve üretim hattı.
+- yt-dlp, Faster-Whisper, Ollama, FFmpeg ve OpenCV entegrasyonları.
+- Görev ilerleme görünümü ve Studio paneli.
+- CPU/RAM ve desteklenen NVIDIA sistemlerinde GPU telemetrisi.
+- Yerel ayarlar, performans kayıtları ve Windows başlatma betiği.
+- Türkçe arayüz metinleri ve İngilizce konuşma seçeneği.
 
-- Uygulama başlatma betiği sunucuyu varsayılan olarak `127.0.0.1` adresine bağlar. Bu, yerel makine dışından doğrudan erişimi engeller.
-- Gerçek API anahtarlarını, OAuth sırlarını, erişim/yenileme tokenlarını, parolaları veya özel anahtarları Git'e eklemeyin.
-- `.env`, `settings.local.json`, `.venv/`, `workspace/`, yerel veritabanları ve yedek dosyalar kaynak kontrolünün dışında tutulmalıdır.
-- Yalnızca indirme, dönüştürme ve yeniden kullanma hakkına sahip olduğunuz medya üzerinde işlem yapın. Platformların hizmet koşullarına ve telif haklarına uyun.
-- Yerel ağda veya internette yayınlamadan önce kimlik doğrulama, TLS, erişim kontrolü, güvenli sır yönetimi, istek sınırlandırma ve denetim kayıtları ekleyin. Bu depo, internete açık üretim dağıtımı için hazır bir güvenlik katmanı sunduğunu iddia etmez.
-- Platformlara otomatik yayınlama, ilgili platformun resmî API erişimi, izinleri, hesap uygunluğu ve kullanıcı onayı gerektirir.
+**11 Kasım 2026 — Dokümantasyon yenilemesi**
 
-## Bilinen sınırlar ve yol haritası
+- Profesyonel README bilgi mimarisi ve iki dilli içerik.
+- Ozan Yaman geliştirici imzası ve güncellenmiş kapak görseli.
+- Özellik haritası, sürüm yol haritası ve dil desteği infografikleri.
+- Ayrı sürüm geçmişi dosyası ve netleştirilmiş kurulum/API notları.
 
-v1.2, yerel analiz ve render odaklı bir sürümdür. Aşağıdaki konular yol haritasında tanımlanmıştır ve mevcut sürümde tamamlanmış oldukları varsayılmamalıdır:
+Ayrıntılar: [CHANGELOG.md](CHANGELOG.md) · [ROADMAP.md](docs/ROADMAP.md)
 
-- Gelişmiş, kalıcı ve yeniden başlatılabilir çok ajanlı iş akışı orkestrasyonu.
-- Kullanıcı/kurum bazlı çok kiracılı hesap sistemi ve merkezi veritabanı.
-- YouTube, Instagram ve TikTok için üretim seviyesinde OAuth bağlantısı ve resmî API üzerinden otomatik yayınlama.
-- Yayın takvimi, onay mekanizması, gelişmiş canlı analitik ve kapsamlı denetim kayıtları.
-- Arayüz için Türkçe/İngilizce arasında değiştirilebilir çoklu dil sistemi.
+### Yol haritası
 
-Güncel plan ve kabul kriterleri için [ROADMAP.md](docs/ROADMAP.md) dosyasına bakın.
+<img src="docs/assets/roadmap.svg" alt="v1.2 temel sürümü ve v1.3-v1.8 ürün yol haritası" width="100%">
 
-## Katkıda bulunma
+| Hedef sürüm | Planlanan kapsam |
+|---|---|
+| v1.3 | Kalıcı ajan iş akışları, retry, iptal ve denetim olayları |
+| v1.4 | Platform bazlı SEO ve metaveri motoru |
+| v1.5 | Yetkilendirilmiş YouTube OAuth, yükleme ve analitik |
+| v1.6 | Uygun hesaplar için Instagram ve TikTok resmî API entegrasyonları |
+| v1.7 | Veri güncelliği göstergeli birleşik analitik merkezi |
+| v1.8 | Öğrenme, içerik takvimi, onay kuyrukları ve kontrollü otomasyon |
+
+Bunlar planlanan kilometre taşlarıdır; yayımlanmış özellik veya taahhüt edilmiş tarih değildir.
+
+### Güvenlik ve gizlilik
+
+- Varsayılan sunucu adresi `127.0.0.1` olduğundan uygulama yerel makinede çalışacak şekilde tasarlanmıştır.
+- Gerçek API anahtarlarını, OAuth sırlarını, parolaları veya erişim tokenlarını Git'e göndermeyin.
+- `.env`, `settings.local.json`, `.venv/`, `workspace/`, yerel veritabanları ve yedekler kaynak kontrolünün dışında tutulmalıdır.
+- İnternete açık dağıtım öncesinde kimlik doğrulama, TLS, erişim kontrolü, sır yönetimi, rate limiting ve denetim kayıtları eklenmelidir.
+- Yalnızca kullanma ve işleme hakkına sahip olduğunuz medya dosyalarını indirin veya dönüştürün.
+- Otomatik platform yayınlama, ilgili platformun resmî API erişimi, izinleri ve kullanıcı onayı gerektirir.
+
+### Sorun giderme
+
+- **FFmpeg bulunamadı:** FFmpeg `bin` dizinini PATH'e ekleyin ve terminali yeniden açın.
+- **Ollama bağlantısı yok:** Ollama servisinin çalıştığını ve model adının doğru olduğunu kontrol edin.
+- **Whisper yavaş:** Daha küçük bir model (`tiny`) deneyin; daha küçük model daha az kaynak tüketir ancak doğruluğu düşebilir.
+- **GPU kullanımı görünmüyor:** NVIDIA sürücüsü, CUDA runtime ve ilgili Python paketlerinin uyumluluğunu kontrol edin. GPU telemetrisi ile modelin GPU'da çalışması aynı şey değildir.
+- **RAM yetersiz:** Daha küçük Whisper/Ollama modeli seçin ve kısa kaynak videolarla test edin.
+- **Port kullanımda:** Başka bir boş port seçin ve Uvicorn ile tarayıcı adresini aynı porta ayarlayın.
+
+### Katkı
 
 1. Depoyu fork edin.
-2. Özellik veya hata düzeltmesi için ayrı bir dal açın.
-3. Değişikliği küçük ve açıklayıcı commit'lerle yapın.
-4. Python ve JavaScript sözdizimi kontrollerini çalıştırın; ilgili API akışlarını test edin.
-5. Değişikliğin kapsamını, test adımlarını ve bilinen sınırlarını açıklayan bir Pull Request gönderin.
+2. Özellik veya hata düzeltmesi için ayrı dal açın.
+3. Küçük ve açıklayıcı commit'ler kullanın.
+4. Python/JavaScript kontrollerini ve ilgili API testlerini çalıştırın.
+5. Değişiklikleri, test adımlarını ve bilinen sınırlamaları açıklayan Pull Request gönderin.
 
-Güvenlik açığı bildirimlerinde hassas ayrıntıları herkese açık issue olarak paylaşmayın; depo sahibine özel kanaldan ulaşın.
-
-## Lisans
+### Lisans
 
 Bu proje [MIT Lisansı](LICENSE) ile lisanslanmıştır. Üçüncü taraf araçlar ve platform API'leri kendi lisans ve kullanım koşullarına tabidir.
 
 ---
 
-## English
+## 🇬🇧 English
 
-<p align="center"><img src="docs/assets/hero.svg" alt="YAMAN VIRAL STUDIO PRO banner" width="100%" /></p>
+### Overview
 
+**YAMAN VIRAL STUDIO PRO** is a local-first, AI-assisted video production studio. It analyzes long-form video sources, transcribes speech with timestamps, ranks candidate moments, and renders short-form vertical video assets for YouTube Shorts, Instagram Reels, and TikTok.
 
-**Developer: Ozan Yaman**
-
-YAMAN VIRAL STUDIO PRO is an AI-assisted, local-first video content production application. It analyzes long-form video sources, transcribes speech, ranks candidate moments, and prepares short-form vertical video outputs for YouTube Shorts, Instagram Reels, and TikTok.
+The v1.2 baseline combines source ingestion, speech transcription, local AI-assisted clip evaluation, subtitle processing, and FFmpeg rendering in a browser-based local dashboard.
 
 ### Key capabilities
 
 - YouTube source ingestion through yt-dlp, subject to source access and platform terms.
 - Timestamped speech transcription with Faster-Whisper.
-- Candidate clip ranking with a local Ollama model and a heuristic fallback.
-- FFmpeg-based clip rendering, subtitle generation, and vertical output variants.
+- Optional local Ollama ranking with a heuristic fallback.
+- Candidate clip selection and task progress tracking.
+- FFmpeg-based vertical rendering and subtitle processing.
 - OpenCV-assisted face detection and framing helpers.
 - Platform-oriented metadata suggestions and agent utilities.
-- Local performance observations and system metrics for CPU, memory, and supported NVIDIA GPUs.
-- A browser-based dashboard served locally by FastAPI.
+- Local learning/performance observations.
+- CPU and RAM telemetry, plus NVIDIA GPU/VRAM/temperature metrics where supported.
+- Windows startup script and FastAPI REST endpoints.
 
-### Language support and flags
+### Language support
 
 | Flag | Language | Code | v1.2 status |
 |---|---|---|---|
-| 🇹🇷 | Turkish | tr | Selectable speech language; primary interface language |
-| 🇬🇧 | English | en | Selectable speech language |
-| 🌐 | Automatic detection | auto | Detects spoken language automatically |
+| 🇹🇷 | Turkish | `tr` | Selectable speech language; primary UI language |
+| 🇬🇧 | English | `en` | Selectable speech language |
+| 🌐 | Automatic detection | `auto` | Automatic spoken-language detection |
 
-**Future multilingual targets:** 🇪🇸 Spanish · 🇮🇳 Hindi · 🇸🇦 Arabic · 🇫🇷 French · 🇩🇪 German · 🇵🇹 Portuguese · 🇷🇺 Russian · 🇨🇳 Chinese. These are proposed expansion targets, not separate v1.2 UI selections.
+**Proposed future languages:** 🇪🇸 Spanish · 🇫🇷 French · 🇩🇪 German · 🇸🇦 Arabic · 🇵🇹 Portuguese · 🇷🇺 Russian · 🇨🇳 Chinese · 🇮🇳 Hindi.
 
-Speech-language selection is distinct from UI localization. The v1.2 interface is Turkish; a fully switchable Turkish/English UI is not implemented yet.
+Speech-language selection is not the same as interface localization. The v1.2 interface is primarily Turkish; a fully switchable multilingual UI is planned, not shipped.
 
-### Quick start (Windows)
+### Quick start — Windows
 
-1. Install Python 3.10+, Git, FFmpeg and FFprobe. Install Ollama if local LLM ranking is desired.
-2. Clone the repository and select the v1.2 branch:
+Requirements: Windows 10/11, Python 3.10+, Git, FFmpeg and FFprobe. Ollama is optional.
 
 ```powershell
 git clone https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO.git
 cd YAMAN-VIRAL-STUDIO-PRO
 git checkout import/v1.2-source
+.\run_windows.bat
 ```
 
-3. Run `run_windows.bat` from the project root.
-4. Open **http://127.0.0.1:8765** in your browser.
+Open **http://127.0.0.1:8765**. Interactive API documentation is available at **http://127.0.0.1:8765/docs**.
 
-For manual setup, create and activate a Python virtual environment, install `requirements.txt`, then run:
+For manual installation, create a Python virtual environment, install `requirements.txt`, and run:
 
 ```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
 python -m uvicorn app.main:app --host 127.0.0.1 --port 8765
 ```
 
-### Configuration
+### Local AI configuration
 
-Copy `.env.example` to `.env` if environment overrides are needed. Important settings include `OLLAMA_URL`, `OLLAMA_MODEL`, `WHISPER_MODEL`, `WHISPER_DEVICE`, and `MAX_DOWNLOAD_MB`. Ollama is optional; without it, candidate ranking may use the heuristic fallback. GPU execution depends on compatible hardware, drivers, and libraries and must not be assumed from GPU detection alone.
+Install [Ollama](https://ollama.com/download/windows), then download a model:
 
-### API and documentation
+```powershell
+ollama pull qwen3:1.7b
+ollama list
+```
 
-FastAPI interactive API documentation is available at `http://127.0.0.1:8765/docs`. Architecture, platform integration plans, and product milestones are documented in `docs/ARCHITECTURE.md`, `docs/PLATFORM-INTEGRATIONS.md`, and `docs/ROADMAP.md`.
+Configure `OLLAMA_URL`, `OLLAMA_MODEL`, `WHISPER_MODEL`, and `WHISPER_DEVICE` as required. Ollama is optional. GPU execution depends on compatible hardware, drivers, and runtime libraries; GPU detection alone does not prove that a given workload is using the GPU.
 
-### Scope and security
+### Architecture and release documentation
 
-This release focuses on local analysis and rendering. OAuth-based publishing, production-grade multi-tenant infrastructure, advanced persistent agent orchestration, and a switchable bilingual UI are roadmap items unless explicitly implemented and verified. Keep credentials, local settings, databases, virtual environments, media files, and generated outputs out of source control. Only process media you are authorized to use, and do not expose the development server publicly without adding appropriate authentication and security controls.
+- [Architecture](docs/ARCHITECTURE.md)
+- [Platform integrations](docs/PLATFORM-INTEGRATIONS.md)
+- [Product roadmap](docs/ROADMAP.md)
+- [Release history](CHANGELOG.md)
+
+The PostgreSQL, Redis, LangGraph, OAuth publishing, and multi-tenant architecture described in design documents represents planned evolution unless explicitly identified as implemented in the v1.2 feature matrix.
+
+### Security
+
+Keep credentials, tokens, local settings, virtual environments, databases, media, and generated outputs out of source control. The default development server binds to localhost. Do not expose it publicly without authentication, TLS, access control, secret management, rate limiting, and audit logging. Only process media you are authorized to use.
+
+### Release status
+
+- **Current documented baseline:** v1.2 (2026-11-10).
+- **Documentation refresh:** 2026-11-11.
+- **Future milestones:** v1.3–v1.8 are roadmap targets, not released features.
+
+See [CHANGELOG.md](CHANGELOG.md) for shipped changes and [docs/ROADMAP.md](docs/ROADMAP.md) for planned scope.
 
 ### License
 
-MIT. Third-party tools and platform APIs remain subject to their own licenses and terms.
+MIT. Third-party tools and platform APIs remain subject to their respective licenses and terms.
 
 ---
 
-<p align="center">Built for local-first creator workflows · YAMAN VIRAL STUDIO PRO</p>
+<div align="center">
+
+**YAMAN VIRAL STUDIO PRO**  
+Designed & developed by **Ozan Yaman**
+
+[GitHub repository](https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO) · [Changelog](CHANGELOG.md) · [Roadmap](docs/ROADMAP.md)
+
+</div>
