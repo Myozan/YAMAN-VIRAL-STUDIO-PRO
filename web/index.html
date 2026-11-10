@@ -1,0 +1,56 @@
+<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>YAMAN VIRAL STUDIO PRO</title><link rel="stylesheet" href="/assets/style.css"></head>
+<body><div class="layout">
+<aside><div class="brand"><div class="mark">Y</div><div><b>YAMAN</b><small>VIRAL STUDIO PRO</small></div></div>
+<nav id="sidebarNav">
+<a class="active" href="#studio" data-page="studio">◈　Studio</a>
+<a href="#content" data-page="content">▣　İçerik üretimi</a>
+<a href="#projects" data-page="projects">◷　Projeler</a>
+<a href="#platforms" data-page="platforms">▤　Platform profilleri</a>
+<a href="#settings" data-page="settings">⚙　Ayarlar</a>
+</nav>
+<div class="local"><i></i><div><b>LOCAL AI ENGINE</b><small>Veriler bilgisayarında işlenir</small></div></div></aside>
+<main>
+<section class="page active" id="page-studio"><header><div><div class="eyebrow">AI CONTENT OPERATING SYSTEM</div><h1>İçeriğini çoğalt.</h1><p>Uzun videoları analiz et, güçlü anları seç ve tüm dikey platformlara hazırla.</p></div><div class="health" id="health">Kontrol ediliyor…</div></header>
+<section class="hero"><div><span class="tag">✦ LOCAL-FIRST AI CLIPPING</span><h2>Bir video.<br><em>Her platform için hazır.</em></h2><p>Whisper transkripsiyon · Ollama içerik zekâsı · FFmpeg render</p></div><div class="hero-art"><div class="play">▶</div><span>9:16</span></div></section>
+<section class="panel"><div class="panelhead"><div><h3>Yeni video projesi</h3><p>Yalnızca indirme ve yeniden yayınlama hakkına sahip olduğun videoları kullan.</p></div><small>01 / SOURCE</small></div>
+<label>YouTube video bağlantısı</label><div class="urlrow"><input id="url" placeholder="https://www.youtube.com/watch?v=..." /><button id="analyze">Analiz et <b>→</b></button></div>
+<div class="options"><div><label>Short adedi</label><select id="clips"><option>3</option><option>5</option><option selected>8</option><option>12</option><option>20</option></select></div><div><label>Hedef klip uzunluğu</label><select id="length"><option value="30">20–30 saniye</option><option value="55" selected>20–55 saniye</option><option value="90">20–90 saniye</option><option value="180">20–180 saniye</option></select></div><div><label>Konuşma dili</label><select id="language"><option value="auto">Otomatik</option><option value="tr">Türkçe</option><option value="en">İngilizce</option></select></div></div>
+<div id="notice" class="notice">ⓘ Yerel Ollama servisi ve Whisper ilk kullanımda model indirebilir.</div></section>
+<section class="panel hidden" id="results"><div class="panelhead"><div><h3>AI tarafından seçilen anlar</h3><p>Skorlar editoryal tahmindir; viral olma garantisi değildir.</p></div><small>02 / SELECT</small></div><div id="clipslist"></div></section>
+<section class="panel"><div class="panelhead"><div><h3>Viral Learning Engine</h3><p>Gerçek istatistikleri gir; sistem performanstan öğrensin.</p></div><small>03 / LEARN</small></div>
+<div class="options"><div><label>Platform</label><select id="metricPlatform"><option value="youtube">YouTube</option><option value="instagram">Instagram</option><option value="tiktok">TikTok</option></select></div><div><label>Görüntülenme</label><input id="metricViews" type="number" value="1000"></div><div><label>Beğeni</label><input id="metricLikes" type="number" value="80"></div></div>
+<div class="options"><div><label>Yorum</label><input id="metricComments" type="number" value="8"></div><div><label>Paylaşım</label><input id="metricShares" type="number" value="12"></div><div><label>Ort. izlenme (sn)</label><input id="metricWatch" type="number" value="18"></div></div>
+<div class="urlrow"><input id="metricFingerprint" value="demo-clip-001" placeholder="Kesit kimliği"><input id="metricDuration" type="number" value="30"><button id="saveMetrics">Performansı kaydet</button></div><div id="learningSummary" class="notice">Öğrenme verileri yükleniyor…</div></section>
+<footer>YAMAN VIRAL STUDIO PRO <span>LOCAL AI · MULTI-PLATFORM · v1.0</span></footer></section>
+<section class="page" id="page-content">
+<header><div><div class="eyebrow">CONTENT WORKSPACE</div><h1>İçerik üretimi</h1><p>Kesitleri oluştur, düzenle, SEO metinlerini hazırla ve dışa aktar.</p></div><div class="health">Çalışma alanı</div></header>
+<div class="panel"><div class="panelhead"><div><h3>Üretim akışı</h3><p>Bir video analizinden sonra her kesit için üretim ve ajan araçları burada görünür.</p></div><small>CONTENT PIPELINE</small></div>
+<div class="pipeline"><div><b>01</b><strong>Kaynak</strong><small>YouTube bağlantısı</small></div><div><b>02</b><strong>Transkripsiyon</strong><small>Whisper zaman damgaları</small></div><div><b>03</b><strong>Akıllı seçim</strong><small>Yerel AI puanlama</small></div><div><b>04</b><strong>Kurgu</strong><small>Yüz takibi ve altyazı</small></div><div><b>05</b><strong>Dışa aktarım</strong><small>Shorts · Reels · TikTok</small></div></div>
+<div class="notice">İçerik üretimine başlamak için Studio bölümünden video bağlantısını analiz et. Kesit sonuçları ve üretim kontrolleri Studio ekranında açılır.</div><button class="nav-cta" data-go="studio">Studio'ya git →</button></div>
+<div class="panel"><div class="panelhead"><div><h3>AI ajanları</h3><p>Her ajan kendi görevini yürütür; raporlar kesit kartında görüntülenir.</p></div><small>MULTI-AGENT</small></div><div class="agent-grid"><article><b>◉ Video Analiz</b><p>Hook, açıklık, merak ve sonuç sinyallerini değerlendirir.</p></article><article><b>✂ Editör</b><p>9:16 kadraj, altyazı ve yüz takibi için kurgu planı hazırlar.</p></article><article><b>⌕ SEO</b><p>Platforma uygun başlık, açıklama ve etiket önerir.</p></article><article><b>⇧ Yayınlama</b><p>Dosyaları yayınlamaya hazırlar. OAuth bağlantısı olmadan otomatik yükleme yapmaz.</p></article></div></div>
+</section>
+<section class="page" id="page-projects">
+<header><div><div class="eyebrow">PROJECT LIBRARY</div><h1>Projeler</h1><p>Bu oturumda analiz edilen video projeleri ve kesit sayıları.</p></div><button class="nav-cta" data-go="studio">+ Yeni proje</button></header>
+<div class="panel"><div class="panelhead"><div><h3>Son projeler</h3><p>Proje kayıtları mevcut uygulama oturumundan listelenir.</p></div><button class="secondary" id="refreshProjects">Yenile</button></div><div id="projectList" class="project-list"><div class="empty">Projeler yükleniyor…</div></div></div>
+<div class="notice">Not: Şu sürümde proje iş kayıtları RAM tabanlıdır. Uygulama yeniden başlatıldığında geçmiş işler sıfırlanır; kalıcı proje arşivi sonraki geliştirme aşamasıdır.</div>
+</section>
+<section class="page" id="page-platforms">
+<header><div><div class="eyebrow">DISTRIBUTION CHANNELS</div><h1>Platform profilleri</h1><p>Çıktı profillerini yönet. Hesap bağlantıları henüz yapılandırılmadı.</p></div><div class="health">3 platform profili</div></header>
+<div id="platformList" class="platform-grid"><div class="empty">Platform profilleri yükleniyor…</div></div>
+<div class="notice">Otomatik yayın için ilgili platformların geliştirici uygulamaları, OAuth izinleri ve kullanıcı onayı gerekir. Bu ekranda henüz hesap bağlantısı yapılmaz.</div>
+</section>
+<section class="page" id="page-settings">
+<header><div><div class="eyebrow">LOCAL CONFIGURATION</div><h1>Ayarlar</h1><p>Yerel AI motoru ve transkripsiyon tercihlerini yapılandır.</p></div><div class="health">Local-first</div></header>
+<div class="panel"><div class="panelhead"><div><h3>Yerel AI motoru</h3><p>Ollama servisi bilgisayarında çalışır; uzak AI servisi kullanılmaz.</p></div><small>OLLAMA</small></div>
+<label>Ollama API adresi</label><input value="http://127.0.0.1:11434" disabled>
+<label style="margin-top:18px">Model adı</label><input id="settingModel" value="qwen3:8b" placeholder="qwen3:8b">
+<div class="notice" id="ollamaSettingStatus">Ollama bağlantı durumu kontrol ediliyor…</div></div>
+<div class="panel"><div class="panelhead"><div><h3>Whisper transkripsiyon</h3><p>Model büyüdükçe doğruluk ve kaynak tüketimi artabilir.</p></div><small>WHISPER</small></div>
+<label>Transkripsiyon modeli</label><select id="settingWhisper"><option>tiny</option><option>base</option><option selected>small</option><option>medium</option><option>large-v3</option></select>
+<label style="margin-top:18px">İşlemci</label><select id="settingDevice"><option value="auto">Otomatik</option><option value="cpu">CPU</option><option value="cuda">NVIDIA CUDA</option></select>
+<div class="notice">Model değişikliği sonraki transkripsiyon işleminde uygulanır. İlk kullanımda model dosyası indirilebilir.</div>
+<button id="saveSettings" class="nav-cta">Ayarları kaydet</button><span id="settingsFeedback" class="inline-feedback"></span></div>
+<div class="panel"><div class="panelhead"><div><h3>Bağımlılıklar</h3><p>Uygulamanın temel araçlarının erişilebilirliği.</p></div><small>SYSTEM CHECK</small></div><div id="dependencyStatus" class="dependency-grid">Kontrol ediliyor…</div></div>
+</section>
+</main></div><script src="/assets/app.js"></script></body></html>
