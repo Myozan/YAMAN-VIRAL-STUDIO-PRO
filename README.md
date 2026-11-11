@@ -131,9 +131,12 @@ OAuth callback adresini ilgili geliştirici konsoluna birebir ekle. Her yayın i
 - [Platform entegrasyonları](docs/PLATFORM-INTEGRATIONS.md)
 - [Sürüm geçmişi](CHANGELOG.md)
 
-## 📄 Lisans
+## 📄 Lisanslama
 
-MIT — ayrıntılar için [LICENSE](LICENSE) dosyasına bakın.
+- **Community Edition:** Depodaki mevcut kaynak kodu [MIT Lisansı](LICENSE) kapsamındadır. Ticari kullanım dahil MIT hakları korunur.
+- **Enterprise / Commercial:** Yalnızca ayrıca tanımlanmış ticari modüller, imzalı kurumsal sözleşme ile lisanslanır. Mevcut MIT kodunun hakları daraltılmaz.
+- [Lisanslama modeli ve bileşen sınırları](LICENSING.md)
+- [Ticari lisans sözleşmesi taslağı](LICENSE-COMMERCIAL-TEMPLATE.md) — yalnızca taslaktır; imzalı sözleşme ve hukuk incelemesi olmadan lisans vermez.
 
 <div align="center">
 
