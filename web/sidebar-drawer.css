@@ -1,0 +1,68 @@
+/* YAMAN sidebar refresh — shared desktop/mobile navigation */
+.layout{grid-template-columns:270px minmax(0,1fr)!important}
+.layout>aside{position:sticky;top:0;height:100vh;min-height:100vh;overflow-y:auto;overflow-x:hidden;padding:28px 18px 18px!important;background:linear-gradient(180deg,#0b1422 0%,#080e18 100%);border-right:1px solid rgba(117,145,177,.18);box-shadow:12px 0 36px rgba(0,0,0,.12);z-index:20}
+.layout>aside .brand{padding:0 8px 25px;border-bottom:1px solid rgba(117,145,177,.13)}
+.layout>aside .mark{width:46px;height:46px;flex:0 0 46px;border-radius:14px;box-shadow:0 8px 24px rgba(91,220,204,.18)}
+.layout>aside .sidebar-caption{margin:26px 10px 12px;color:#6f819b;font-size:9px;font-weight:800;letter-spacing:2px}
+.layout>aside nav#sidebarNav{display:grid;gap:6px;margin:0;padding:0}
+.layout>aside nav#sidebarNav a{position:relative;display:flex;align-items:center;gap:11px;min-height:47px;padding:9px 11px;border:1px solid transparent;border-radius:12px;color:#a2b1c5;text-decoration:none;font-size:12px;font-weight:650;letter-spacing:.1px;transition:background .18s,border-color .18s,color .18s,transform .18s}
+.layout>aside nav#sidebarNav a:hover{background:rgba(116,145,180,.09);border-color:rgba(116,145,180,.14);color:#f0f6ff;transform:translateX(2px)}
+.layout>aside nav#sidebarNav a.active{background:linear-gradient(100deg,rgba(85,224,203,.15),rgba(62,109,143,.12));border-color:rgba(91,224,204,.28);color:#7cebd9;box-shadow:inset 3px 0 #69e5d1,0 8px 22px rgba(0,0,0,.12)}
+.layout>aside nav#sidebarNav .nav-icon{display:grid;place-items:center;flex:0 0 29px;width:29px;height:29px;border:1px solid rgba(148,166,196,.13);border-radius:9px;background:rgba(148,166,196,.06);font-size:15px;color:#9caec6}
+.layout>aside nav#sidebarNav a.active .nav-icon{color:#75ead7;background:rgba(103,234,212,.1);border-color:rgba(103,234,212,.22)}
+.layout>aside nav#sidebarNav .nav-label{flex:1;min-width:0;white-space:nowrap}
+.layout>aside nav#sidebarNav .nav-arrow{color:#60758e;font-size:18px;opacity:.7}
+.layout>aside .sidebar-bottom{margin-top:auto;padding-top:26px}
+.layout>aside .github-link{display:flex;align-items:center;gap:11px;margin:0 0 12px;padding:13px;border:1px solid rgba(148,166,196,.15);border-radius:13px;background:linear-gradient(145deg,rgba(25,39,57,.8),rgba(13,22,36,.9));color:var(--text);text-decoration:none;transition:border-color .2s,transform .2s}
+.layout>aside .github-link:hover{border-color:rgba(103,234,212,.4);transform:translateY(-2px)}
+.layout>aside .github-mark{display:grid;place-items:center;flex:0 0 34px;width:34px;height:34px;border-radius:10px;background:#e8f0fa;color:#101c2b;font-size:17px;font-weight:800}
+.layout>aside .github-link b{display:block;font-size:11px}.layout>aside .github-link small{display:block;margin-top:4px;color:#8799b1;font-size:9px}.layout>aside .github-link .external{margin-left:auto;color:#91a6bd}
+.layout>aside .local{margin:0;padding:13px;background:rgba(20,54,53,.35);border:1px solid rgba(91,224,204,.2);border-radius:12px}
+.layout>aside .sidebar-version{display:flex;justify-content:space-between;gap:8px;padding:16px 5px 0;color:#64758c;font-size:8px;letter-spacing:1.1px}.layout>aside .sidebar-version span{color:#a0b1c7}
+@media(max-width:1050px){.layout{grid-template-columns:230px minmax(0,1fr)}aside{padding-inline:14px}main{padding-inline:22px}.hero-art{width:118px;height:118px}}
+@media(max-width:760px){.layout{display:block!important}aside{position:relative;top:auto;height:auto;display:block;padding:14px 12px;border-right:0;border-bottom:1px solid var(--line)}.layout>aside .brand{padding:0 4px}.layout>aside .sidebar-caption{display:none}.layout>aside nav#sidebarNav{display:flex;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;margin-top:13px;padding:0 0 5px;gap:5px}.layout>aside nav#sidebarNav a{flex:0 0 auto;min-height:40px;padding:8px 10px;gap:7px;font-size:10px}.layout>aside nav#sidebarNav .nav-icon{width:22px;height:22px;flex-basis:22px;font-size:12px}.layout>aside nav#sidebarNav .nav-arrow{display:none}.layout>aside .sidebar-bottom{display:none}}
+/* Accessible collapsible sidebar and responsive off-canvas drawer */
+.layout{--sidebar-width:270px;grid-template-columns:var(--sidebar-width) minmax(0,1fr)!important;transition:grid-template-columns .24s ease}
+.layout>aside{width:var(--sidebar-width);min-width:0;transition:width .24s ease,padding .24s ease,transform .24s ease}
+.layout.sidebar-collapsed{--sidebar-width:78px}
+.layout.sidebar-collapsed>aside{padding-inline:12px!important}
+.layout.sidebar-collapsed>aside .brand{justify-content:center;padding-inline:0}
+.layout.sidebar-collapsed>aside .brand>div:not(.mark),
+.layout.sidebar-collapsed>aside .sidebar-caption,
+.layout.sidebar-collapsed>aside nav .nav-label,
+.layout.sidebar-collapsed>aside nav .nav-arrow,
+.layout.sidebar-collapsed>aside .sidebar-bottom .github-link span:not(.github-mark),
+.layout.sidebar-collapsed>aside .sidebar-bottom .local>div,
+.layout.sidebar-collapsed>aside .sidebar-version{display:none!important}
+.layout.sidebar-collapsed>aside nav#sidebarNav a{justify-content:center;padding:8px;min-height:46px}
+.layout.sidebar-collapsed>aside nav#sidebarNav .nav-icon{width:34px;height:34px;flex-basis:34px;font-size:16px}
+.layout.sidebar-collapsed>aside .sidebar-bottom .github-link{justify-content:center;padding:10px}
+.layout.sidebar-collapsed>aside .sidebar-bottom .local{justify-content:center;padding:12px}
+.sidebar-toggle{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-width:34px;min-height:34px;margin-left:auto;padding:6px 9px;border:1px solid rgba(148,166,196,.18);border-radius:9px;background:rgba(148,166,196,.07);color:#b9c9dc;font-size:10px;white-space:nowrap}
+.sidebar-toggle:hover{border-color:rgba(103,234,212,.4);color:#84f0dc;background:rgba(103,234,212,.08)}
+.toggle-glyph{font-size:18px;line-height:1}
+.sidebar-collapsed .sidebar-toggle{width:38px;padding:5px}
+.sidebar-collapsed .sidebar-toggle .toggle-text{display:none}
+.mobile-menu-toggle,.mobile-drawer-head{display:none}
+.sidebar-overlay{display:none}
+@media(max-width:760px){
+ .layout{display:block!important;--sidebar-width:270px}
+ .layout>aside{position:fixed!important;z-index:1001;inset:0 auto 0 0;width:min(86vw,310px)!important;height:100dvh!important;min-height:0!important;max-height:100dvh;overflow-y:auto;overflow-x:hidden;padding:18px 16px!important;background:linear-gradient(180deg,#0b1422,#080e18);border-right:1px solid rgba(117,145,177,.24);box-shadow:24px 0 70px rgba(0,0,0,.48);transform:translateX(-105%);transition:transform .25s cubic-bezier(.2,.8,.2,1)}
+ .layout.drawer-open>aside{transform:translateX(0)}
+ .layout>aside .mobile-drawer-head{display:flex;align-items:center;justify-content:space-between;padding:3px 4px 17px;color:#8295af;font-size:10px;letter-spacing:2px}
+ .drawer-close{display:grid;place-items:center;width:34px;height:34px;padding:0;border:1px solid rgba(148,166,196,.2);border-radius:9px;background:rgba(148,166,196,.07);color:#d8e4f3}
+ .layout>aside .brand{padding:0 4px 14px!important;border-bottom:1px solid rgba(117,145,177,.15)}
+ .layout>aside .sidebar-caption{display:block;margin:22px 8px 10px}
+ .layout>aside nav#sidebarNav{display:grid;overflow:visible;margin-top:0;padding:0}
+ .layout>aside nav#sidebarNav a{display:flex;flex:initial;min-height:46px;padding:8px 10px;gap:10px;font-size:12px}
+ .layout>aside nav#sidebarNav .nav-label{display:block;white-space:normal}
+ .layout>aside nav#sidebarNav .nav-arrow{display:block}
+ .layout>aside .sidebar-bottom{display:block;margin-top:24px}
+ .layout>aside .sidebar-bottom .local{display:flex}
+ .layout>aside .sidebar-version{display:flex}
+ .layout>aside .sidebar-toggle{display:none}
+ .mobile-menu-toggle{display:inline-flex;align-items:center;justify-content:center;gap:8px;flex:0 0 auto;min-height:36px;margin-right:10px;padding:7px 10px;border:1px solid rgba(103,234,212,.24);border-radius:9px;background:rgba(103,234,212,.08);color:#9df7e8;font-size:10px;font-weight:800}
+ .sidebar-overlay:not([hidden]){display:block;position:fixed;z-index:1000;inset:0;width:100%;height:100%;padding:0;border:0;border-radius:0;background:rgba(2,7,14,.68);backdrop-filter:blur(3px)}
+ body.drawer-lock{overflow:hidden}
+}
+@media(prefers-reduced-motion:reduce){.layout,.layout>aside{transition:none}}

@@ -1,10 +1,10 @@
 ﻿
 /* YAMAN VIRAL STUDIO PRO — minimal app-shell service worker */
-const CACHE_NAME = "yaman-viral-studio-shell-v1.8.0";
+const CACHE_NAME = "yaman-viral-studio-shell-v1.8.0.2";
 const APP_SHELL = [
   "/",
   "/assets/manifest.webmanifest",
-  "/assets/style.css?v=v180creator",
+  "/assets/style.css?v=v180creator3",
   "/assets/app.js?v=v180creator",
   "/assets/favicon.ico",
   "/assets/favicon.svg",
@@ -12,7 +12,9 @@ const APP_SHELL = [
   "/assets/icons/icon-192.svg",
   "/assets/icons/icon-512.svg",
   "/assets/icons/icon-192.png",
-  "/assets/icons/icon-512.png"
+  "/assets/icons/icon-512.png",
+  "/assets/sidebar-drawer.css?v=v180creator",
+  "/assets/sidebar-drawer.js?v=v180creator"
 ];
 
 self.addEventListener("install", event => {

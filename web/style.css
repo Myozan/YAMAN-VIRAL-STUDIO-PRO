@@ -832,3 +832,32 @@ html[data-theme="ocean"] .pipeline>div,html[data-theme="ocean"] .agent-grid arti
  .system-live{display:none}
 }
 @media(prefers-reduced-motion:reduce){.layout,.layout>aside{transition:none}}
+
+/* v1.8.0 mobile viewport fit — keep every dashboard column inside the viewport */
+@media(max-width:760px){
+ html,body{width:100%;max-width:100%;overflow-x:hidden}
+ main{width:100%!important;max-width:100%!important;min-width:0!important;padding-inline:12px!important}
+ .topbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;max-width:none;overflow:visible;margin-inline:-12px;padding-inline:12px}
+ .topbar-right{display:flex;max-width:none!important;min-width:0;overflow:visible!important;gap:6px}
+ .breadcrumbs{flex:1;min-width:0}
+ .topbar-github{padding:7px 8px}
+ .topbar-github span{display:none}
+ .install-app-button{max-width:none;min-width:36px;overflow:visible}
+ .system-monitor{display:grid!important;width:100%!important;max-width:100%!important;min-width:0;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important;margin:0 0 18px!important}
+ .system-monitor>.metric-card{width:100%!important;min-width:0!important;max-width:100%!important;padding:10px 7px!important}
+ .page>header{display:flex;flex-direction:column;align-items:flex-start;gap:9px}
+ .page>header>div{width:100%;min-width:0}
+ .page>header p{width:100%;max-width:100%;white-space:normal;overflow-wrap:anywhere}
+ .hero,.factory-hero,.panel{width:100%;max-width:100%;min-width:0}
+}
+
+@media(max-width:420px){
+ .system-monitor{grid-template-columns:minmax(0,1fr)!important;width:100%!important;max-width:100%!important}
+ .system-monitor>.metric-card{display:grid!important;grid-template-columns:76px minmax(0,1fr);grid-template-rows:auto auto;column-gap:12px;align-items:center;text-align:left!important}
+ .system-monitor>.metric-card .metric-gauge{grid-column:1;grid-row:1/3;width:68px!important;height:68px!important}
+ .system-monitor>.metric-card .metric-label,.system-monitor>.metric-card>small{grid-column:2;text-align:left!important}
+ .topbar{flex-wrap:wrap}
+ .topbar-right{flex:0 0 auto;margin-left:auto}
+ .topbar-github,.install-app-button{display:none!important}
+ .breadcrumbs{flex:1}
+}
