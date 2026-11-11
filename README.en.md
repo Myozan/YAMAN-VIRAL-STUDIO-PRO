@@ -31,3 +31,10 @@ run_windows.bat
 Open http://127.0.0.1:8765. See the [Turkish documentation](README.md), [architecture](docs/ARCHITECTURE.md), [platform integrations](docs/PLATFORM-INTEGRATIONS.md) and [changelog](CHANGELOG.md).
 
 Only use and republish media you have rights to use. OAuth publication requires platform approval and explicit user confirmation.
+
+
+## Licensing
+
+- **Community Edition:** The existing repository source remains under the [MIT License](LICENSE), including the rights granted for commercial use.
+- **Enterprise / Commercial:** Separately identified commercial modules require a signed commercial agreement. This does not narrow rights already granted to MIT-licensed code.
+- See the [licensing model](LICENSING.md) and the [commercial agreement template](LICENSE-COMMERCIAL-TEMPLATE.md). The template is not an executed license and requires legal review.
