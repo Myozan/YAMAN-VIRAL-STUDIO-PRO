@@ -62,7 +62,11 @@ def _row(row):
 def list_autopilots(db_path: Path):
     with sqlite3.connect(db_path, timeout=15) as db:
         rows=db.execute("SELECT id,name,niche,language,clips,min_seconds,max_seconds,platforms_json,frequency,publish_time,timezone,enabled,next_run,last_run,last_status,last_message,processed_json,created_at,updated_at FROM autopilots ORDER BY created_at DESC").fetchall()
-    return [_row(r) for r in rows]
+        items=[_row(r) for r in rows]
+        for item in items:
+            last=db.execute("SELECT output_json FROM autopilot_runs WHERE autopilot_id=? ORDER BY started_at DESC LIMIT 1",(item["id"],)).fetchone()
+            item["last_outputs"]=json.loads(last[0]) if last and last[0] else []
+    return items
 
 def get_autopilot(db_path: Path, item_id: str):
     with sqlite3.connect(db_path, timeout=15) as db:

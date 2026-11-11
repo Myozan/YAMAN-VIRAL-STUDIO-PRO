@@ -6,9 +6,9 @@
 
 ### Yerel yapay zekâ destekli video analiz, Shorts üretimi ve çok formatlı içerik stüdyosu
 
-**v1.5.7 · Local-first AI · Windows · PWA**
+**v1.5.8 · Local-first AI · Windows · PWA**
 
-[![Version](https://img.shields.io/badge/version-1.5.7-6478ff?style=for-the-badge)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.5.8-6478ff?style=for-the-badge)](CHANGELOG.md)
 [![CI](https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO/actions/workflows/ci.yml/badge.svg?branch=import%2Fv1.2-source)](https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/API-FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
@@ -89,7 +89,7 @@ Autopilot, seçilen yayın takviminde Windows İndirilenler klasörüne eklenen 
 - **Güvenlik:** Sosyal medya paylaşımı otomatik yapılmaz. Her çıktı kullanıcı incelemesi ve açık yayın onayı bekler.
 - **Çalışma koşulu:** Zamanlayıcı yerel uygulama çalışırken ve bilgisayar açıkken işler.
 
-Bu sürüm mevcut videoları yeniden kullanır. Konu trendi keşfi, sıfırdan metinden video/ses üretimi, ses klonlama ve otomatik platform gönderimi henüz bu yerel Autopilot kapsamına dahil değildir.
+Autopilot ayrıca Google Trends, Google News ve Reddit RSS kaynaklarından trend konu keşfi yapar; yerel Ollama modeliyle kanal nişine göre senaryo yazar. Edge Neural TTS ile Türkçe/İngilizce MP3 seslendirme üretilebilir, önizlenebilir ve indirilebilir. Trend araştırması internet gerektirir; senaryo Ollama'da yerel hazırlanır; Edge TTS çevrimiçidir ve metni Microsoft ses hizmetine gönderir. Zamanlanmış çalıştırmalar da konu araştırması, senaryo ve seslendirme üretimini dener. Seslendirme MP3'ü ayrı çıktı olarak verilir; mevcut video kesitlerine otomatik miksleme henüz yapılmaz.
 
 ## Mimari
 
@@ -112,7 +112,8 @@ Bu sürüm mevcut videoları yeniden kullanır. Konu trendi keşfi, sıfırdan m
 - Windows 10/11
 - Python 3.12 önerilir
 - FFmpeg (PATH içinde erişilebilir olmalı)
-- Ollama (yerel AI özellikleri için)
+- Ollama (yerel AI senaryo ve video analizi için)
+- Edge TTS (çevrimiçi neural seslendirme; internet gerekir)
 - Faster-Whisper modelleri ilk kullanımda indirilebilir
 
 ### Başlatma

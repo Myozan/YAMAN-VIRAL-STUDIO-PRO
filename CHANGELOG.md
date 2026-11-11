@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.5.8] - 2026-11-11
+
+### Added
+- Trend discovery from Google Trends RSS, Google News RSS and Reddit RSS, with source labels, relevance hints and graceful source errors.
+- Local Ollama script generation with niche, topic, language and target duration controls; scripts are saved as Markdown and JSON.
+- Neural voiceover generation with selectable Turkish and English Edge Neural voices, MP3 preview and download.
+- Scheduled Autopilot cycles now attempt trend discovery, script writing and voiceover before processing any new local source video.
+
+### Improved
+- Autopilot workspace now includes trend discovery, script editing and voiceover tools.
+- PWA shell and static asset cache bumped to v1.5.8.
+
+### Privacy and limitations
+- Trend discovery requires an internet connection. RSS ranking is a relevance heuristic, not an official popularity metric.
+- Script generation runs on the configured local Ollama model.
+- Edge Neural TTS uses an online Microsoft service; narration text is sent to that provider. It is not an offline voice engine.
+- Social publishing remains user-approved.
+
+
 ## [1.5.7] - 2026-11-11
 
 ### Added
@@ -26,7 +45,7 @@
 - Mobile layout alignment for studio panels, summary controls, navigation, system metrics and editing options.
 - PWA cache version bumped to v1.5.6.
 
- / Sürüm Geçmişi
+ / S├╝r├╝m Ge├ğmi┼şi
 
 
 ## [1.5.5] - 2026-11-11
@@ -68,7 +87,7 @@
 ## [1.4.1] - 2026-11-11
 
 ### Added
-- Moved the application language selector into Settings → Language & localization.
+- Moved the application language selector into Settings ÔåÆ Language & localization.
 - Added Turkish, English, German and Spanish locale options with browser-persisted preference.
 - Rebuilt all four README language pages with a consistent professional layout, real desktop/mobile screenshots, feature map, workflow, architecture and roadmap visuals.
 
@@ -79,38 +98,38 @@
 ## [1.4.0] - 2026-11-11
 
 ### Added
-- SQLite tabanlı kalıcı görev ve olay günlüğü.
-- Ajan görevlerini iptal etme, başarısız/kesintiye uğramış görevleri yeniden deneme ve uygulama yeniden başladığında görev durumunu kurtarma.
-- Yerel AI ajan çağrılarında sınırlı yeniden deneme politikası.
-- YouTube, TikTok ve Instagram için resmî OAuth bağlantı akışları.
-- OAuth istemci kimlik bilgileri ve kullanıcı tokenları Fernet ile şifrelenerek yerel kasada saklanır.
-- YouTube Data API ile kullanıcı onaylı resumable MP4 yükleme.
-- TikTok Content Posting API ile kullanıcı onaylı Direct Post dosya yükleme ve AI-generated etiket tercihi.
-- Instagram Graph API ile Reels container ve yayınlama akışı; profesyonel hesap/Page bağlantısı keşfi.
-- Platform Profilleri ekranına geliştirici Client ID/Secret kaydı, bağlantı durumu, bağlan/kes kontrolleri eklendi.
-- Medya kütüphanesine kullanıcı onaylı platform yayınlama eylemi eklendi.
-- Türkçe/İngilizce arayüz dil seçici eklendi.
-- README belgeleri dil başına ayrı dosyalara ayrıldı: README.md, README.en.md, README.de.md, README.es.md.
+- SQLite tabanl─▒ kal─▒c─▒ g├Ârev ve olay g├╝nl├╝─ş├╝.
+- Ajan g├Ârevlerini iptal etme, ba┼şar─▒s─▒z/kesintiye u─şram─▒┼ş g├Ârevleri yeniden deneme ve uygulama yeniden ba┼şlad─▒─ş─▒nda g├Ârev durumunu kurtarma.
+- Yerel AI ajan ├ğa─şr─▒lar─▒nda s─▒n─▒rl─▒ yeniden deneme politikas─▒.
+- YouTube, TikTok ve Instagram i├ğin resm├« OAuth ba─şlant─▒ ak─▒┼şlar─▒.
+- OAuth istemci kimlik bilgileri ve kullan─▒c─▒ tokenlar─▒ Fernet ile ┼şifrelenerek yerel kasada saklan─▒r.
+- YouTube Data API ile kullan─▒c─▒ onayl─▒ resumable MP4 y├╝kleme.
+- TikTok Content Posting API ile kullan─▒c─▒ onayl─▒ Direct Post dosya y├╝kleme ve AI-generated etiket tercihi.
+- Instagram Graph API ile Reels container ve yay─▒nlama ak─▒┼ş─▒; profesyonel hesap/Page ba─şlant─▒s─▒ ke┼şfi.
+- Platform Profilleri ekran─▒na geli┼ştirici Client ID/Secret kayd─▒, ba─şlant─▒ durumu, ba─şlan/kes kontrolleri eklendi.
+- Medya k├╝t├╝phanesine kullan─▒c─▒ onayl─▒ platform yay─▒nlama eylemi eklendi.
+- T├╝rk├ğe/─░ngilizce aray├╝z dil se├ğici eklendi.
+- README belgeleri dil ba┼ş─▒na ayr─▒ dosyalara ayr─▒ld─▒: README.md, README.en.md, README.de.md, README.es.md.
 
 ### Changed
-- CPU kartında yalnızca işlemci modeli ve işlemci kullanımı gösterilir.
-- CPU sıcaklığı, çekirdek/thread, saat hızı ve GPU sıcaklığı arayüzden ve telemetri yanıtından kaldırıldı.
-- Türkçe gezinme menüsü ve görünür metinler UTF-8/HTML entity tabanlı olarak yeniden düzenlendi.
-- Sürüm 1.4.0 olarak güncellendi.
+- CPU kart─▒nda yaln─▒zca i┼şlemci modeli ve i┼şlemci kullan─▒m─▒ g├Âsterilir.
+- CPU s─▒cakl─▒─ş─▒, ├ğekirdek/thread, saat h─▒z─▒ ve GPU s─▒cakl─▒─ş─▒ aray├╝zden ve telemetri yan─▒t─▒ndan kald─▒r─▒ld─▒.
+- T├╝rk├ğe gezinme men├╝s├╝ ve g├Âr├╝n├╝r metinler UTF-8/HTML entity tabanl─▒ olarak yeniden d├╝zenlendi.
+- S├╝r├╝m 1.4.0 olarak g├╝ncellendi.
 
 ### OAuth limitations and requirements
-- Gerçek hesap bağlantısı için platform geliştirici uygulaması, Client ID/Secret, doğru callback adresi ve platform tarafından onaylanmış kapsamlar gerekir.
-- TikTok'un denetlenmemiş istemcileri yalnızca özel gönderi yayınlayabilir.
-- Instagram Reels, Meta'nın erişebildiği genel HTTPS medya URL'si gerektirir; localhost dosyaları kullanılamaz.
-- Her yayın isteği kullanıcı onayı gerektirir; arka planda sessiz yayın yapılmaz.
+- Ger├ğek hesap ba─şlant─▒s─▒ i├ğin platform geli┼ştirici uygulamas─▒, Client ID/Secret, do─şru callback adresi ve platform taraf─▒ndan onaylanm─▒┼ş kapsamlar gerekir.
+- TikTok'un denetlenmemi┼ş istemcileri yaln─▒zca ├Âzel g├Ânderi yay─▒nlayabilir.
+- Instagram Reels, Meta'n─▒n eri┼şebildi─şi genel HTTPS medya URL'si gerektirir; localhost dosyalar─▒ kullan─▒lamaz.
+- Her yay─▒n iste─şi kullan─▒c─▒ onay─▒ gerektirir; arka planda sessiz yay─▒n yap─▒lmaz.
 
 ## [1.3.0] - 2026-11-11
-- Dört uzman ajan eklendi; toplam ajan sayısı 12'ye çıkarıldı.
-- Mobil düzen, platform profilleri ve kısa video kesit seçimi iyileştirildi.
-- Videodan akıllı özet MP4 üretimi ve rapor kartları eklendi.
+- D├Ârt uzman ajan eklendi; toplam ajan say─▒s─▒ 12'ye ├ğ─▒kar─▒ld─▒.
+- Mobil d├╝zen, platform profilleri ve k─▒sa video kesit se├ğimi iyile┼ştirildi.
+- Videodan ak─▒ll─▒ ├Âzet MP4 ├╝retimi ve rapor kartlar─▒ eklendi.
 
 ## [1.2.1] - 2026-11-10
-- Studio sayfası onarıldı; yerel video tarama, transkripsiyon ve sistem göstergeleri geliştirildi.
+- Studio sayfas─▒ onar─▒ld─▒; yerel video tarama, transkripsiyon ve sistem g├Âstergeleri geli┼ştirildi.
 
 ## [1.5.3] - Story-flow video format
 

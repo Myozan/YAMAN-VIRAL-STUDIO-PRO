@@ -505,7 +505,10 @@ async function loadAutopilots(){
   if(!r.ok)throw new Error(d.detail||"Autopilot listesi alınamadı");
   $("autoSourceFolder").textContent=d.source_folder||"Downloads";
   if(!d.autopilots.length){box.innerHTML='<div class="empty">Henüz otomasyon yok. İlk Autopilot görevini yukarıdan oluştur.</div>';return;}
-  box.innerHTML=d.autopilots.map(a=>'<article class="autopilot-card"><div class="autopilot-card-head"><div><b>'+escapeHtml(a.name)+'</b><small>'+escapeHtml(a.niche)+' · '+(a.frequency==="weekly"?"Haftalık":"Her gün")+' · '+escapeHtml(a.publish_time)+' '+escapeHtml(a.timezone)+'</small></div><span class="autopilot-status '+escapeHtml(a.last_status)+'">'+escapeHtml(a.last_status==="ready"?"HAZIR":a.last_status==="running"?"ÇALIŞIYOR":a.last_status==="review"?"ONAY BEKLİYOR":a.last_status==="failed"?"HATA":a.last_status.toUpperCase())+'</span></div><p>'+escapeHtml(a.last_message||("Sonraki çalışma: "+new Date(a.next_run).toLocaleString("tr-TR")))+'</p><small>'+escapeHtml(a.platforms.join(" · "))+' · '+(a.enabled?"Zamanlama açık":"Duraklatıldı")+'</small><div class="autopilot-card-actions"><button class="secondary" data-auto-run="'+a.id+'">Şimdi çalıştır</button><button class="secondary" data-auto-toggle="'+a.id+'" data-enabled="'+(!a.enabled)+'">'+(a.enabled?"Duraklat":"Etkinleştir")+'</button><button class="secondary danger" data-auto-delete="'+a.id+'">Sil</button></div></article>').join("");
+  box.innerHTML=d.autopilots.map(a=>{
+   const outputs=(a.last_outputs||[]).map(o=>'<a href="'+escapeHtml(o.url)+'" target="_blank" rel="noopener">'+escapeHtml(o.type==="voiceover"?"MP3 Seslendirme":o.type==="script"?"Senaryo":o.type==="trend_research"?"Trend Raporu":"MP4 Çıktı")+'</a>').join("");
+   return '<article class="autopilot-card"><div class="autopilot-card-head"><div><b>'+escapeHtml(a.name)+'</b><small>'+escapeHtml(a.niche)+' · '+(a.frequency==="weekly"?"Haftalık":"Her gün")+' · '+escapeHtml(a.publish_time)+' '+escapeHtml(a.timezone)+'</small></div><span class="autopilot-status '+escapeHtml(a.last_status)+'">'+escapeHtml(a.last_status==="ready"?"HAZIR":a.last_status==="running"?"ÇALIŞIYOR":a.last_status==="review"?"ONAY BEKLİYOR":a.last_status==="failed"?"HATA":a.last_status.toUpperCase())+'</span></div><p>'+escapeHtml(a.last_message||("Sonraki çalışma: "+new Date(a.next_run).toLocaleString("tr-TR")))+'</p><small>'+escapeHtml(a.platforms.join(" · "))+' · '+(a.enabled?"Zamanlama açık":"Duraklatıldı")+'</small>'+(outputs?'<div class="autopilot-output-links">'+outputs+'</div>':'')+'<div class="autopilot-card-actions"><button class="secondary" data-auto-run="'+a.id+'">Şimdi çalıştır</button><button class="secondary" data-auto-toggle="'+a.id+'" data-enabled="'+(!a.enabled)+'">'+(a.enabled?"Duraklat":"Etkinleştir")+'</button><button class="secondary danger" data-auto-delete="'+a.id+'">Sil</button></div></article>';
+  }).join("");
   box.querySelectorAll("[data-auto-run]").forEach(b=>b.addEventListener("click",async()=>{b.disabled=true;b.textContent="Kuyruğa alınıyor…";try{const x=await fetch("/api/autopilot/"+b.dataset.autoRun+"/run",{method:"POST"});const v=await x.json();if(!x.ok)throw new Error(v.detail);$("autopilotFeedback").textContent=v.message||"İşlem kuyruğa alındı."; }catch(e){$("autopilotFeedback").textContent=e.message;}finally{b.disabled=false;b.textContent="Şimdi çalıştır";loadAutopilots();}}));
   box.querySelectorAll("[data-auto-toggle]").forEach(b=>b.addEventListener("click",async()=>{const id=b.dataset.autoToggle;const item=d.autopilots.find(x=>x.id===id);const body={name:item.name,niche:item.niche,language:item.language,clips:item.clips,min_seconds:item.min_seconds,max_seconds:item.max_seconds,platforms:item.platforms,frequency:item.frequency,publish_time:item.publish_time,timezone:item.timezone,enabled:b.dataset.enabled==="true"};try{const x=await fetch("/api/autopilot/"+id,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});const v=await x.json();if(!x.ok)throw new Error(v.detail);loadAutopilots();}catch(e){$("autopilotFeedback").textContent=e.message;}}));
   box.querySelectorAll("[data-auto-delete]").forEach(b=>b.addEventListener("click",async()=>{if(!confirm("Bu Autopilot otomasyonunu silmek istiyor musun?"))return;const x=await fetch("/api/autopilot/"+b.dataset.autoDelete,{method:"DELETE"});if(x.ok)loadAutopilots();}));
@@ -520,6 +523,43 @@ $("autopilotForm")?.addEventListener("submit",async e=>{
  finally{btn.disabled=false;btn.textContent="Autopilot oluştur →";}
 });
 $("refreshAutopilot")?.addEventListener("click",loadAutopilots);
+
+
+let latestTrendTopics=[];
+$("researchTrends")?.addEventListener("click",async()=>{
+ const btn=$("researchTrends"),box=$("trendResults"),notice=$("trendNotice");
+ btn.disabled=true;btn.textContent="Kaynaklar taranıyor…";box.innerHTML='<div class="empty">Google Trends, haberler ve topluluk akışları kontrol ediliyor…</div>';notice.textContent="";
+ try{
+  const r=await fetch("/api/content/trends",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({niche:$("trendNiche").value,region:$("trendRegion").value,limit:18})});
+  const d=await r.json();if(!r.ok)throw new Error(d.detail||"Trend araştırması başarısız");
+  latestTrendTopics=d.topics||[];
+  box.innerHTML=latestTrendTopics.length?latestTrendTopics.map((t,i)=>'<button type="button" class="trend-item" data-trend="'+i+'"><span><b>'+escapeHtml(t.title)+'</b><small>'+escapeHtml(t.source)+' · '+escapeHtml(t.published||"Tarih belirtilmedi")+'</small></span><em>'+t.relevance+'/100</em></button>').join(""):'<div class="empty">Kaynaklardan konu bulunamadı. Nişi genişletip yeniden dene.</div>';
+  box.querySelectorAll("[data-trend]").forEach(b=>b.addEventListener("click",()=>{$("scriptTopic").value=latestTrendTopics[Number(b.dataset.trend)].title;$("scriptNiche").value=$("trendNiche").value;$("scriptTopic").focus();}));
+  notice.textContent=(d.sources||[]).join(" · ")+" | "+(d.errors||[]).join(" | ")+" "+(d.notice||"");
+ }catch(e){box.innerHTML='<div class="empty">'+escapeHtml(e.message)+'</div>';}
+ finally{btn.disabled=false;btn.textContent="Trendleri araştır";}
+});
+$("generateScript")?.addEventListener("click",async()=>{
+ const btn=$("generateScript"),feedback=$("scriptFeedback");btn.disabled=true;btn.textContent="Ollama senaryo yazıyor…";feedback.textContent="";
+ try{
+  const r=await fetch("/api/content/script",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({niche:$("scriptNiche").value,topic:$("scriptTopic").value,language:$("scriptLanguage").value,duration:Number($("scriptDuration").value)})});
+  const d=await r.json();if(!r.ok)throw new Error(d.detail||"Senaryo oluşturulamadı");
+  $("scriptOutput").value=d.script;$("scriptMeta").textContent=d.title+" · "+(d.hashtags||[]).join(" ")+" · "+(d.scenes||[]).length+" sahne";
+  feedback.textContent="Senaryo yerel Ollama ile oluşturuldu ve diske kaydedildi.";
+ }catch(e){feedback.textContent=e.message;}
+ finally{btn.disabled=false;btn.textContent="AI senaryo oluştur →";}
+});
+$("generateVoiceover")?.addEventListener("click",async()=>{
+ const btn=$("generateVoiceover"),feedback=$("voiceFeedback");btn.disabled=true;btn.textContent="Ses üretiliyor…";feedback.textContent="";
+ try{
+  const r=await fetch("/api/content/voiceover",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text:$("scriptOutput").value,voice:$("voiceSelect").value})});
+  const d=await r.json();if(!r.ok)throw new Error(d.detail||"Seslendirme oluşturulamadı");
+  $("voicePreview").src=d.audio_url;$("voicePreview").hidden=false;$("voiceDownload").href=d.audio_url;$("voiceDownload").hidden=false;$("voiceDownload").textContent="MP3 seslendirmeyi indir";
+  feedback.textContent=d.engine+" · "+Math.round(d.bytes/1024)+" KB. "+d.notice;
+ }catch(e){feedback.textContent=e.message;}
+ finally{btn.disabled=false;btn.textContent="AI seslendirme üret";}
+});
+$("autoNiche")?.addEventListener("change",()=>{$("trendNiche").value=$("autoNiche").value;$("scriptNiche").value=$("autoNiche").value;});
 
 applyLocale(savedLocale);
 loadAutopilots();

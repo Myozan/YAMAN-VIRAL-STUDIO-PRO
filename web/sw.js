@@ -1,11 +1,11 @@
 ﻿
 /* YAMAN VIRAL STUDIO PRO — minimal app-shell service worker */
-const CACHE_NAME = "yaman-viral-studio-shell-v1.5.7.0";
+const CACHE_NAME = "yaman-viral-studio-shell-v1.5.8.0";
 const APP_SHELL = [
   "/",
   "/assets/manifest.webmanifest",
-  "/assets/style.css?v=v157autopilot",
-  "/assets/app.js?v=v157autopilot",
+  "/assets/style.css?v=v158content",
+  "/assets/app.js?v=v158content",
   "/assets/favicon.svg",
   "/assets/icons/icon-192.svg",
   "/assets/icons/icon-512.svg"

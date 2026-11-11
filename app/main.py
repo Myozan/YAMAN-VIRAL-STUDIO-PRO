@@ -19,6 +19,7 @@ from app.learning import ViralLearningEngine
 from app.agents import AGENT_CATALOG, run_agent_team
 from app.framing import render_face_tracked
 from app import autopilot as autopilot_store
+from app import content_factory
 
 # Windows CUDA runtime DLLs are shipped inside this project's isolated venv.
 # Keep AddDllDirectory handles alive so CTranslate2 can resolve cuBLAS/cuDNN.
@@ -79,7 +80,7 @@ if _PROFILE_FILE.exists():
                 PLATFORM_PROFILES[key].update({k: value[k] for k in ("width", "height", "max_seconds") if k in value})
     except Exception:
         pass
-app = FastAPI(title="YAMAN VIRAL STUDIO PRO", version="1.5.7")
+app = FastAPI(title="YAMAN VIRAL STUDIO PRO", version="1.5.8")
 app.mount("/assets", StaticFiles(directory=BASE / "web"), name="assets")
 
 @app.get("/sw.js", include_in_schema=False)
@@ -213,6 +214,21 @@ class AutopilotRequest(BaseModel):
     publish_time: str = Field(default="09:00", pattern="^([01]\\d|2[0-3]):[0-5]\\d$")
     timezone: str = Field(default="Europe/Istanbul", min_length=3, max_length=80)
     enabled: bool = True
+
+class TrendResearchRequest(BaseModel):
+    niche: str = Field(min_length=2, max_length=160)
+    region: str = Field(default="TR", pattern="^(TR|US|GB|DE)$")
+    limit: int = Field(default=18, ge=1, le=30)
+
+class ScriptRequest(BaseModel):
+    niche: str = Field(min_length=2, max_length=160)
+    topic: str = Field(min_length=3, max_length=300)
+    language: str = Field(default="tr", pattern="^(tr|en)$")
+    duration: int = Field(default=60, ge=15, le=180)
+
+class VoiceoverRequest(BaseModel):
+    text: str = Field(min_length=10, max_length=12000)
+    voice: str = Field(default="tr-TR-EmelNeural", max_length=80)
 
 class TeamRequest(BaseModel):
     job_id: str
@@ -1699,6 +1715,48 @@ def record_performance(req: PerformanceRequest):
     if req.platform not in PLATFORMS: raise HTTPException(400,"Geçersiz platform.")
     return learning.record(req.model_dump())
 
+@app.get("/api/content/voices")
+def content_voice_catalog():
+    return {"voices": content_factory.VOICE_CATALOG, "engine":"edge-tts", "mode":"online-neural"}
+
+@app.post("/api/content/trends")
+def content_trends(req: TrendResearchRequest):
+    try:
+        return content_factory.research_trends(req.niche, req.region, req.limit)
+    except Exception as exc:
+        raise HTTPException(502, f"Trend kaynaklarına erişilemedi: {str(exc)[:240]}")
+
+@app.post("/api/content/script")
+def content_script(req: ScriptRequest):
+    try:
+        result=content_factory.generate_script(OLLAMA_URL, OLLAMA_MODEL, req.niche, req.topic, req.language, req.duration)
+        folder=WORK / "autopilot-content"
+        folder.mkdir(parents=True,exist_ok=True)
+        item_id=uuid.uuid4().hex[:12]
+        payload={"id":item_id,"niche":req.niche,"topic":req.topic,"language":req.language,"duration":req.duration,**result}
+        (folder / f"{item_id}.json").write_text(json.dumps(payload,ensure_ascii=False,indent=2),encoding="utf-8")
+        (folder / f"{item_id}.md").write_text(f"# {payload['title']}\n\n{payload['script']}\n",encoding="utf-8")
+        payload["script_url"]=f"/workspace/autopilot-content/{item_id}.md"
+        return payload
+    except requests.RequestException as exc:
+        raise HTTPException(502, f"Ollama servisine erişilemedi: {str(exc)[:220]}")
+    except Exception as exc:
+        raise HTTPException(500, f"Senaryo üretilemedi: {str(exc)[:220]}")
+
+@app.post("/api/content/voiceover")
+def content_voiceover(req: VoiceoverRequest):
+    folder=WORK / "autopilot-content"
+    folder.mkdir(parents=True,exist_ok=True)
+    item_id=uuid.uuid4().hex[:12]
+    output=folder / f"{item_id}.mp3"
+    try:
+        content_factory.create_voiceover(req.text,req.voice,output)
+        return {"id":item_id,"voice":req.voice,"engine":"Microsoft Edge neural voices (edge-tts)","mode":"online","audio_url":f"/workspace/autopilot-content/{item_id}.mp3","bytes":output.stat().st_size,
+                "notice":"Seslendirme internet bağlantısı üzerinden oluşturuldu. Metin üçüncü taraf TTS servisine gönderilir."}
+    except Exception as exc:
+        output.unlink(missing_ok=True)
+        raise HTTPException(502, f"Seslendirme oluşturulamadı: {str(exc)[:240]}")
+
 @app.get("/api/autopilot")
 def list_autopilots():
     return {"autopilots": autopilot_store.list_autopilots(TASK_DB),
@@ -1750,9 +1808,40 @@ def run_autopilot_cycle(item: dict):
     """Watch Downloads, analyze the newest unseen source, render top clips, and leave them for approval."""
     source = None
     task_id = uuid.uuid4().hex[:10]
+    outputs = []
+    notes = []
     try:
+        # Every scheduled cycle first discovers a timely topic and creates a ready-to-narrate script.
+        content_folder = WORK / "autopilot-content" / task_id
+        content_folder.mkdir(parents=True, exist_ok=True)
+        chosen_topic = item["niche"] + " için güncel gelişmeler"
+        try:
+            trends = content_factory.research_trends(item["niche"], "TR", 12)
+            if trends.get("topics"):
+                chosen_topic = trends["topics"][0]["title"]
+                (content_folder / "trends.json").write_text(json.dumps(trends, ensure_ascii=False, indent=2), encoding="utf-8")
+                outputs.append({"type":"trend_research","title":chosen_topic,"url":f"/workspace/autopilot-content/{task_id}/trends.json"})
+        except Exception as trend_error:
+            notes.append("Trend araştırması: " + str(trend_error)[:140])
+        script_language = "en" if item.get("language") == "en" else "tr"
+        try:
+            script = content_factory.generate_script(OLLAMA_URL, OLLAMA_MODEL, item["niche"], chosen_topic, script_language, 60)
+            (content_folder / "script.md").write_text("# " + script.get("title", chosen_topic) + "\n\n" + script["script"] + "\n", encoding="utf-8")
+            outputs.append({"type":"script","title":script.get("title",chosen_topic),"url":f"/workspace/autopilot-content/{task_id}/script.md"})
+            voice = "en-US-AriaNeural" if script_language == "en" else "tr-TR-EmelNeural"
+            try:
+                audio = content_factory.create_voiceover(script["script"], voice, content_folder / "narration.mp3")
+                outputs.append({"type":"voiceover","title":voice,"url":f"/workspace/autopilot-content/{task_id}/narration.mp3","bytes":audio.stat().st_size})
+            except Exception as voice_error:
+                notes.append("AI seslendirme: " + str(voice_error)[:140])
+        except Exception as script_error:
+            notes.append("Senaryo üretimi: " + str(script_error)[:160])
         if not DOWNLOADS_DIR.is_dir():
-            raise RuntimeError("İndirilenler klasörü bulunamadı.")
+            if outputs:
+                message = "Trend araştırması ve içerik taslağı hazır. " + " | ".join(notes) + " Kaynak video bekleniyor."
+                autopilot_store.finish_run(TASK_DB, item["id"], "review", message, task_id, None, outputs)
+                return
+            raise RuntimeError("İndirilenler klasörü bulunamadı ve içerik üretimi tamamlanamadı.")
         seen = set(item.get("processed_files", []))
         candidates = []
         for file in DOWNLOADS_DIR.iterdir():
@@ -1761,7 +1850,11 @@ def run_autopilot_cycle(item: dict):
                     candidates.append(file)
             except OSError: continue
         if not candidates:
-            raise RuntimeError("İşlenecek yeni video yok. İndirilenler klasörüne yeni bir video ekleyin.")
+            if outputs:
+                message = "Trend konusu, senaryo ve mevcut seslendirme çıktıları hazır. Yeni kaynak video bekleniyor. " + " | ".join(notes)
+                autopilot_store.finish_run(TASK_DB, item["id"], "review", message, task_id, None, outputs)
+                return
+            raise RuntimeError("İşlenecek yeni video yok. İndirilenler klasörüne yeni bir video ekleyin. " + " | ".join(notes))
         source = max(candidates, key=lambda p: p.stat().st_mtime)
         folder = WORK / task_id
         folder.mkdir(parents=True, exist_ok=True)
@@ -1800,7 +1893,7 @@ def run_autopilot_cycle(item: dict):
         except Exception:
             pass
         selected = sorted(job["clips"], key=lambda c: c.get("score", 0), reverse=True)[:3]
-        rendered = []
+        rendered = list(outputs)
         for clip in selected:
             render_id = uuid.uuid4().hex[:10]
             render_req = RenderRequest(job_id=task_id, clip_id=clip["id"], platforms=item["platforms"], captions=True)
@@ -1811,7 +1904,7 @@ def run_autopilot_cycle(item: dict):
             if render_state.get("status") != "completed":
                 raise RuntimeError(render_state.get("error", "Platform render işlemi başarısız."))
             rendered.extend(render_state.get("outputs", []))
-        message = f"{source.name}: {len(selected)} kesit, {len(rendered)} platform çıktısı hazır. Yayın öncesi onay bekliyor."
+        message = f"{source.name}: {len(selected)} kesit hazır. Trend, senaryo ve seslendirme çıktıları da üretildi. Yayın öncesi onay bekliyor. " + " | ".join(notes)
         autopilot_store.finish_run(TASK_DB, item["id"], "review", message, task_id, task_id, rendered, source.name)
     except Exception as exc:
         autopilot_store.finish_run(TASK_DB, item["id"], "failed", str(exc), task_id,

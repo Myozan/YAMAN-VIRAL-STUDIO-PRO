@@ -6,7 +6,7 @@
 
 <p align="center">
 
-[![Version](https://img.shields.io/badge/version-1.5.7-6478ff)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.5.8-6478ff)](CHANGELOG.md)
 [![CI](https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO/actions/workflows/ci.yml/badge.svg?branch=import%2Fv1.2-source)](https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/Python-3.12-3776AB)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/API-FastAPI-009688)](https://fastapi.tiangolo.com/)
@@ -88,7 +88,7 @@ When local AI output is invalid, transcript-based salience scoring selects momen
 
 Autopilot watches the Windows Downloads folder on a daily or weekly schedule, transcribes new videos with Whisper, ranks clips with the local AI pipeline and renders the top three clips for YouTube Shorts, Instagram Reels and TikTok. Schedules and run history are stored in SQLite and survive restarts.
 
-Publishing is intentionally manual: every generated MP4 waits for user review and the existing explicit publishing confirmation. This release does not yet include trend discovery, text-to-video, voice cloning or unattended social posting.
+Autopilot also discovers topics from Google Trends, Google News and Reddit RSS, writes niche-aware scripts with the local Ollama model, and generates previewable/downloadable MP3 narration with Edge Neural TTS. Trend research requires internet access; script writing runs locally; Edge TTS is online and sends narration text to Microsoft's speech service. Scheduled cycles also attempt topic research, script writing and narration. Narration is currently delivered as a separate MP3 and is not automatically mixed into the generated video clips. Publishing remains user-approved.
 
 ## Architecture
 

@@ -6,3 +6,4 @@ requests>=2.32
 pydantic>=2.8
 av==18.1.0
 cryptography>=42.0.0
+edge-tts>=7.3.1
