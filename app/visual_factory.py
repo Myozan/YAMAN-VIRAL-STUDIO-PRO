@@ -1,12 +1,52 @@
 """AI visual and scene-based B-roll providers for YAMAN VIRAL STUDIO PRO."""
 from __future__ import annotations
 import time
+import ipaddress
+import socket
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import urljoin, urlparse
 import requests
 
 RUNWAY_BASE = "https://api.dev.runwayml.com/v1"
 RUNWAY_VERSION = "2024-11-06"
+
+def validate_public_https_url(url: str) -> str:
+    """Reject non-HTTPS, credential-bearing, localhost and non-public destinations."""
+    parsed = urlparse(url)
+    host = (parsed.hostname or "").lower().rstrip(".")
+    try:
+        port = parsed.port
+    except ValueError as exc:
+        raise ValueError("Invalid URL port") from exc
+    if (parsed.scheme.lower() != "https" or not host or host == "localhost" or host.endswith((".localhost", ".local", ".internal")) or parsed.username is not None or parsed.password is not None or port not in (None, 443)):
+        raise ValueError("Only public HTTPS URLs on the standard port are allowed")
+    try:
+        literal = ipaddress.ip_address(host)
+        addresses = [literal]
+    except ValueError:
+        try:
+            addresses = [ipaddress.ip_address(item[4][0]) for item in socket.getaddrinfo(host, 443, type=socket.SOCK_STREAM)]
+        except (OSError, ValueError, IndexError) as exc:
+            raise ValueError("URL host could not be safely resolved") from exc
+    if not addresses or any(not address.is_global for address in addresses):
+        raise ValueError("URL host resolves to a non-public IP address")
+    return url
+
+
+def safe_stream_get(url: str, *, timeout: int, max_redirects: int = 5):
+    """GET a public HTTPS URL while revalidating every redirect target."""
+    current = url
+    for _ in range(max_redirects + 1):
+        validate_public_https_url(current)
+        response = requests.get(current, stream=True, timeout=timeout, allow_redirects=False)
+        if response.status_code not in {301, 302, 303, 307, 308}:
+            return response
+        location = response.headers.get("Location")
+        response.close()
+        if not location:
+            raise VisualProviderError("Remote media redirect did not include a Location header")
+        current = urljoin(current, location)
+    raise VisualProviderError("Remote media URL exceeded the redirect limit")
 
 class VisualProviderError(RuntimeError):
     pass
@@ -59,7 +99,7 @@ class RunwayClient:
         parsed = urlparse(url)
         if parsed.scheme != "https":
             raise VisualProviderError("Runway çıktı adresi güvenli HTTPS olmalıdır.")
-        with requests.get(url, stream=True, timeout=180) as response:
+        with safe_stream_get(url, timeout=180) as response:
             response.raise_for_status()
             size = 0
             with target.open("wb") as stream:
@@ -129,7 +169,7 @@ def search_pexels_video(api_key: str, query: str, target: Path, orientation: str
             if not link.startswith("https://"):
                 continue
             try:
-                with requests.get(link, stream=True, timeout=120) as download:
+                with safe_stream_get(link, timeout=120) as download:
                     download.raise_for_status()
                     size = 0
                     with target.open("wb") as stream:

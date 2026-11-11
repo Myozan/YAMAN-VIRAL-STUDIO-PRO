@@ -319,11 +319,18 @@ def get_whisper():
     return _whisper
 
 def validate_youtube_url(url: str):
-    host = (urlparse(url).hostname or "").lower()
+    """Accept only canonical HTTPS YouTube URLs; reject URL parser ambiguity."""
+    parsed = urlparse(url)
     allowed = {"youtube.com", "www.youtube.com", "m.youtube.com", "youtu.be", "www.youtube-nocookie.com"}
-    if host not in allowed:
-        raise ValueError("Güvenlik nedeniyle yalnızca youtube.com veya youtu.be bağlantıları kabul edilir.")
-
+    host = (parsed.hostname or "").lower().rstrip(".")
+    try:
+        port = parsed.port
+    except ValueError:
+        raise ValueError("Geçersiz YouTube bağlantı noktası.")
+    if (parsed.scheme.lower() != "https" or host not in allowed
+            or parsed.username is not None or parsed.password is not None
+            or port not in (None, 443)):
+        raise ValueError("Güvenlik nedeniyle yalnızca standart HTTPS YouTube bağlantıları kabul edilir.")
 def download_video(url: str, folder: Path, progress_callback=None) -> Path:
     validate_youtube_url(url)
     def download_hook(data):
