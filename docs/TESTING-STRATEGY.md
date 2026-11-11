@@ -1,87 +1,93 @@
 # Quality Engineering & Testing Strategy — v1.8.0
 
-This document distinguishes implemented automated coverage from planned release assurance. A passing test suite is evidence for the tested paths only; it is not a security certification or proof that the entire product is defect-free.
+This document distinguishes automated coverage that is implemented and executed from future release-assurance work. Passing tests are evidence for tested paths only, not a security certification.
 
-## 1. Quality gates currently implemented
+## 1. QA 3.1 baseline
 
-The repository now contains a pytest suite focused on deterministic local logic:
+The test suite now contains **18 automated tests** across deterministic unit and FastAPI integration layers.
 
-| Suite | Coverage | Current tests |
+| Suite | Coverage | Tests |
 |---|---|---:|
-| Autopilot | SQLite initialization, create/read, invalid timezone, due-run claiming, manual claim states, run history, processed-file deduplication, deletion | 6 |
+| Autopilot | SQLite initialization, create/read, invalid timezone, due/manual claims, run history, processed-file deduplication, deletion | 6 |
 | Learning engine | Engagement/retention calculations, minimum sample threshold, platform isolation | 3 |
-| **Total** | **Unit tests** | **9** |
+| FastAPI integration | Health contract, Pydantic validation, unknown task/job, cancellation persistence/idempotency/events, restart recovery, publish confirmation, unsupported provider, invalid and replayed OAuth state | 9 |
+| **Total** | | **18** |
 
-GitHub Actions continues to validate Python compilation, required assets, selected UI/source invariants, PWA manifest JSON and JavaScript syntax. It additionally installs pytest and runs the unit suite.
+API tests use FastAPI TestClient and temporary SQLite databases. Ollama status is stubbed; no real provider or publishing endpoint is called.
 
 ## 2. Run locally
 
 Python 3.12 is the supported CI runtime.
 
 ```powershell
-python -m pip install pytest
+python -m pip install -r requirements.txt -r requirements-dev.txt
 python -m pytest -q
 python -m compileall -q app
 node --check web/app.js
 node --check web/sw.js
 ```
 
-Tests use temporary SQLite databases and must not write to the operator's real workspace or production database.
+`requirements-dev.txt` contains test-only dependencies. Application runtime dependencies remain in `requirements.txt`.
 
 ## 3. Test pyramid
 
 ```mermaid
 flowchart TB
   E2E[End-to-end and real media smoke tests]
-  INT[API, SQLite recovery, OAuth and FFmpeg integration tests]
+  INT[FastAPI, SQLite recovery, OAuth and FFmpeg integration tests]
   UNIT[Autopilot and learning unit tests]
   STATIC[Compile, JavaScript, manifest and asset checks]
   STATIC --> UNIT --> INT --> E2E
 ```
 
-## 4. Coverage status and next priorities
+## 4. QA 3.1 implemented API regression coverage
 
-| Area | Status | Priority / next action |
-|---|---|---|
-| Autopilot scheduling and persistence | Unit tests added | Expand weekly/DST and concurrent process cases |
-| Learning calculations | Unit tests added | Add zero-view, boundary and malformed-data cases |
-| FastAPI API contracts | Not yet covered by TestClient | P0: health, request validation, unknown task/job |
-| Task store recovery/cancellation/retry | Not yet covered | P0: restart interruption, event history, retry semantics |
-| OAuth lifecycle | Not yet covered | P0: invalid/expired state, disconnect, token redaction |
-| Publishing safety | Not yet covered | P0: reject without explicit confirmation |
-| Secret vault | Not yet covered | P0: round-trip, wrong key, key rotation |
-| Path and URL safety | Partial source controls exist; regression tests pending | P0: traversal, redirect/SSRF and symlink cases |
-| FFmpeg output | Not yet automated | P0: synthetic clip, ffprobe validation, missing binary |
-| AI provider failures | Not yet covered | P1: timeout, connection failure, malformed JSON |
-| Agent QA and fallback | Not yet covered | P1: deterministic rule outcomes and fallback status |
-| Browser/mobile flows | Static checks only | P1: responsive navigation and key workflows |
+- `GET /api/health` returns the expected health contract.
+- Invalid analysis request values are rejected with HTTP 422.
+- Unknown task, job and task-event resources return HTTP 404.
+- Task cancellation persists state and is idempotent.
+- Task event history records cancellation.
+- In-flight tasks are marked interrupted when the task store is reinitialized after a simulated restart.
+- Publishing without explicit confirmation is rejected before OAuth token lookup.
+- OAuth state is consumed once; a replayed callback is rejected.
+- Unsupported publishing providers and invalid OAuth callback state are rejected.
 
-## 5. Test design rules
+## 5. Defect found and fixed during QA 3.1
 
-- Never call paid or production provider APIs from CI.
-- Mock Ollama, OAuth providers, publishing endpoints and external HTTP.
-- Use generated or redistributable synthetic media; never commit private or copyrighted user media.
-- Use `tmp_path` for SQLite and filesystem tests.
-- Assert observable outcomes and error contracts, not private implementation details.
-- Test timezone-aware values explicitly; include Europe/Istanbul and daylight-saving zones where applicable.
-- Keep tests deterministic, isolated and safe to run repeatedly.
-- Do not silently skip a required release test because a binary or provider is unavailable; mark optional integration tests explicitly.
+The new OAuth callback regression test exposed a first-run failure: the oauth_states table was created only when OAuth authorization was initiated. A callback with an unknown state before any OAuth start therefore raised SQLite OperationalError instead of returning the intended HTTP 400. The table is now initialized with the task store, so invalid callbacks are rejected cleanly. A replay test also verifies that a state is consumed once.
 
-## 6. Release gates
+## 5. Remaining coverage priorities
 
-A release candidate must satisfy all of the following before being described as production-ready:
+**P0**
+- Task retry behavior for agent tasks, including missing project/clip cases.
+- OAuth state expiry boundary, one-time state consumption and disconnect vault behavior.
+- Secret vault round-trip, wrong-key handling and rotation.
+- Workspace path traversal, symlink and URL/SSRF regression cases.
+- SQLite multi-connection concurrency and Autopilot double-claim stress tests.
+- Synthetic FFmpeg render and ffprobe output validation.
 
-1. All static checks and unit tests pass in CI.
-2. P0 API, task recovery, OAuth, publishing-confirmation, vault and path-safety tests pass.
-3. Windows 10/11 and Python 3.12 smoke checks pass.
-4. A synthetic or rights-cleared sample completes transcription, render and ffprobe playback validation.
-5. Backup and restore are exercised on a copy of the workspace.
-6. Release diff and archive contain no credentials, private media or local configuration.
-7. Security limitations and external provider permissions are disclosed.
+**P1**
+- Ollama timeout, connection failure and malformed JSON.
+- Agent fallback status and deterministic QA outcomes.
+- Mobile browser navigation and PWA flows.
+- External provider quota and error handling.
 
-## 7. Current limitations
+## 6. CI and test design rules
 
-The current nine unit tests are the first automated quality baseline, not comprehensive coverage. FastAPI integration tests, real FFmpeg output tests, browser automation, concurrency stress tests and security scanning remain future work. Do not claim those checks have passed until they are implemented and executed.
+- CI installs application and test dependencies, then runs the same pytest suite.
+- No real paid API, live OAuth account or production credential is used in tests.
+- Mock external providers and use synthetic or redistributable media.
+- Use temporary directories and isolated databases.
+- Keep tests deterministic and repeatable.
+- Do not silently skip required release checks.
+
+## 7. Release gates
+
+A release candidate requires passing CI and P0 tests, Windows 10/11 + Python 3.12 smoke checks, a rights-cleared media render validated by ffprobe, a verified backup/restore drill, and a clean release archive with no secrets or private media.
+
+## 8. Current limitations
+
+The 18 tests are an expanded QA baseline, not comprehensive coverage. Real FFmpeg output, browser automation, concurrency stress, complete vault lifecycle and security scanning are not yet claimed as passing.
 
 ## Related documentation
 

@@ -120,6 +120,7 @@ def init_task_store():
     with sqlite3.connect(TASK_DB) as db:
         db.execute("CREATE TABLE IF NOT EXISTS tasks (task_id TEXT PRIMARY KEY, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, status TEXT NOT NULL, percent INTEGER NOT NULL, stage TEXT NOT NULL, payload_json TEXT NOT NULL DEFAULT '{}')")
         db.execute("CREATE TABLE IF NOT EXISTS task_events (id INTEGER PRIMARY KEY AUTOINCREMENT, task_id TEXT NOT NULL, event_type TEXT NOT NULL, created_at TEXT NOT NULL, payload_json TEXT NOT NULL)")
+        db.execute("CREATE TABLE IF NOT EXISTS oauth_states (state TEXT PRIMARY KEY, platform TEXT NOT NULL, verifier TEXT NOT NULL, redirect_uri TEXT NOT NULL, created_at REAL NOT NULL)")
         rows = db.execute("SELECT task_id,payload_json FROM tasks WHERE status IN ('queued','running')").fetchall()
         for task_id, payload in rows:
             state = json.loads(payload or "{}")
