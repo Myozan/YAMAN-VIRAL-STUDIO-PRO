@@ -4,213 +4,185 @@
 
 # YAMAN VIRAL STUDIO PRO
 
-### Yerel yapay zekâ ile video analiz, Shorts üretimi ve çok platformlu içerik iş akışı
+### Yerel yapay zekâ destekli video analiz, Shorts üretimi ve çok formatlı içerik stüdyosu
 
-> **v1.5.4 · PWA + Responsive UI** · Mobil uyumlu çalışma alanı, yüklenebilir uygulama deneyimi ve yenilenmiş ürün görselleri.
+**v1.5.5 · Local-first AI · Windows · PWA**
 
-[🇹🇷 Türkçe](README.md) · [🇬🇧 English](README.en.md) · [🇩🇪 Deutsch](README.de.md) · [🇪🇸 Español](README.es.md)
-
-[![Version](https://img.shields.io/badge/version-1.5.4-6478ff?style=for-the-badge)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.5.5-6478ff?style=for-the-badge)](CHANGELOG.md)
 [![CI](https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO/actions/workflows/ci.yml/badge.svg?branch=import%2Fv1.2-source)](https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO/actions/workflows/ci.yml)
-[![PWA](https://img.shields.io/badge/PWA-installable-5B8DEF?style=for-the-badge)](#ana-ekrana-y%C3%BCkleme-pwa)
 [![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/API-FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-[![Local AI](https://img.shields.io/badge/AI-Local--First-8B5CF6?style=for-the-badge)](#mimari)
+[![PWA](https://img.shields.io/badge/PWA-installable-5B8DEF?style=for-the-badge)](#pwa-kurulumu)
 [![License](https://img.shields.io/badge/License-MIT-2ea44f?style=for-the-badge)](LICENSE)
 
-**Tasarım ve geliştirme: [Ozan Yaman](https://github.com/Myozan)**
+$1
 
 </div>
 
 ---
 
-## ✨ Genel bakış
+[GitHub sosyal önizleme PNG](docs/assets/social-preview.png) · [Beş format infografiği](docs/assets/video-formats.svg)`r`n`r`n## Genel bakış
 
-**Anahtar kelimeler:** AI video editor, local-first AI, video repurposing, YouTube Shorts generator, Instagram Reels, TikTok clips, Ollama, Faster-Whisper, FFmpeg, Python, FastAPI, offline-first video workflow.
+**YAMAN VIRAL STUDIO PRO**, uzun videoları analiz edip konuşmaları zaman damgalı metne dönüştüren, güçlü anları bulan ve farklı yayın hedefleri için düzenlenmiş videolar üreten yerel öncelikli bir içerik stüdyosudur.
 
-YAMAN VIRAL STUDIO PRO; uzun videoları analiz eden, konuşmaları zaman damgalı metne dönüştüren, güçlü anları kısa video kesitlerine ayıran ve YouTube Shorts, Instagram Reels ile TikTok için içerik hazırlayan yerel öncelikli bir AI stüdyosudur.
+Ollama, Faster-Whisper ve FFmpeg tabanlı iş akışı; video analizi, transkripsiyon ve render işlemlerini mümkün olduğunca kullanıcının kendi bilgisayarında tutar. Tek bir özet yaklaşımına bağlı kalmadan beş ayrı editoryal üretim modu sunar.
 
-Ollama, Faster-Whisper ve FFmpeg tabanlı iş akışı, içerik üretimini mümkün olduğunca kullanıcının kendi bilgisayarında tutar.
+## Beş üretim modu
 
-## Belgesel Anlatimi video formati
+<img src="docs/assets/video-formats.svg" alt="YAMAN VIRAL STUDIO PRO beş video üretim modu" width="100%">
 
-Akilli Ozet ve Hikaye Akisi seceneklerine ek olarak **Belgesel Anlatimi** modu; **Konu -> Guclu Acilis -> Arka Plan -> Kronolojik Gelisme -> Bulgular -> Sonuc -> Kapanis** sirasiyla ayri bir dikey MP4 uretir. Bolumler kaynak transkriptin zaman damgalarina baglanir; modelin dogrulayamadigi tarih, alinti, neden-sonuc iliskisi veya bilgi uydurulmaz. Yerel Ollama yaniti eksikse kaynak transkriptten guvenli zaman cizelgesi yedegi kullanilir.
+| Mod | İçerik akışı | Çıktı |
+|---|---|---|
+| **Akıllı Özet** | Kaynağın önemli anlarını seçer ve kısa, akıcı bir özet oluşturur. | `summary_video.mp4` |
+| **Hikâye Akışı** | Konu → Giriş → Gelişme → Sonuç → Kapanış | `story_video.mp4` |
+| **Belgesel Anlatımı** | Konu → Güçlü Açılış → Arka Plan → Kronolojik Gelişme → Bulgular → Sonuç → Kapanış | `documentary_video.mp4` |
+| **Eğitim Videosu** | Öğrenme Hedefi → Giriş → Temel Kavramlar → Adım Adım Anlatım → Uygulama → Özet → Mini Test | `education_video.mp4` |
+| **Ürün Tanıtımı** | İhtiyaç → Ürün → Özellikler → Faydalar → Fark Yaratan Detay → Kanıt → CTA | `product_video.mp4` |
 
-## 🎬 Canlı uygulama demosu
+Her anlatı formatı kendi bölüm başlıklarını videoya işler ve ayrı MP4 çıktısı üretir. Bölüm seçimi kaynak transkriptin zaman damgalarına dayanır. Model eksik veya geçersiz bölüm döndürürse transkript tabanlı güvenli yedek akış devreye girer.
 
-[20 saniyelik MP4 ürün turunu izle](docs/assets/showcase-demo.mp4) · [Animasyonlu GIF önizlemesi](docs/assets/showcase-demo.gif) · [GitHub sosyal önizleme PNG](docs/assets/social-preview.png)
+**İçerik doğruluğu:** Sistem kaynakta bulunmayan ürün özelliği, fiyat, müşteri yorumu, sertifika, garanti, tarih, alıntı veya kanıtı uydurmamalıdır. Özellikle Ürün Tanıtımı modu yalnızca kaynakta desteklenen iddiaları kullanır.
 
-![YAMAN VIRAL STUDIO PRO — canlı arayüz ürün turu](docs/assets/showcase-demo.gif)
+## Güncel uygulama ekranları
 
-## 🖥️ Uygulamadan gerçek ekran görüntüleri
+Aşağıdaki görseller yerel uygulamanın güncel arayüzünden alınmıştır.
 
-Aşağıdaki ekran görüntüleri, GitHub deposunun güncel sürümü yerel olarak çalıştırılarak alındı. Kompakt görünüm 600 px genişlikte yakalandı. Sistem metrikleri donanıma ve o anki yüke göre değişebilir.
-
-| Masaüstü — canlı uygulama | Kompakt ekran — canlı uygulama |
+| Masaüstü | Mobil / kompakt görünüm |
 |:---:|:---:|
-| <img src="docs/assets/screenshot-live-desktop.png" alt="YAMAN VIRAL STUDIO PRO canlı masaüstü ekran görüntüsü" width="100%"> | <img src="docs/assets/screenshot-live-mobile.png" alt="YAMAN VIRAL STUDIO PRO kompakt ekran görüntüsü" width="72%"> |
+| <img src="docs/assets/screenshot-live-desktop.png" alt="YAMAN VIRAL STUDIO PRO masaüstü ekranı" width="100%"> | <img src="docs/assets/screenshot-live-mobile.png" alt="YAMAN VIRAL STUDIO PRO mobil ekranı" width="78%"> |
 
-[GitHub paylaşım görseli](docs/assets/social-preview.png) · [Masaüstü SVG tasarım önizlemesi](docs/assets/dashboard-desktop.svg) · [Mobil SVG tasarım önizlemesi](docs/assets/dashboard-mobile.svg)
+## Ürün demosu
 
-SVG tasarım görselleri arayüz konseptini temsil eder; yukarıdaki PNG dosyaları ise çalışan uygulamadan alınmış ekran görüntüleridir.
+- [20 saniyelik stüdyo tanıtım videosu](docs/assets/showcase-demo.mp4)
+- [Animasyonlu arayüz önizlemesi](docs/assets/showcase-demo.gif)
+- [Uçtan uca Shorts üretim videosu](docs/assets/demo-output-youtube-shorts.mp4)
+- [Örnek kaynak video](docs/assets/demo-input.mp4)
+- [Zaman damgalı altyazı dosyası](docs/assets/demo-transcript.srt)
+- [Demo raporu](docs/DEMO.md)
 
-## 🎥 Gerçek uçtan uca üretim demosu
+> Demo medya dosyaları test amaçlı sentetik içeriktir; gerçek kişi veya üçüncü taraf video kaydı değildir.
 
-**Kaynak videoyu analiz ettik, konuşmayı çözdük ve uygulamanın kendi render motoruyla 9:16 MP4 ürettik.**
+## Öne çıkan yetenekler
 
-[40 saniyelik gerçek YouTube Shorts çıktısını izle](docs/assets/demo-output-youtube-shorts.mp4) · [Demo kaynak videosu](docs/assets/demo-input.mp4) · [Zaman damgalı altyazı (SRT)](docs/assets/demo-transcript.srt) · [Tam demo raporu](docs/DEMO.md)
+- **Video içe aktarma:** Yerel video dosyaları ve desteklenen YouTube kaynakları.
+- **Konuşma tanıma:** Faster-Whisper ile zaman damgalı transkripsiyon; TXT/SRT iş akışları.
+- **Yerel AI:** Ollama üzerinden yerel model entegrasyonu ve yapılandırılabilir model seçimi.
+- **Akıllı kesit keşfi:** Hook, bağlam, konuşma yoğunluğu ve izlenebilirlik sinyallerine göre klip adayları.
+- **Çok formatlı render:** Dikey video, altyazı, bölüm başlıkları, giriş/kapanış ve ayrı MP4 çıktıları.
+- **Uzman AI ajanları:** Strateji, hook, kurgu, SEO, risk kontrolü, erişilebilirlik ve yerelleştirme görevleri.
+- **Görev yönetimi:** SQLite tabanlı görev geçmişi, olay günlüğü, iptal, yeniden deneme ve kurtarma.
+- **Platform hazırlığı:** YouTube, TikTok ve Instagram için kullanıcı onaylı yayın hazırlığı.
+- **Sistem izleme:** GPU, CPU, RAM ve VRAM metrikleri.
+- **Responsive arayüz:** Masaüstü ve mobil ekranlara uyumlu web arayüzü; PWA kurulumu.
+- **Çok dilli arayüz:** Türkçe, İngilizce, Almanca ve İspanyolca.
 
-![YAMAN VIRAL STUDIO PRO tarafından üretilen dikey video karesi](docs/assets/demo-render-frame.png)
+## Mimari
 
-Bu örnek, kişisel veya üçüncü taraf bir video değil; test amacıyla üretilmiş sentetik anlatım ve görsel içeriktir. Çıktı 1080 × 1920, H.264/AAC ve yaklaşık 40 saniyedir.
-
-| Masaüstü çalışma alanı | Mobil uyumlu görünüm |
-|:---:|:---:|
-| <img src="docs/assets/dashboard-desktop.svg" alt="Masaüstü uygulama ekranı" width="100%"> | <img src="docs/assets/dashboard-mobile.svg" alt="Mobil uygulama ekranı" width="72%"> |
-
-## 🚀 Öne çıkan yetenekler
-
-<img src="docs/assets/feature-map.svg" alt="Ürün özellik haritası" width="100%">
-
-- **Video içe aktarma:** YouTube bağlantısı veya yerel Windows Downloads klasörü.
-- **Akıllı transkripsiyon:** Faster-Whisper ile zaman damgalı konuşma metni ve TXT dışa aktarma.
-- **AI kesit seçimi:** Hook, bağlam, konuşma yoğunluğu ve izlenebilirlik sinyallerine dayalı klip adayları.
-- **Akıllı özet videosu:** Önemli anları birleştiren dikey MP4, altyazı, giriş ve kapanış.
-- **12 uzman AI ajanı:** Strateji, hook, kurgu, SEO, risk kontrolü, erişilebilirlik, yerelleştirme ve yayın hazırlığı.
-- **Görev orkestrasyonu:** SQLite tabanlı görev geçmişi, olay günlüğü, iptal, yeniden deneme ve yeniden başlatma sonrası kurtarma.
-- **Çok dilli arayüz:** Türkçe, English, Deutsch ve Español; dil seçimi Ayarlar bölümünden yönetilir.
-- **Platform iş akışları:** YouTube, TikTok ve Instagram için OAuth bağlantısı ve kullanıcı onaylı yayın hazırlığı.
-- **Sistem izleme:** GPU, CPU, RAM ve VRAM kullanım göstergeleri.
-- **Uyarlanabilir arayüz:** Masaüstü ve mobil ekranlar için duyarlı tasarım; PWA yükleme deneyimi.
-
-## 🔄 Üretim akışı
-
-<img src="docs/assets/pipeline.svg" alt="Video üretim iş akışı" width="100%">
-
-1. Kaynak videoyu içe aktar.
-2. Whisper ile konuşmayı yazıya dönüştür.
-3. Yerel AI ile güçlü anları ve kesitleri belirle.
-4. Dikey kadraj, altyazı ve platform profilini uygula.
-5. MP4 çıktısını incele ve istediğin platforma hazırla.
-
-## 🧩 Mimari
-
-<img src="docs/assets/architecture.svg" alt="Uygulama mimarisi" width="100%">
+<img src="docs/assets/architecture.svg" alt="YAMAN VIRAL STUDIO PRO mimarisi" width="100%">
 
 | Katman | Teknoloji |
 |---|---|
-| API ve görev yönetimi | Python 3.12 · FastAPI · Uvicorn |
-| Yerel dil modeli | Ollama · Qwen |
+| API ve uygulama | Python 3.12, FastAPI |
+| Web arayüzü | HTML, CSS, JavaScript |
+| Yerel LLM | Ollama |
 | Konuşma tanıma | Faster-Whisper |
-| Video işleme | FFmpeg · FFprobe · yt-dlp |
-| Web arayüzü | HTML · CSS · JavaScript |
-| Kalıcı görev geçmişi | SQLite |
-| OAuth gizli verileri | Fernet ile yerel şifreleme |
+| Video / ses işleme | FFmpeg |
+| Görev geçmişi | SQLite |
+| PWA | Web App Manifest, Service Worker |
 
-## ⚙️ Windows kurulumu
+## Windows kurulumu
 
-**Gereksinimler:** Windows 10/11, Python 3.12, FFmpeg ve Ollama.
+### Gereksinimler
 
-1. Depoyu klonla: **git clone https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO.git**
-2. Proje klasörüne gir.
-3. Yerel modeli indir: **ollama pull qwen3:1.7b**
-4. **run_windows.bat** dosyasını çalıştır.
-5. Tarayıcıda **http://127.0.0.1:8765** adresini aç.
+- Windows 10/11
+- Python 3.12 önerilir
+- FFmpeg (PATH içinde erişilebilir olmalı)
+- Ollama (yerel AI özellikleri için)
+- Faster-Whisper modelleri ilk kullanımda indirilebilir
 
-Bağımlılıkları elle kurmak için Python sanal ortamı oluşturup **pip install -r requirements.txt** komutunu çalıştır.
+### Başlatma
 
-## 📲 Ana ekrana yükleme (PWA)
+1. Depoyu klonla:
 
-YAMAN VIRAL STUDIO PRO, desteklenen tarayıcılarda ana ekrana yüklenebilir.
+   ```powershell
+   git clone https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO.git
+   cd YAMAN-VIRAL-STUDIO-PRO
+   ```
 
-1. Uygulamayı aynı cihazda `http://127.0.0.1:8765` üzerinden aç veya telefonda erişilebilen güvenilir bir HTTPS adresi kullan.
-2. Desteklenen Chromium tarayıcılarında üst çubuktaki **Uygulamayı yükle** düğmesine bas. Alternatif olarak tarayıcı menüsündeki **Uygulamayı yükle** seçeneğini kullan.
-3. iPhone/iPad'de Safari paylaş menüsünü aç ve **Ana Ekrana Ekle** seçeneğini seç.
-4. Windows masaüstünde Edge/Chrome adres çubuğundaki yükleme simgesini de kullanabilirsin.
+2. Bağımlılıkları yükle:
 
-**Önemli sınırlar:**
-- PWA kurulumu ve Service Worker için HTTPS veya localhost gerekir. Telefon, bilgisayardaki `127.0.0.1` adresine erişemez; telefon üzerinden kullanım için güvenilir HTTPS dağıtımı gerekir.
-- Windows başlatıcısı güvenlik nedeniyle varsayılan olarak yalnızca `127.0.0.1` üzerinde dinler. LAN'a otomatik açılmaz.
-- Çevrimdışı önbellek yalnızca uygulama kabuğunu (arayüz, CSS, JavaScript ve ikonlar) tutar. Video analizi, AI, OAuth, yükleme ve diğer API işlemleri için YAMAN sunucusu ve yerel servisler çalışır durumda olmalıdır.
-- API yanıtları ve özel `/workspace` dosyaları Service Worker önbelleğine alınmaz.
+   ```powershell
+   py -3.12 -m venv .venv
+   .\.venv\Scripts\Activate.ps1
+   python -m pip install --upgrade pip
+   pip install -r requirements.txt
+   ```
 
-## 🌐 Dil ve görünüm ayarları
+3. Örnek ortam dosyasını incele ve yerel ayarlarını yapılandır:
 
-Uygulama içinden **Ayarlar → Dil ve yerelleştirme** bölümüne git. Türkçe, English, Deutsch veya Español seçimini yap. Tercih tarayıcıda saklanır ve sonraki açılışta korunur. Görünüm teması ayrıca Gece, Açık ve Okyanus seçenekleriyle değiştirilebilir.
+   ```powershell
+   Copy-Item .env.example .env
+   ```
 
-## 🔐 OAuth ve yayınlama
+4. Uygulamayı başlat:
 
-Platform Profilleri bölümünde sağlayıcı geliştirici bilgilerini tanımla. Uygulama kimlik bilgileri ve tokenlar yerel diskte şifrelenir.
+   ```powershell
+   .\run_windows.bat
+   ```
 
-| Platform | Gerekli yapılandırma | İzin |
-|---|---|---|
-| YouTube | YAMAN_GOOGLE_CLIENT_ID / YAMAN_GOOGLE_CLIENT_SECRET | youtube.upload |
-| TikTok | YAMAN_TIKTOK_CLIENT_KEY / YAMAN_TIKTOK_CLIENT_SECRET | video.publish |
-| Instagram | YAMAN_META_APP_ID / YAMAN_META_APP_SECRET | instagram_basic, instagram_content_publish, pages_show_list |
+5. Tarayıcıda aç: **http://127.0.0.1:8765**
 
-OAuth callback adresini ilgili geliştirici konsoluna birebir ekle. Her yayın işlemi kullanıcı onayı ister. YouTube yüklemeleri varsayılan olarak private başlar; TikTok uygulama denetimi ve Instagram'ın HTTPS medya adresi gereksinimleri platform kurallarına tabidir.
+> Yerel Ollama servisi ve Whisper modelleri ilk kullanımda model indirebilir. Bu ilk indirme tamamlandıktan sonra yapılandırılmış yerel iş akışları internet bağlantısı olmadan çalıştırılabilir; OAuth ve platform yayınlama gibi çevrimiçi entegrasyonlar istisnadır.
 
-## 🛡️ Güvenlik ve gizlilik
+## PWA kurulumu
 
-- AI ve video işleme adımları yerel servislerle çalışacak şekilde tasarlanmıştır.
-- OAuth sırları ve erişim tokenları Fernet ile şifrelenir.
-- .oauth.key, token kasası, settings.local.json ve çalışma alanı verileri Git'e eklenmemelidir.
-- .oauth.key dosyasını güvenli bir yerde yedekle; kaybolması şifreli token kasasının açılamamasına neden olur.
+Uygulama HTTPS veya localhost üzerinden desteklenen tarayıcılara yüklenebilir.
+
+1. Masaüstünde Chrome/Edge menüsünden **Uygulamayı yükle** seçeneğini kullan.
+2. iPhone/iPad'de Safari → Paylaş → **Ana Ekrana Ekle** yolunu izle.
+3. PWA önbelleği yalnızca uygulama kabuğunu tutar. Video analizi, AI, yükleme ve API işlemleri için yerel sunucu çalışır durumda olmalıdır.
+4. Windows başlatıcısı güvenlik amacıyla varsayılan olarak yalnızca `127.0.0.1` adresinde dinler; LAN erişimi otomatik açılmaz.
+
+## Güvenlik ve gizlilik
+
+- AI ve video işleme bileşenleri yerel servislerle çalışacak şekilde tasarlanmıştır.
+- OAuth sırları ve erişim tokenları şifreli kasada saklanır.
+- `.env`, `.oauth.key`, token kasası, `settings.local.json` ve özel çalışma alanı verileri Git'e eklenmemelidir.
+- OAuth üzerinden yayınlama kullanıcı onayı gerektirir. Platformların geliştirici incelemesi ve yayın politikaları geçerlidir.
 - Yalnızca kullanma ve yeniden yayınlama hakkına sahip olduğun içerikleri içe aktar.
 
-## 🗂️ Proje yapısı
+## Proje yapısı
 
-- **app/** — FastAPI uygulaması ve AI/video iş mantığı
-- **web/** — Web arayüzü, stiller ve istemci kodu
-- **docs/** — Mimari, entegrasyon ve görsel dokümantasyon
-- **workspace/** — Yerel çalışma çıktıları (Git dışında tutulur)
-- **run_windows.bat** — Windows başlatıcısı
-- **requirements.txt** — Python bağımlılıkları
+```text
+app/                 FastAPI uygulaması, AI ve video iş mantığı
+web/                 Web arayüzü, stiller ve istemci kodu
+docs/                Mimari, entegrasyon, demo ve görsel dokümantasyon
+docs/assets/         Ürün görselleri, ekran görüntüleri ve demo medyası
+workspace/           Yerel çalışma alanı ve üretim çıktıları
+.github/workflows/   CI iş akışları
+run_windows.bat      Windows başlatıcısı
+requirements.txt     Python bağımlılıkları
+```
 
-## 🧭 Yol haritası
-
-<img src="docs/assets/roadmap.svg" alt="Ürün yol haritası" width="100%">
-
-## 🤝 Katkı ve güvenlik
+## Geliştirme ve katkı
 
 - [Katkı rehberi](CONTRIBUTING.md)
-- [Güvenlik açığı bildirme politikası](SECURITY.md)
-- [Hata bildirimi](https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO/issues/new?template=bug_report.yml)
-- [Özellik önerisi](https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO/issues/new?template=feature_request.yml)
-
-## 📚 Teknik dokümantasyon
-
-- [AI ajanları ve OAuth araştırması](docs/AI-AGENTS-RESEARCH.md)
+- [Güvenlik politikası](SECURITY.md)
 - [Mimari notları](docs/ARCHITECTURE.md)
 - [Platform entegrasyonları](docs/PLATFORM-INTEGRATIONS.md)
+- [AI ajanları araştırması](docs/AI-AGENTS-RESEARCH.md)
 - [Sürüm geçmişi](CHANGELOG.md)
+- [Hata bildir](https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO/issues/new?template=bug_report.yml)
+- [Özellik öner](https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO/issues/new?template=feature_request.yml)
 
-## 📄 Lisanslama
+## Lisanslama
 
-- **Community Edition:** Depodaki mevcut kaynak kodu [MIT Lisansı](LICENSE) kapsamındadır. Ticari kullanım dahil MIT hakları korunur.
-- **Enterprise / Commercial:** Yalnızca ayrıca tanımlanmış ticari modüller, imzalı kurumsal sözleşme ile lisanslanır. Mevcut MIT kodunun hakları daraltılmaz.
-- [Lisanslama modeli ve bileşen sınırları](LICENSING.md)
-- [Ticari lisans sözleşmesi taslağı](LICENSE-COMMERCIAL-TEMPLATE.md) — yalnızca taslaktır; imzalı sözleşme ve hukuk incelemesi olmadan lisans vermez.
+Community Edition kaynak kodu [MIT Lisansı](LICENSE) kapsamındadır. Ayrı ticari modüller ve kurumsal lisans sınırları için [LICENSING.md](LICENSING.md) ve [ticari lisans taslağını](LICENSE-COMMERCIAL-TEMPLATE.md) incele.
+
+---
 
 <div align="center">
 
-**YAMAN VIRAL STUDIO PRO** · Built with focus by [Ozan Yaman](https://github.com/Myozan)
+**YAMAN VIRAL STUDIO PRO** · [GitHub](https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO)
 
 </div>
-
-
-## 🎬 Yeni video anlatım modu: Hikâye akışı
-
-Akıllı özet moduna ek olarak artık **Hikâye akışı** seçilebilir. Yerel AI, kaynak transkriptteki zaman damgalarını kullanarak videoyu şu editoryal sıraya dizer:
-
-1. **Konu:** Ana fikir ve videonun cevapladığı soru
-2. **Giriş:** İzleyiciyi yakalayan açılış
-3. **Gelişme:** Açıklama, örnekler, kanıtlar veya adımlar
-4. **Sonuç:** Kaynağın desteklediği çıkarım
-5. **Kapanış:** Kısa özet ve uygun çağrı (CTA)
-
-Her bölüm videoda bölüm başlığı olarak gösterilir; konuşma altyazıları zamanlamasını korur. Model yeterli bölüm üretemezse sistem, transkript zamanlarına dayalı yedek bölümleme kullanır. Kaynakta bulunmayan bilgi veya alıntı uydurulmaz.
-
-## Egitim Videosu ve Urun Tanitimi
-
-**Egitim Videosu** modu; ogrenme hedefi, konuya giris, temel kavramlar, adim adim anlatim, uygulama ornegi, ozet ve mini test bolumleriyle ayri `education_video.mp4` uretir. **Urun Tanitimi** modu; ihtiya? urun, ozellikler, faydalar, fark yaratan detaylar, kanit ve CTA akisini ayri `product_video.mp4` olarak olusturur. Her iki mod da yalnizca kaynak transkriptte bulunan bilgi ve zaman damgalarini kullanir; olmayan ozellik, fiyat, yorum, garanti veya iddia uydurmaz. Belgesel Anlatimi da yedi bolumlu ayri format olarak korunmustur.

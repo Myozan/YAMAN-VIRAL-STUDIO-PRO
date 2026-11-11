@@ -8,6 +8,8 @@
 - Documentary chapter labels are burned into the rendered video, alongside Story, Education and Product chapter labels.
 
 ### Improved
+- Refreshed Turkish and English README guides for all five production formats, setup, architecture, PWA and security.
+- Replaced the README hero and social preview artwork; added a five-format infographic and refreshed live desktop/mobile screenshots.
 - PWA shell and asset cache bumped to v1.5.5.
 
 ## [1.5.4] - 2026-11-11

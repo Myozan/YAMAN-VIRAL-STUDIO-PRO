@@ -1,96 +1,143 @@
 # YAMAN VIRAL STUDIO PRO
 
-Local-first **AI video repurposing studio** for video analysis, speech transcription, highlight discovery and vertical clip production for YouTube Shorts, Instagram Reels and TikTok.
+**Local-first AI video studio** for video analysis, timestamped transcription, highlight discovery and multi-format video production.
 
 <p align="center"><img src="docs/assets/hero.svg" alt="YAMAN VIRAL STUDIO PRO local AI video studio" width="100%"></p>
 
-<p align="center"><a href="https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO/actions/workflows/ci.yml"><img src="https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO/actions/workflows/ci.yml/badge.svg?branch=import%2Fv1.2-source" alt="CI status"></a> <img src="https://img.shields.io/badge/AI-Local--First-7C5CFA" alt="Local-first AI"> <img src="https://img.shields.io/badge/PWA-Installable-5B8DEF" alt="PWA"> <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-2ea44f.svg" alt="MIT"></a></p>
+<p align="center">
 
-<p align="center"><a href="README.md">Türkçe</a> · <b>English</b> · <a href="README.de.md">Deutsch</a> · <a href="README.es.md">Español</a></p>
+[![Version](https://img.shields.io/badge/version-1.5.5-6478ff)](CHANGELOG.md)
+[![CI](https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO/actions/workflows/ci.yml/badge.svg?branch=import%2Fv1.2-source)](https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO/actions/workflows/ci.yml)
+[![Python](https://img.shields.io/badge/Python-3.12-3776AB)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/API-FastAPI-009688)](https://fastapi.tiangolo.com/)
+[![PWA](https://img.shields.io/badge/PWA-Installable-5B8DEF)](#pwa-installation)
+[![License](https://img.shields.io/badge/License-MIT-2ea44f)](LICENSE)
 
-**Search terms:** AI video editor, video repurposing, YouTube Shorts generator, local LLM, Ollama, Faster-Whisper, FFmpeg, Reels, TikTok.
+[ Türkçe ](README.md) · **English** · [ Deutsch ](README.de.md) · [ Español ](README.es.md)
 
-**v1.5.2 · PWA + responsive UI.** Desktop and mobile workspace previews are included below. The SVG previews are illustrative design assets, not live application screenshots.
+</p>
 
-## Core capabilities
-- Import eligible YouTube sources or local videos from Windows Downloads.
-- Transcribe speech with Faster-Whisper and export timestamped transcripts.
-- Identify candidate short clips with local AI analysis.
-- Render vertical videos with captions for Shorts, Reels and TikTok.
-- Coordinate specialist AI agents and persistent task history.
-- Configure local Ollama and Whisper models.
-- Track GPU, CPU, RAM and VRAM telemetry.
+[Social preview PNG](docs/assets/social-preview.png) · [Five-format infographic](docs/assets/video-formats.svg)`r`n`r`n## Overview
 
-## Live product preview
+YAMAN VIRAL STUDIO PRO turns long-form video into structured, publish-ready content. It transcribes speech, discovers strong moments and renders vertical videos with captions and editorial chapter structure.
 
-[Watch the 20-second MP4 overview](docs/assets/showcase-demo.mp4) · [Animated GIF preview](docs/assets/showcase-demo.gif) · [GitHub social preview PNG](docs/assets/social-preview.png)
+The local-first workflow combines **Ollama**, **Faster-Whisper** and **FFmpeg** so AI analysis and media processing can run on the user's own computer. Five distinct production modes are available.
 
-![YAMAN VIRAL STUDIO PRO live UI overview](docs/assets/showcase-demo.gif)
+## Five production formats
+
+<img src="docs/assets/video-formats.svg" alt="Five video production formats" width="100%">
+
+| Format | Editorial structure | Output |
+|---|---|---|
+| **Smart Recap** | Selects key moments and creates a concise recap. | `summary_video.mp4` |
+| **Story Flow** | Topic → Opening → Development → Conclusion → Closing | `story_video.mp4` |
+| **Documentary Narration** | Topic → Strong Hook → Background → Timeline → Findings → Conclusion → Closing | `documentary_video.mp4` |
+| **Educational Video** | Learning Goal → Introduction → Core Concepts → Step-by-Step → Example → Recap → Mini Quiz | `education_video.mp4` |
+| **Product Presentation** | Need → Product → Features → Benefits → Differentiator → Evidence → CTA | `product_video.mp4` |
+
+Each narrative format renders its own MP4 file and burns chapter titles into the video. Chapter timing is grounded in the source transcript. If local model output is incomplete or invalid, a transcript-based fallback is used.
+
+**Grounded claims:** Product mode must not invent product features, prices, reviews, certifications, warranties or evidence that are absent from the source material.
 
 ## Live application screenshots
 
-Captured from the current repository branch while the local app was running. The compact capture uses a 600 px viewport; system metrics vary with hardware load.
-
-| Desktop | Compact viewport |
+| Desktop | Mobile / compact |
 |---|---|
-| ![Live desktop application](docs/assets/screenshot-live-desktop.png) | ![Live compact application](docs/assets/screenshot-live-mobile.png) |
+| <img src="docs/assets/screenshot-live-desktop.png" alt="Live desktop app screenshot" width="100%"> | <img src="docs/assets/screenshot-live-mobile.png" alt="Live mobile app screenshot" width="78%"> |
 
-Illustrative SVG design previews: [desktop](docs/assets/dashboard-desktop.svg) · [mobile](docs/assets/dashboard-mobile.svg).
+## Product demos
 
-## End-to-end production demo
+- [20-second studio overview](docs/assets/showcase-demo.mp4)
+- [Animated UI preview](docs/assets/showcase-demo.gif)
+- [End-to-end Shorts output](docs/assets/demo-output-youtube-shorts.mp4)
+- [Demo source video](docs/assets/demo-input.mp4)
+- [Timestamped subtitles](docs/assets/demo-transcript.srt)
+- [Demo report](docs/DEMO.md)
 
-**The app imported a source video, transcribed its speech, selected clip candidates and rendered a vertical MP4 with captions.**
+Demo media is synthetic test content, not personal or third-party footage.
 
-[Watch the 40-second YouTube Shorts output](docs/assets/demo-output-youtube-shorts.mp4) · [Demo source video](docs/assets/demo-input.mp4) · [Timestamped subtitles (SRT)](docs/assets/demo-transcript.srt) · [Full demo report](docs/DEMO.md)
+## Core capabilities
 
-![Frame from a vertical video rendered by YAMAN VIRAL STUDIO PRO](docs/assets/demo-render-frame.png)
+- Local video import and supported YouTube sources.
+- Timestamped speech transcription with Faster-Whisper.
+- Local LLM analysis through Ollama.
+- Highlight discovery and short-form clip candidates.
+- Vertical MP4 rendering, subtitles, chapter overlays and format-specific exports.
+- Specialist AI agents for strategy, hooks, editing, SEO, safety, accessibility and localization.
+- SQLite task history, event logs, cancellation, retries and recovery.
+- User-approved publishing preparation for YouTube, TikTok and Instagram.
+- GPU, CPU, RAM and VRAM telemetry.
+- Responsive desktop/mobile web UI and installable PWA.
+- Turkish, English, German and Spanish interface.
 
-This is a synthetic test asset, not personal or third-party footage. Output: 1080 × 1920, H.264/AAC, approximately 40 seconds.
+## Architecture
 
-## PWA installation
+<img src="docs/assets/architecture.svg" alt="Application architecture" width="100%">
 
-Install from a supported Chromium browser over HTTPS or localhost. On iOS, use Safari → Share → Add to Home Screen. Offline caching covers the app shell only; AI, video processing, uploads and API features still require the local backend. The Windows launcher binds to `127.0.0.1` by default and is not exposed to the LAN.
+| Layer | Technology |
+|---|---|
+| API and application | Python 3.12, FastAPI |
+| Web interface | HTML, CSS, JavaScript |
+| Local LLM | Ollama |
+| Speech recognition | Faster-Whisper |
+| Media processing | FFmpeg |
+| Task history | SQLite |
+| Installable shell | Web App Manifest, Service Worker |
 
 ## Windows setup
-Requirements: Windows 10/11, Python 3.12, FFmpeg and Ollama.
+
+Requirements: Windows 10/11, Python 3.12 recommended, FFmpeg on PATH, and Ollama for local LLM features.
 
 ```powershell
 git clone https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO.git
 cd YAMAN-VIRAL-STUDIO-PRO
-ollama pull qwen3:1.7b
-run_windows.bat
+py -3.12 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+Copy-Item .env.example .env
+.\run_windows.bat
 ```
 
-Open http://127.0.0.1:8765. See the [Turkish documentation](README.md), [architecture](docs/ARCHITECTURE.md), [platform integrations](docs/PLATFORM-INTEGRATIONS.md) and [changelog](CHANGELOG.md).
+Open **http://127.0.0.1:8765**.
 
-Only use and republish media you have rights to use. OAuth publication requires platform approval and explicit user confirmation.
+Ollama and Whisper models may be downloaded on first use. Once configured, local workflows can run offline; OAuth and platform publishing integrations still require connectivity.
 
+## PWA installation
 
-## Contributing and security
+Install from Chrome or Edge over HTTPS or localhost. On iOS, use Safari → Share → Add to Home Screen. Offline caching covers the app shell only; the backend and local AI services must remain available for processing. The Windows launcher binds to `127.0.0.1` by default.
 
-- [Contribution guide](CONTRIBUTING.md)
+## Security and privacy
+
+- Local-first AI and media processing.
+- OAuth credentials and tokens are stored in an encrypted vault.
+- Never commit `.env`, `.oauth.key`, token vaults, `settings.local.json` or private workspace data.
+- Publishing requires user approval and remains subject to platform policies.
+- Import only media you have the right to use.
+
+## Project structure
+
+```text
+app/                 FastAPI application, AI and media logic
+web/                 Web UI, styles and client code
+docs/                Architecture, integrations, demos and visuals
+docs/assets/         Product visuals, screenshots and demo media
+workspace/           Local workspace and generated outputs
+.github/workflows/   CI workflows
+run_windows.bat      Windows launcher
+requirements.txt     Python dependencies
+```
+
+## Contributing and documentation
+
+- [Contributing guide](CONTRIBUTING.md)
 - [Security policy](SECURITY.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [Platform integrations](docs/PLATFORM-INTEGRATIONS.md)
+- [AI agents research](docs/AI-AGENTS-RESEARCH.md)
+- [Changelog](CHANGELOG.md)
 - [Report a bug](https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO/issues/new?template=bug_report.yml)
-- [Request a feature](https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO/issues/new?template=feature_request.yml)
 
-## Licensing
+## License
 
-- **Community Edition:** The existing repository source remains under the [MIT License](LICENSE), including the rights granted for commercial use.
-- **Enterprise / Commercial:** Separately identified commercial modules require a signed commercial agreement. This does not narrow rights already granted to MIT-licensed code.
-- See the [licensing model](LICENSING.md) and the [commercial agreement template](LICENSE-COMMERCIAL-TEMPLATE.md). The template is not an executed license and requires legal review.
-
-
-## Story-flow video format
-
-In addition to the highlight recap, the Studio now offers a **Story flow** format. It structures timestamped source speech into five editorial beats: **Topic → Introduction → Development → Conclusion → Closing/CTA**. Chapter labels are burned into the vertical video while original speech captions keep their timing. If the local model returns incomplete beats, a transcript-timestamp fallback is used; unsupported facts or quotes are never invented.
-
-[Watch a real local-Ollama story-flow sample](docs/assets/demo-story-flow.mp4) · [Chapter-label preview](docs/assets/demo-story-flow-frame.png)
-
-
-## Documentary narration format
-
-The Studio adds a **Documentary narration** mode alongside Smart recap and Story flow. It structures source-timestamped footage into **Topic -> Strong opening -> Background -> Chronological development -> Findings -> Conclusion -> Closing**. The local model must ground every chapter in the transcript; unsupported dates, quotations, facts and causal claims are not invented. An incomplete model response falls back to a transcript-based timeline. The result is rendered as a separate `documentary_video.mp4`.
-
-## Educational and product video formats
-
-**Educational video** creates a structured lesson: learning objective, introduction, core concepts, step-by-step explanation, practical example, recap and mini-quiz. **Product presentation** follows need, product introduction, features, benefits, differentiators, evidence and CTA. They export separately as `education_video.mp4` and `product_video.mp4`. Both use source timestamps and transcript-grounded content; unsupported product features, prices, reviews and guarantees are never invented. Documentary narration remains a separate seven-chapter mode.
+The Community Edition source is distributed under the [MIT License](LICENSE). See [LICENSING.md](LICENSING.md) for separately licensed commercial modules.
