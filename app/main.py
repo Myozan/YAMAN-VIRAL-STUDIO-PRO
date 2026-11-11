@@ -193,7 +193,7 @@ class PerformanceRequest(BaseModel):
 class SummaryRequest(BaseModel):
     job_id: str
     target_seconds: int = Field(default=90, ge=30, le=180)
-    format: str = Field(default="smart", pattern="^(smart|story|documentary)$")
+    format: str = Field(default="smart", pattern="^(smart|story|documentary|education|product)$")
 
 
 class TeamRequest(BaseModel):
@@ -959,6 +959,8 @@ def media_library():
                 ("summary_video.mp4", "summary", "summary", "Akıllı Video Özeti"),
                 ("story_video.mp4", "story", "story", "Hikâye Akışı"),
                 ("documentary_video.mp4", "documentary", "documentary", "Belgesel Anlatımı"),
+                ("education_video.mp4", "education", "education", "Eğitim Videosu"),
+                ("product_video.mp4", "product", "product", "Ürün Tanıtımı"),
             ):
                 path = folder / filename
                 if path.is_file():
@@ -1149,6 +1151,29 @@ def fallback_documentary_moments(segments: list[dict], duration: float, target_s
     return output if len(output) == len(labels) else fallback_story_moments(segments, duration, target_seconds)
 
 
+def fallback_structured_moments(segments: list[dict], duration: float, target_seconds: int, labels: list[str]) -> list[dict]:
+    """Create chronological, transcript-grounded chapters for structured video formats."""
+    usable = [x for x in segments if str(x.get("text", "")).strip()]
+    if not usable:
+        return fallback_summary_moments(segments, duration, target_seconds)
+    count = len(labels)
+    window = duration / count
+    if window < 4:
+        return fallback_story_moments(segments, duration, target_seconds)
+    desired = min(22.0, max(4.0, target_seconds / count))
+    output = []
+    for index, label in enumerate(labels):
+        left, right = index * window, (index + 1) * window
+        candidates = [x for x in usable if left <= (float(x.get("start", 0)) + float(x.get("end", 0))) / 2 < right]
+        segment = candidates[0] if candidates else min(usable, key=lambda x: abs((float(x.get("start", 0)) + float(x.get("end", 0))) / 2 - (left + right) / 2))
+        start = max(left, min(float(segment.get("start", left)), right - 4))
+        end = min(right, max(float(segment.get("end", start)), start + min(desired, window)))
+        if end - start >= 4:
+            output.append({"start": round(start, 2), "end": round(end, 2), "section": label,
+                           "reason": str(segment.get("text", label)).strip()[:200]})
+    return output if len(output) == count else fallback_story_moments(segments, duration, target_seconds)
+
+
 def build_summary_moments(job: dict, target_seconds: int, format: str = "smart") -> dict:
     """Build either a highlight recap or a structured topic-to-conclusion story."""
     segments = job.get("segments", [])
@@ -1161,33 +1186,48 @@ def build_summary_moments(job: dict, target_seconds: int, format: str = "smart")
         lines = transcript.splitlines()
         stride = max(1, len(lines) // 90)
         transcript = "\n".join(lines[::stride])[:8500]
-    is_story = format in ("story", "documentary")
+    format_sections = {
+        "story": ["Konu", "Giriş", "Gelişme", "Sonuç", "Kapanış"],
+        "documentary": ["Konu", "Güçlü Açılış", "Arka Plan", "Kronolojik Gelişme", "Bulgular", "Sonuç", "Kapanış"],
+        "education": ["Öğrenme Hedefi", "Konuya Giriş", "Temel Kavramlar", "Adım Adım Anlatım", "Uygulama Örneği", "Özet", "Mini Test ve Kapanış"],
+        "product": ["İhtiyaç", "Ürün Tanıtımı", "Temel Özellikler", "Fayda ve Kullanım", "Fark Yaratan Detay", "Güven ve Kanıt", "Çağrı / CTA"],
+    }
+    is_story = format in format_sections
     is_documentary = format == "documentary"
-    narrative_sections = (["Konu", "Güçlü Açılış", "Arka Plan", "Kronolojik Gelişme", "Bulgular", "Sonuç", "Kapanış"]
-                          if is_documentary else ["Konu", "Giriş", "Gelişme", "Sonuç", "Kapanış"])
+    is_education = format == "education"
+    is_product = format == "product"
+    narrative_sections = format_sections.get(format, [])
+    format_labels = {"smart": "Akıllı Özet", "story": "Hikâye Akışı", "documentary": "Belgesel Anlatımı", "education": "Eğitim Videosu", "product": "Ürün Tanıtımı"}
     if is_documentary:
         fallback = fallback_documentary_moments(segments, duration, target_seconds)
         instruction = (
             "Create a factual Turkish mini-documentary with exactly these ordered chapters: "
-            "Konu (subject and central question), Güçlü Açılış (documentary hook grounded in the source), "
-            "Arka Plan (time, place and context only when stated in the source), "
-            "Kronolojik Gelişme (events in source order), Bulgular (evidence, examples and key facts), "
-            "Sonuç (what the source supports), Kapanış (concise takeaway and optional CTA). "
-            "Choose source timestamps for every chapter, keep them chronological, use 4-22 second sections, "
-            "never invent dates, facts, quotes or causal links. Return JSON only with title, summary, key_points, "
-            "story_beats:[{section:'Konu|Güçlü Açılış|Arka Plan|Kronolojik Gelişme|Bulgular|Sonuç|Kapanış',start:1,end:12,reason:'...'}], intro and outro."
+            "Konu, Güçlü Açılış, Arka Plan, Kronolojik Gelişme, Bulgular, Sonuç, Kapanış. "
+            "Ground every chapter in the source, keep chronology, and never invent dates, quotes or causal links. "
+            "Return story_beats with the exact Turkish section names and source timestamps."
+        )
+    elif is_education:
+        fallback = fallback_structured_moments(segments, duration, target_seconds, narrative_sections)
+        instruction = (
+            f"Create a clear Turkish educational lesson for a general learner. Follow exactly these ordered chapters: {', '.join(narrative_sections)}. "
+            "Explain concepts progressively, retain source examples, make the practical example concrete, and end with one short comprehension question. "
+            "Do not invent facts or claim a demonstration exists unless visible or stated in the source. "
+            "Return story_beats with section names matching the Turkish chapter labels, source timestamps and concise reasons."
+        )
+    elif is_product:
+        fallback = fallback_structured_moments(segments, duration, target_seconds, narrative_sections)
+        instruction = (
+            f"Create a persuasive but honest Turkish product presentation. Follow exactly these ordered chapters: {', '.join(narrative_sections)}. "
+            "Use only features, specifications, prices, guarantees and evidence explicitly present in the source. "
+            "Never invent performance claims, customer reviews, certifications, prices or warranties. "
+            "Connect each feature to a practical user benefit and end with a natural call to action. "
+            "Return story_beats with section names matching the Turkish chapter labels, source timestamps and concise reasons."
         )
     elif is_story:
         fallback = fallback_story_moments(segments, duration, target_seconds)
         instruction = (
-            "Create a coherent Turkish mini-story with exactly these ordered beats: "
-            "Konu (what this video is about and its central question), Giriş (a compelling opening/hook), "
-            "Gelişme (explanation, evidence, examples or key steps), Sonuç (the conclusion supported by the source), "
-            "Kapanış (a short natural takeaway and optional call to action). "
-            "Choose source timestamps for each beat, keep them chronological, do not fabricate speech, "
-            "and use 5-22 second sections. Return JSON only with title, summary, key_points, "
-            "story_beats:[{section:'Konu|Giriş|Gelişme|Sonuç|Kapanış',start:1,end:12,reason:'...'}], "
-            "intro and outro. Each beat must be grounded in the timestamped transcript."
+            f"Create a coherent Turkish mini-story with exactly these ordered beats: {', '.join(narrative_sections)}. Choose source timestamps, keep chronology, do not fabricate speech. "
+            "Return story_beats with exact Turkish section names, timestamps and concise reasons."
         )
     else:
         fallback = fallback_summary_moments(segments, duration, target_seconds)
@@ -1204,7 +1244,7 @@ def build_summary_moments(job: dict, target_seconds: int, format: str = "smart")
             + instruction + f" Keep total selected duration close to {target_seconds} seconds without exceeding it. "
             + "Transcript:\n" + transcript
         )
-        data = llm_json(prompt, timeout=180, num_predict=1024 if is_story else 768)
+        data = llm_json(prompt, timeout=180, num_predict=1280 if is_story else 768)
         if not isinstance(data, dict):
             data = {}
     except Exception:
@@ -1285,17 +1325,18 @@ def build_summary_moments(job: dict, target_seconds: int, format: str = "smart")
             remaining -= length
     moments = selected or fallback[:1]
     selected_duration = sum(x["end"] - x["start"] for x in moments)
-    title = str(data.get("title") or ("Belgesel Anlatımı" if is_documentary else ("Konu · Giriş · Gelişme · Sonuç" if is_story else "Videonun kısa özeti")))[:100]
+    title = str(data.get("title") or format_labels.get(format, "Video"))[:100]
     summary = str(data.get("summary") or "Video içindeki önemli konuşma bölümleri seçilerek kısa bir akış oluşturuldu.")[:1500]
     key_points = data.get("key_points")
     if not isinstance(key_points, list) or not key_points:
         key_points = [str(x.get("reason", "Önemli bölüm")) for x in moments[:5]]
     story_beats = ([{"section": x.get("section", "Gelişme"), "start": x["start"], "end": x["end"],
                      "reason": x.get("reason", "")} for x in moments] if is_story else [])
+    default_outros = {"education": "Review the mini-quiz to reinforce what you learned.", "product": "Explore the product details to learn more.", "documentary": "Follow for more source-grounded stories.", "story": "Follow for the next chapter."}
     return {"title": title, "summary": summary, "key_points": [str(x)[:220] for x in key_points[:6]],
             "intro": str(data.get("intro") or title)[:150],
-            "outro": str(data.get("outro") or "İzlediğin için teşekkürler.")[:150],
-            "format": format, "format_label": "Belgesel Anlatımı" if is_documentary else ("Hikâye Akışı" if is_story else "Akıllı özet"),
+            "outro": str(data.get("outro") or default_outros.get(format, "Thanks for watching."))[:150],
+            "format": format, "format_label": format_labels.get(format, "Akıllı özet"),
             "story_beats": story_beats, "moments": moments,
             "method": "local Ollama" if data else "transcript fallback"}
 
@@ -1307,7 +1348,7 @@ def render_summary_video(job: dict, summary: dict, task_id: str) -> Path:
     if not source.is_file():
         raise RuntimeError("\u00d6zet video kaynak dosyas\u0131 bulunamad\u0131.")
     moments, parts, mapped = summary["moments"], [], []
-    prefix = "documentary" if summary.get("format") == "documentary" else ("story" if summary.get("format") == "story" else "summary")
+    prefix = {"documentary": "documentary", "story": "story", "education": "education", "product": "product"}.get(summary.get("format"), "summary")
     timeline = 0.0
     for index, moment in enumerate(moments, 1):
         start, length = float(moment["start"]), float(moment["end"]) - float(moment["start"])
@@ -1342,17 +1383,17 @@ def render_summary_video(job: dict, summary: dict, task_id: str) -> Path:
     ass = folder / f"{prefix}_video.ass"
     create_ass(mapped, {"start": 0.0, "end": timeline, "duration": timeline}, ass, 280)
     with ass.open("a", encoding="utf-8") as handle:
-        if summary.get("format") == "story":
+        if summary.get("format") in ("story", "documentary", "education", "product"):
             cursor = 0.0
             for moment in moments:
                 label = str(moment.get("section", "Gelişme"))
                 handle.write(f"Dialogue: 0,{ass_time(cursor)},{ass_time(min(timeline,cursor+2.8))},Viral,,0,0,300,,{{\\an8\\fs62\\bord5}}{ass_escape(label.upper())}\n")
                 cursor += float(moment["end"]) - float(moment["start"])
-        if summary.get("format") != "story":
+        if summary.get("format") == "smart":
             handle.write(f"Dialogue: 1,0:00:00.00,{ass_time(min(4.0,timeline))},Viral,,0,0,300,,{{\\an8\\fs76\\bord5}}{ass_escape(summary['title'])}\n")
         if timeline > 5:
             handle.write(f"Dialogue: 1,{ass_time(max(0,timeline-4))},{ass_time(timeline)},Viral,,0,0,300,,{{\\an8\\fs64\\bord5}}{ass_escape(summary['outro'])}\n")
-    output = folder / ("documentary_video.mp4" if summary.get("format") == "documentary" else ("story_video.mp4" if summary.get("format") == "story" else "summary_video.mp4"))
+    output = folder / {"documentary": "documentary_video.mp4", "story": "story_video.mp4", "education": "education_video.mp4", "product": "product_video.mp4"}.get(summary.get("format"), "summary_video.mp4")
     command(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-i", str(joined),
              "-vf", f"ass='{escape_filter_path(ass)}'", "-map", "0:v:0", "-map", "0:a?",
              "-c:v", "libx264", "-preset", "veryfast", "-crf", "21", "-pix_fmt", "yuv420p",
@@ -1368,16 +1409,16 @@ def render_summary_video(job: dict, summary: dict, task_id: str) -> Path:
 
 def run_summary_task(task_id: str, job_id: str, job: dict, target_seconds: int, format: str = "smart"):
     try:
-        set_task(task_id, 5, "Belgesel anlatimi hazirlaniyor - Yerel AI" if format == "documentary" else ("Hikaye akisi hazirlaniyor - Yerel AI" if format == "story" else "Video ozeti hazirlaniyor - Yerel AI"))
+        set_task(task_id, 5, f"{ {'documentary': 'Belgesel anlatimi', 'education': 'Egitim videosu', 'product': 'Urun tanitimi', 'story': 'Hikaye akisi'}.get(format, 'Video ozeti')} hazirlaniyor - Yerel AI")
         summary = build_summary_moments(job, target_seconds, format)
-        set_task(task_id, 38, "Belgesel bolumleri siralandi - Video hazirlaniyor" if format == "documentary" else ("Konu, giris, gelisme, sonuc ve kapanis siralandi - Video hazirlaniyor" if format == "story" else "Onemli anlar secildi - Ozet videosu hazirlaniyor"),
+        set_task(task_id, 38, f"{ {'documentary': 'Belgesel bolumleri', 'education': 'Egitim bolumleri', 'product': 'Urun tanitim bolumleri', 'story': 'Hikaye bolumleri'}.get(format, 'Onemli anlar')} siralandi - Video hazirlaniyor",
                  summary=summary, total_moments=len(summary["moments"]))
         output = render_summary_video(job, summary, task_id)
         summary["output"] = {"file": f"/workspace/{job_id}/{output.name}", "filename": output.name,
                              "size_mb": round(output.stat().st_size/(1024*1024),2),
                              "duration_seconds": round(sum(float(x["end"])-float(x["start"]) for x in summary["moments"]),1)}
         (Path(job["folder"])/"summary.json").write_text(json.dumps(summary,ensure_ascii=False,indent=2),encoding="utf-8")
-        set_task(task_id,100,"Belgesel anlatimi videosu hazir" if format == "documentary" else ("Hikaye akisi videosu hazir" if format == "story" else "Akilli ozet videosu hazir"),"completed",result=summary)
+        set_task(task_id,100,f"{ {'documentary': 'Belgesel anlatimi', 'education': 'Egitim videosu', 'product': 'Urun tanitimi', 'story': 'Hikaye akisi'}.get(format, 'Akilli ozet')} videosu hazir","completed",result=summary)
     except Exception as exc:
         set_task(task_id,100,"Ozet video olusturulamadi","failed",error=str(exc)[:1000])
 

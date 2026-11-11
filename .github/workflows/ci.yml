@@ -46,8 +46,14 @@ jobs:
           grep -q 'summaryFormat' web/index.html
           grep -q 'summaryFormat' web/app.js
           grep -q 'documentary' app/main.py
+          grep -q 'education' app/main.py
+          grep -q 'product' app/main.py
           grep -q 'value="documentary"' web/index.html
+          grep -q 'value="education"' web/index.html
+          grep -q 'value="product"' web/index.html
           grep -q 'documentary_video.mp4' app/main.py
+          grep -q 'education_video.mp4' app/main.py
+          grep -q 'product_video.mp4' app/main.py
           python -c "import json; json.load(open('web/manifest.webmanifest', encoding='utf-8'))"
       - name: Validate JavaScript syntax
         run: |

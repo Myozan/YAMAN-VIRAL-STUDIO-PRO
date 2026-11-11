@@ -1,3 +1,15 @@
+## [1.5.5] - 2026-11-11
+
+### Added
+- Educational video format with learning objective, introduction, concepts, step-by-step explanation, practical example, recap and mini-quiz.
+- Product presentation format with need, product introduction, features, benefits, differentiators, evidence and CTA.
+- Separate `education_video.mp4` and `product_video.mp4` exports and media-library entries.
+- Source-grounded chapter selection and transcript fallback for both formats; unsupported product claims, prices, reviews and guarantees are not invented.
+- Documentary chapter labels are burned into the rendered video, alongside Story, Education and Product chapter labels.
+
+### Improved
+- PWA shell and asset cache bumped to v1.5.5.
+
 ## [1.5.4] - 2026-11-11
 
 ### Added

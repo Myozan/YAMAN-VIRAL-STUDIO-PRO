@@ -210,3 +210,7 @@ Akıllı özet moduna ek olarak artık **Hikâye akışı** seçilebilir. Yerel 
 5. **Kapanış:** Kısa özet ve uygun çağrı (CTA)
 
 Her bölüm videoda bölüm başlığı olarak gösterilir; konuşma altyazıları zamanlamasını korur. Model yeterli bölüm üretemezse sistem, transkript zamanlarına dayalı yedek bölümleme kullanır. Kaynakta bulunmayan bilgi veya alıntı uydurulmaz.
+
+## Egitim Videosu ve Urun Tanitimi
+
+**Egitim Videosu** modu; ogrenme hedefi, konuya giris, temel kavramlar, adim adim anlatim, uygulama ornegi, ozet ve mini test bolumleriyle ayri `education_video.mp4` uretir. **Urun Tanitimi** modu; ihtiyac, urun, ozellikler, faydalar, fark yaratan detaylar, kanit ve CTA akisini ayri `product_video.mp4` olarak olusturur. Her iki mod da yalnizca kaynak transkriptte bulunan bilgi ve zaman damgalarini kullanir; olmayan ozellik, fiyat, yorum, garanti veya iddia uydurmaz. Belgesel Anlatimi da yedi bolumlu ayri format olarak korunmustur.

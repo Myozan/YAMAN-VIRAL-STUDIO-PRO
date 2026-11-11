@@ -90,3 +90,7 @@ In addition to the highlight recap, the Studio now offers a **Story flow** forma
 ## Documentary narration format
 
 The Studio adds a **Documentary narration** mode alongside Smart recap and Story flow. It structures source-timestamped footage into **Topic -> Strong opening -> Background -> Chronological development -> Findings -> Conclusion -> Closing**. The local model must ground every chapter in the transcript; unsupported dates, quotations, facts and causal claims are not invented. An incomplete model response falls back to a transcript-based timeline. The result is rendered as a separate `documentary_video.mp4`.
+
+## Educational and product video formats
+
+**Educational video** creates a structured lesson: learning objective, introduction, core concepts, step-by-step explanation, practical example, recap and mini-quiz. **Product presentation** follows need, product introduction, features, benefits, differentiators, evidence and CTA. They export separately as `education_video.mp4` and `product_video.mp4`. Both use source timestamps and transcript-grounded content; unsupported product features, prices, reviews and guarantees are never invented. Documentary narration remains a separate seven-chapter mode.
