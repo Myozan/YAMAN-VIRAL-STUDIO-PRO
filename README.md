@@ -77,7 +77,7 @@ Yerel içerik zekâsı için [Ollama](https://ollama.com/download/windows) kurun
 
 **MOBİL ÇALIŞMA ALANI**
 
-<p align="center"><img src="docs/assets/screenshot-live-mobile-framed.png" alt="YAMAN VIRAL STUDIO PRO v1.8.0 ? true 390px mobile viewport" width="390"></p>
+<p align="center"><img src="docs/assets/screenshot-live-mobile-framed.png" alt="YAMAN VIRAL STUDIO PRO v1.8.0 gerçek mobil görünümü, 390 piksel viewport" width="390"></p>
 
 Arayüz; daraltılabilir ikon menüsü, mobil açılır navigasyon, hızlı tema değiştirme ve üretim hattını öne çıkaran ana sayfa içerir.
 
