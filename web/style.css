@@ -406,3 +406,11 @@ button,a{touch-action:manipulation}
   nav a,button,.secondary,.actions a{min-height:44px}
   input,select{font-size:16px}
 }
+
+
+/* PWA install affordance */
+.install-app-button{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:36px;padding:8px 11px;border:1px solid rgba(103,234,212,.28);border-radius:9px;background:rgba(103,234,212,.1);color:#a3fff0;font-size:10px;font-weight:800;white-space:nowrap}
+.install-app-button[hidden]{display:none!important}
+.install-app-button:hover{background:rgba(103,234,212,.17)}
+@media(max-width:760px){.install-app-button{min-height:38px;padding:7px 9px;font-size:9px}.install-app-button span{display:inline}}
+@media(max-width:390px){.install-app-button span{display:none}}
