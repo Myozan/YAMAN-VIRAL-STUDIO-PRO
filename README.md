@@ -132,7 +132,7 @@ requirements.txt     Python bağımlılıkları
 
 ## 📚 Dokümantasyon
 
-- [Wiki / Teknik dokümantasyon](docs/wiki/Home.md)
+- [GitHub Wiki](https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO/wiki) · [Wiki kaynak dosyaları](docs/wiki/Home.md)
 - [Kurulum ve hızlı başlangıç](docs/wiki/Installation.md)
 - [Mimari](docs/ARCHITECTURE.md)
 - [API Reference](docs/wiki/API-Reference.md)
