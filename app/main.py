@@ -19,7 +19,7 @@ from app.learning import ViralLearningEngine
 from app.agents import AGENT_CATALOG, run_agent_team
 from app.framing import render_face_tracked
 from app import autopilot as autopilot_store
-from app import content_factory
+from app import content_factory, visual_factory
 
 # Windows CUDA runtime DLLs are shipped inside this project's isolated venv.
 # Keep AddDllDirectory handles alive so CTranslate2 can resolve cuBLAS/cuDNN.
@@ -80,7 +80,7 @@ if _PROFILE_FILE.exists():
                 PLATFORM_PROFILES[key].update({k: value[k] for k in ("width", "height", "max_seconds") if k in value})
     except Exception:
         pass
-app = FastAPI(title="YAMAN VIRAL STUDIO PRO", version="1.5.9")
+app = FastAPI(title="YAMAN VIRAL STUDIO PRO", version="1.6.0")
 app.mount("/assets", StaticFiles(directory=BASE / "web"), name="assets")
 
 @app.get("/sw.js", include_in_schema=False)
@@ -235,6 +235,10 @@ class CompleteVideoRequest(BaseModel):
     voice: str = Field(default="tr-TR-EmelNeural", max_length=80)
     captions: bool = True
     auto_trend: bool = True
+    style: str = Field(default="shorts", pattern="^(shorts|trailer)$")
+    visual_provider: str = Field(default="motion", pattern="^(motion|runway|pexels)$")
+    shot_count: int = Field(default=5, ge=2, le=8)
+    generate_music: bool = False
 
 class VoiceoverRequest(BaseModel):
     text: str = Field(min_length=10, max_length=12000)
@@ -727,6 +731,43 @@ def save_oauth_app(req: OAuthAppRequest):
     temp=OAUTH_APP_FILE.with_suffix(".tmp");temp.write_bytes(encrypted);temp.replace(OAUTH_APP_FILE)
     return {"saved":True,"platform":req.platform}
 
+VISUAL_PROVIDER_FILE = WORK / "visual_providers.enc"
+
+def visual_provider_config():
+    if not VISUAL_PROVIDER_FILE.exists(): return {}
+    try: return json.loads(oauth_fernet().decrypt(VISUAL_PROVIDER_FILE.read_bytes()).decode("utf-8"))
+    except Exception as exc: raise RuntimeError("AI visual provider vault cannot be decrypted") from exc
+
+@app.get("/api/visual-providers")
+def get_visual_provider_status():
+    saved=visual_provider_config()
+    return {"runway_configured":bool(os.getenv("RUNWAY_API_KEY") or saved.get("runway_api_key")),
+            "pexels_configured":bool(os.getenv("PEXELS_API_KEY") or saved.get("pexels_api_key")),
+            "runway_key_source":"environment" if os.getenv("RUNWAY_API_KEY") else ("encrypted vault" if saved.get("runway_api_key") else "not configured"),
+            "pexels_key_source":"environment" if os.getenv("PEXELS_API_KEY") else ("encrypted vault" if saved.get("pexels_api_key") else "not configured"),
+            "comfyui_url":os.getenv("COMFYUI_URL","http://127.0.0.1:8188"),
+            "gpu_note":"Bu bilgisayardaki GTX 1650 4 GB VRAM, modern video diffusion modelleri için sınırlıdır. Gerçek AI video üretimi için Runway bulut motoru önerilir."}
+
+class VisualProviderRequest(BaseModel):
+    runway_api_key: str = Field(default="", max_length=500)
+    pexels_api_key: str = Field(default="", max_length=500)
+
+@app.post("/api/visual-providers")
+def save_visual_provider_config(req: VisualProviderRequest):
+    saved=visual_provider_config()
+    for key in ("runway_api_key","pexels_api_key"):
+        value=getattr(req,key).strip()
+        if value: saved[key]=value
+    encrypted=oauth_fernet().encrypt(json.dumps(saved).encode("utf-8"))
+    temp=VISUAL_PROVIDER_FILE.with_suffix(".tmp");temp.write_bytes(encrypted);temp.replace(VISUAL_PROVIDER_FILE)
+    return {"saved":True,"runway_configured":bool(saved.get("runway_api_key") or os.getenv("RUNWAY_API_KEY")),
+            "pexels_configured":bool(saved.get("pexels_api_key") or os.getenv("PEXELS_API_KEY"))}
+
+def _visual_provider_keys():
+    saved=visual_provider_config()
+    return (os.getenv("RUNWAY_API_KEY") or saved.get("runway_api_key",""),
+            os.getenv("PEXELS_API_KEY") or saved.get("pexels_api_key",""))
+
 def oauth_redirect_uri(request,platform_name):
     base=os.getenv("YAMAN_PUBLIC_BASE_URL",str(request.base_url).rstrip("/")).rstrip("/")
     return base+f"/api/oauth/callback/{platform_name}"
@@ -1017,6 +1058,18 @@ def media_library():
                                       "modified_at": stat.st_mtime})
                     except OSError:
                         pass
+    cinematic_root = WORK / "cinematic-content"
+    if cinematic_root.is_dir():
+        for folder in cinematic_root.iterdir():
+            if not folder.is_dir(): continue
+            for path in list(folder.glob("cinematic_*.mp4")):
+                try:
+                    stat=path.stat()
+                    items.append({"job_id":folder.name,"clip_id":"cinematic","platform":"youtube",
+                                  "label":"AI Fragman / Sinematik Shorts","filename":path.name,
+                                  "file":f"/workspace/cinematic-content/{folder.name}/{path.name}",
+                                  "size_mb":round(stat.st_size/(1024*1024),2),"modified_at":stat.st_mtime})
+                except OSError: pass
     generated_root = WORK / "autopilot-content"
     if generated_root.is_dir():
         for folder in generated_root.iterdir():
@@ -1040,7 +1093,7 @@ def get_settings():
     return {"ollama_url": OLLAMA_URL, "ollama_model": OLLAMA_MODEL,
             "whisper_model": WHISPER_MODEL, "whisper_device": WHISPER_DEVICE,
             "available_whisper_models": ["tiny", "base", "small", "medium", "large-v3"],
-            "local_only": True}
+            "local_only": False, "local_first": True, "optional_cloud_providers": ["Runway", "Pexels", "Edge TTS"]}
 
 @app.post("/api/settings")
 def update_settings(req: SettingsRequest):
@@ -1808,6 +1861,71 @@ def render_generated_content_video(folder: Path, title: str, scenes: list[dict],
     return output
 
 
+
+def render_cinematic_video(folder: Path, title: str, scenes: list[dict], voice: Path,
+                           clips: list[Path], music: Path | None = None, trailer: bool = False) -> Path:
+    """Normalize AI/stock B-roll, add cinematic title cards, narration and optional score."""
+    require_binary("ffmpeg"); require_binary("ffprobe")
+    from PIL import Image, ImageDraw, ImageFont
+    probe=subprocess.run(["ffprobe","-v","error","-show_entries","format=duration","-of","default=noprint_wrappers=1:nokey=1",str(voice)],capture_output=True,text=True)
+    if probe.returncode: raise RuntimeError("Ses süresi okunamadı: "+probe.stderr[-400:])
+    total=max(5.0,float(probe.stdout.strip()))
+    if not clips: raise RuntimeError("Sahne B-roll klipleri bulunamadı.")
+    normalized=[];per_clip=total/len(clips)
+    for idx,source in enumerate(clips):
+        target=folder/f"normalized_{idx+1:02d}.mp4"
+        cmd=["ffmpeg","-hide_banner","-loglevel","error","-y","-stream_loop","-1","-i",str(source),"-t",f"{per_clip:.3f}","-vf","scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,fps=30,setsar=1,format=yuv420p","-an","-c:v","libx264","-preset","veryfast","-crf","20","-movflags","+faststart",str(target)]
+        run=subprocess.run(cmd,capture_output=True,text=True)
+        if run.returncode: raise RuntimeError("B-roll dikey render hatası: "+run.stderr[-700:])
+        normalized.append(target)
+    concat=folder/"cinematic_scenes.txt"
+    concat.write_text("".join("file '"+x.name+"'\n" for x in normalized),encoding="utf-8")
+    joined=folder/"cinematic_broll.mp4"
+    run=subprocess.run(["ffmpeg","-hide_banner","-loglevel","error","-y","-f","concat","-safe","0","-i",str(concat),"-c","copy",str(joined)],capture_output=True,text=True)
+    if run.returncode: raise RuntimeError("Sahne montajı başarısız: "+run.stderr[-800:])
+    font_path=Path(r"C:\Windows\Fonts\arial.ttf")
+    def f(size): return ImageFont.truetype(str(font_path),size) if font_path.exists() else ImageFont.load_default()
+    cards=[]
+    labels=[("YAMAN ORIGINAL",title[:80]),("","COMING SOON" if trailer else "WATCH NOW")]
+    for idx,(eyebrow,headline) in enumerate(labels):
+        im=Image.new("RGB",(1080,1920),(7,10,20));d=ImageDraw.Draw(im)
+        for radius in (360,560,780):
+            d.ellipse((540-radius,700-radius,540+radius,700+radius),outline=(44,90+idx*25,112+idx*25),width=4)
+        d.rectangle((80,130,1000,1790),outline=(170,195,220),width=2)
+        d.text((120,240),eyebrow,font=f(30),fill=(110,224,207))
+        words=headline.split();lines=[];line=""
+        for word in words:
+            candidate=(line+" "+word).strip()
+            if d.textbbox((0,0),candidate,font=f(76))[2] < 820: line=candidate
+            else:
+                if line: lines.append(line)
+                line=word
+        if line: lines.append(line)
+        y=790 if idx==0 else 900
+        for text_line in lines[:5]:
+            d.text((120,y),text_line,font=f(76),fill=(248,250,255));y+=105
+        d.text((120,1650),"YAMAN VIRAL STUDIO PRO",font=f(24),fill=(130,150,180))
+        image=folder/f"cinematic_card_{idx+1}.png";im.save(image);im.close()
+        video=folder/f"cinematic_card_{idx+1}.mp4";seconds=2.2 if idx==0 else 2.8
+        run=subprocess.run(["ffmpeg","-hide_banner","-loglevel","error","-y","-loop","1","-i",str(image),"-t",str(seconds),"-vf",f"zoompan=z='min(zoom+0.0004,1.04)':d={int(seconds*30)}:s=1080x1920:fps=30,format=yuv420p","-an","-c:v","libx264","-preset","veryfast","-crf","22",str(video)],capture_output=True,text=True)
+        if run.returncode: raise RuntimeError("Fragman başlık kartı oluşturulamadı: "+run.stderr[-500:])
+        cards.append(video)
+    final_parts=[cards[0],joined,cards[1]]
+    listfile=folder/"final_cinematic_list.txt"
+    listfile.write_text("".join("file '"+x.name+"'\n" for x in final_parts),encoding="utf-8")
+    video_only=folder/"cinematic_video_only.mp4"
+    run=subprocess.run(["ffmpeg","-hide_banner","-loglevel","error","-y","-f","concat","-safe","0","-i",str(listfile),"-c","copy",str(video_only)],capture_output=True,text=True)
+    if run.returncode: raise RuntimeError("Final fragman birleştirilemedi: "+run.stderr[-500:])
+    output=folder/"cinematic_trailer.mp4" if trailer else folder/"cinematic_shorts.mp4"
+    if music and music.is_file():
+        cmd=["ffmpeg","-hide_banner","-loglevel","error","-y","-i",str(video_only),"-i",str(voice),"-stream_loop","-1","-i",str(music),"-filter_complex","[1:a]volume=1.0,apad=pad_dur=5[voice];[2:a]volume=0.16,afade=t=in:st=0:d=1.2,afade=t=out:st="+str(max(1,total-2))+":d=2[music];[voice][music]amix=inputs=2:duration=first:dropout_transition=2[a]","-map","0:v:0","-map","[a]","-c:v","copy","-c:a","aac","-b:a","192k","-shortest","-movflags","+faststart",str(output)]
+    else:
+        cmd=["ffmpeg","-hide_banner","-loglevel","error","-y","-i",str(video_only),"-i",str(voice),"-filter:a","apad=pad_dur=5","-map","0:v:0","-map","1:a:0","-c:v","copy","-c:a","aac","-b:a","192k","-shortest","-movflags","+faststart",str(output)]
+    run=subprocess.run(cmd,capture_output=True,text=True)
+    if run.returncode or not output.is_file(): raise RuntimeError("Final video ses miksajı başarısız: "+run.stderr[-900:])
+    return output
+
+
 @app.get("/api/content/voices")
 def content_voice_catalog():
     return {"voices": content_factory.VOICE_CATALOG, "engine":"edge-tts", "mode":"online-neural"}
@@ -1849,6 +1967,72 @@ def content_voiceover(req: VoiceoverRequest):
     except Exception as exc:
         output.unlink(missing_ok=True)
         raise HTTPException(502, f"Seslendirme oluşturulamadı: {str(exc)[:240]}")
+
+
+
+@app.post("/api/content/create-cinematic")
+def content_create_cinematic(req: CompleteVideoRequest):
+    folder=WORK/"cinematic-content";folder.mkdir(parents=True,exist_ok=True)
+    item_id=uuid.uuid4().hex[:12];work=folder/item_id;work.mkdir(parents=True,exist_ok=True)
+    runway_key,pexels_key=_visual_provider_keys()
+    if req.visual_provider=="runway" and not runway_key:
+        raise HTTPException(400,"Gerçek AI sahne üretimi için Ayarlar > AI Görsel Motorları bölümüne Runway API anahtarını kaydedin.")
+    if req.visual_provider=="pexels" and not pexels_key:
+        raise HTTPException(400,"Sahne B-roll için Pexels API anahtarını Ayarlar > AI Görsel Motorları bölümüne kaydedin.")
+    if req.generate_music and req.visual_provider!="runway":
+        raise HTTPException(400,"AI müzik üretimi için Runway görsel motorunu seçin.")
+    topic=req.topic.strip();trend_data=None
+    try:
+        if not topic and req.auto_trend:
+            trend_data=content_factory.research_trends(req.niche,req.region,12)
+            if trend_data.get("topics"): topic=trend_data["topics"][0]["title"]
+        if not topic: raise HTTPException(400,"Konu girin veya otomatik trend araştırmasını açın.")
+        style=req.style
+        script=content_factory.generate_script(OLLAMA_URL,OLLAMA_MODEL,req.niche,topic,req.language,req.duration,style,req.shot_count)
+        scenes=script.get("scenes",[])[:req.shot_count]
+        if len(scenes)<2: raise RuntimeError("AI yönetmen yeterli sahne planı oluşturamadı.")
+        voice=work/"narration.mp3";content_factory.create_voiceover(script["script"],req.voice,voice)
+        clips=[];pexels_credits=[];provider=req.visual_provider
+        if provider=="runway":
+            if not runway_key: raise HTTPException(400,"Gerçek AI sahne üretimi için Ayarlar > AI Görsel Motorları bölümüne Runway API anahtarını kaydedin.")
+            client=visual_factory.RunwayClient(runway_key)
+            for index,scene in enumerate(scenes):
+                prompt=str(scene.get("visual_direction") or scene.get("narration") or topic)
+                shot_prompt=("Cinematic vertical 9:16 film still, photorealistic, high production value, no text, no logos, no watermark. "+prompt+". Consistent visual identity, realistic materials, intentional composition, dramatic lighting.")
+                image=client.generate_image(shot_prompt,work/f"ai_scene_{index+1:02d}.png")
+                motion=str(scene.get("camera_motion") or "slow cinematic dolly movement, subtle environmental motion")
+                video_prompt=(prompt+". "+motion+". Cinematic natural movement, coherent subject motion, no cuts, no text or logos.")
+                clips.append(client.animate_image(image,video_prompt,work/f"ai_broll_{index+1:02d}.mp4",seconds=5))
+        elif provider=="pexels":
+            if not pexels_key: raise HTTPException(400,"Sahne B-roll için Pexels API anahtarını Ayarlar > AI Görsel Motorları bölümüne kaydedin.")
+            for index,scene in enumerate(scenes):
+                query=str(scene.get("visual_direction") or scene.get("narration") or topic)
+                found=visual_factory.search_pexels_video(pexels_key,query,work/f"pexels_broll_{index+1:02d}.mp4")
+                clips.append(found["path"])
+                pexels_credits.append({"photographer":found.get("photographer","Pexels contributor"),"page":found.get("page","")})
+            (work/"pexels-attribution.json").write_text(json.dumps({"provider":"Pexels","credits":pexels_credits},ensure_ascii=False,indent=2),encoding="utf-8")
+        else:
+            result=render_generated_content_video(work,script["title"],scenes,voice,req.captions)
+            clips=[result]
+        music=None
+        if req.generate_music and provider=="runway":
+            music=work/"cinematic_score.mp3"
+            mood=("Dark cinematic trailer score, deep orchestral drones, pulsing low strings, rising brass, massive impacts and emotional crescendo, instrumental no vocals" if style=="trailer" else "Modern energetic electronic instrumental background score, uplifting build")
+            client.generate_music(mood,req.duration,music)
+        final_video=render_cinematic_video(work,script["title"],scenes,voice,clips,music,style=="trailer")
+        (work/"script.json").write_text(json.dumps({"id":item_id,"style":style,"topic":topic,**script},ensure_ascii=False,indent=2),encoding="utf-8")
+        (work/"script.md").write_text("# "+script["title"]+"\n\n"+script["script"]+"\n",encoding="utf-8")
+        if trend_data: (work/"trend-report.json").write_text(json.dumps(trend_data,ensure_ascii=False,indent=2),encoding="utf-8")
+        return {"id":item_id,"title":script["title"],"style":style,"video_url":f"/workspace/cinematic-content/{item_id}/{final_video.name}",
+            "audio_url":f"/workspace/cinematic-content/{item_id}/narration.mp3","script_url":f"/workspace/cinematic-content/{item_id}/script.md",
+            "filename":final_video.name,"duration_seconds":round(probe_duration(final_video),1),
+            "size_mb":round(final_video.stat().st_size/(1024*1024),2),"visual_provider":provider,
+            "visuals":[f"/workspace/cinematic-content/{item_id}/{x.name}" for x in clips],"pexels_credits":pexels_credits,
+            "notice":"Runway AI görsel/video/müzik üretimi ücretli sağlayıcı kredisi tüketir. Pexels klipleri stok B-roll'dur, AI üretimi değildir. Motion yerel grafik yedeğidir. Yayın öncesi içerik ve kullanım haklarını kontrol edin."}
+    except HTTPException: raise
+    except visual_factory.VisualProviderError as exc: raise HTTPException(502,str(exc)[:900])
+    except requests.RequestException as exc: raise HTTPException(502,"Görsel üretim servisi bağlantı hatası: "+str(exc)[:500])
+    except Exception as exc: raise HTTPException(500,"Sinematik video üretim hatası: "+str(exc)[:700])
 
 
 @app.post("/api/content/create-video")

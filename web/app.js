@@ -322,7 +322,7 @@ function showPage(name){
  if(name==="projects") loadProjects();
  if(name==="media") loadMediaLibrary();
  if(name==="platforms") loadPlatforms();
- if(name==="settings"){loadSettings();const theme=$("themeSelect");if(theme)theme.value=document.documentElement.dataset.theme||"dark";}
+ if(name==="settings"){loadSettings();loadVisualProviderStatus();const theme=$("themeSelect");if(theme)theme.value=document.documentElement.dataset.theme||"dark";}
   if(name==="content") loadTaskHistory();
  if(name==="autopilot") loadAutopilots();
 }
@@ -638,10 +638,10 @@ $("createCompleteVideo")?.addEventListener("click",async()=>{
  const btn=$("createCompleteVideo"),feedback=$("factoryFeedback"),out=$("factoryOutput");
  btn.disabled=true;btn.textContent="Üretim hazırlanıyor…";feedback.textContent="Trend, senaryo, seslendirme ve sahneler hazırlanıyor. Bu işlem birkaç dakika sürebilir.";out.classList.add("hidden");out.innerHTML="";
  try{
-  const body={niche:$("factoryNiche").value,topic:$("factoryTopic").value.trim(),region:$("factoryRegion").value,language:$("factoryLanguage").value,duration:Number($("factoryDuration").value),voice:$("factoryVoice").value,captions:$("factoryCaptions").checked,auto_trend:$("factoryAutoTrend").checked};
-  const r=await fetch("/api/content/create-video",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  const body={niche:$("factoryNiche").value,topic:$("factoryTopic").value.trim(),region:$("factoryRegion").value,language:$("factoryLanguage").value,duration:Number($("factoryDuration").value),voice:$("factoryVoice").value,captions:$("factoryCaptions").checked,auto_trend:$("factoryAutoTrend").checked,style:$("factoryStyle").value,visual_provider:$("factoryVisualProvider").value,shot_count:Number($("factoryShots").value),generate_music:$("factoryMusic").checked};
+  const r=await fetch("/api/content/create-cinematic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
   const d=await r.json();if(!r.ok)throw new Error(d.detail||"Video üretilemedi");
-  feedback.textContent="Tamamlandı · "+d.duration_seconds+" sn · "+d.size_mb+" MB · "+d.visual_mode;
+  feedback.textContent="Tamamlandı · "+d.duration_seconds+" sn · "+d.size_mb+" MB · "+d.visual_provider+" · "+d.style;
   out.classList.remove("hidden");
   const title=document.createElement("h3");title.textContent=d.title;
   const video=document.createElement("video");video.controls=true;video.playsInline=true;video.src=d.video_url;video.className="factory-preview";
@@ -651,6 +651,31 @@ $("createCompleteVideo")?.addEventListener("click",async()=>{
   const audio=document.createElement("a");audio.href=d.audio_url;audio.className="secondary-link";audio.textContent="MP3 seslendirmeyi indir";
   actions.append(download,script,audio);out.append(title,video,actions);
   if(d.notice){const note=document.createElement("p");note.className="muted";note.textContent=d.notice;out.append(note);}
+  if(d.pexels_credits?.length){const credits=document.createElement("div");credits.className="muted";const label=document.createElement("a");label.href="https://www.pexels.com/";label.target="_blank";label.rel="noopener noreferrer";label.textContent="Video footage provided by Pexels";credits.append(label,document.createTextNode(" · "+d.pexels_credits.map(x=>x.photographer+" ("+x.page+")").join(" · ")));out.append(credits);}
  }catch(e){feedback.textContent="Üretim tamamlanamadı: "+e.message;}
  finally{btn.disabled=false;btn.innerHTML="✦ Senaryo + ses + görseller + MP4 oluştur <span>→</span>";}
+});
+
+
+async function loadVisualProviderStatus(){
+ try{const r=await fetch("/api/visual-providers");const d=await r.json();
+  const a=$("runwayProviderStatus"),b=$("pexelsProviderStatus");
+  if(a)a.textContent=d.runway_configured?"Hazır · "+d.runway_key_source:"API anahtarı gerekli";
+  if(b)b.textContent=d.pexels_configured?"Hazır · "+d.pexels_key_source:"API anahtarı gerekli";
+ }catch(e){const a=$("runwayProviderStatus");if(a)a.textContent="Durum okunamadı";}
+}
+$("saveVisualProviders")?.addEventListener("click",async()=>{
+ const feedback=$("visualProviderFeedback"),btn=$("saveVisualProviders");btn.disabled=true;
+ try{const payload={runway_api_key:$("runwayApiKey").value.trim(),pexels_api_key:$("pexelsApiKey").value.trim()};
+  if(!payload.runway_api_key&&!payload.pexels_api_key)throw new Error("En az bir API anahtarı girin.");
+  const r=await fetch("/api/visual-providers",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+  const d=await r.json();if(!r.ok)throw new Error(d.detail||"Kaydedilemedi.");
+  $("runwayApiKey").value="";$("pexelsApiKey").value="";
+  feedback.textContent="API anahtarları yerel şifreli kasaya kaydedildi.";await loadVisualProviderStatus();
+ }catch(e){feedback.textContent=e.message;}finally{btn.disabled=false;}
+});
+
+$("factoryVisualProvider")?.addEventListener("change",()=>{
+ const music=$("factoryMusic"),provider=$("factoryVisualProvider").value;
+ if(music){music.disabled=provider!=="runway";if(provider!=="runway")music.checked=false;}
 });

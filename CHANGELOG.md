@@ -1,3 +1,18 @@
+## [1.6.0] - 2026-11-11
+
+### Added
+- Cinematic trailer script direction with a multi-shot scene plan, filmable visual prompts, camera movement and three-act pacing.
+- Encrypted Runway and Pexels provider credentials, with environment-variable overrides.
+- Runway image generation and image-to-video B-roll generation, plus optional generated instrumental score.
+- Pexels scene-based stock video search and download with attribution metadata.
+- Cinematic vertical montage renderer with opening/closing title cards, narration, optional score mix and media-library integration.
+
+### Notes
+- Runway image/video/music generation consumes paid provider credits; generation is only started when the user selects the Runway provider.
+- Pexels provides licensed stock footage, not AI-generated video; attribution is surfaced.
+- Local GTX 1650 4 GB VRAM is not a practical target for modern high-quality video diffusion. Local motion-graphics fallback remains available.
+- API credentials are encrypted at rest using the existing local Fernet vault.
+
 ## [1.5.9] - 2026-11-11
 
 ### Added

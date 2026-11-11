@@ -8,7 +8,7 @@ from pathlib import Path
 from urllib.parse import quote_plus
 import requests
 
-USER_AGENT = "YAMAN-VIRAL-STUDIO-PRO/1.5.8 (+local creator research)"
+USER_AGENT = "YAMAN-VIRAL-STUDIO-PRO/1.6.0 (+local creator research)"
 VOICE_CATALOG = {
     "tr-TR-EmelNeural": {"label":"Emel · Türkçe kadın", "language":"tr"},
     "tr-TR-AhmetNeural": {"label":"Ahmet · Türkçe erkek", "language":"tr"},
@@ -59,13 +59,15 @@ def research_trends(niche: str, region: str = "TR", limit: int = 18):
     return {"niche":niche,"region":region,"topics":results[:limit],"sources":list(dict.fromkeys(x["source"] for x in results)),"errors":errors,
             "notice":"Trend RSS sonuçları keşif sinyalidir; resmi izlenme/popülerlik sıralaması değildir. Yayın öncesi kaynakları doğrulayın."}
 
-def generate_script(ollama_url: str, model: str, niche: str, topic: str, language: str="tr", duration: int=60):
+def generate_script(ollama_url: str, model: str, niche: str, topic: str, language: str="tr", duration: int=60, style: str="shorts", shot_count: int=5):
     lang="Turkish" if language=="tr" else "English"
-    prompt=f"""You are a careful short-form video scriptwriter. Write a ready-to-narrate {duration}-second script in {lang}.
+    creative = ("Create a cinematic trailer, not a normal explainer. Build a three-act arc: mysterious cold open, escalating reveals, emotional climax and memorable final title/CTA. Write short punchy narrator lines, deliberate pauses, visual metaphors, varied shot scale, dramatic camera movement, rich atmosphere and sound-design cues in scene metadata. Each scene must have a concrete filmable visual, not abstract text. Avoid unsupported factual claims." if style=="trailer" else "Create a fast, clear vertical short with a powerful first-two-second hook, visual variety, concise narration and a strong payoff.")
+    prompt=f"""You are an award-winning trailer editor and short-form film director. Create a {duration}-second {style} video script in {lang}.
 Channel niche: {niche}
 Chosen topic: {topic}
-Return JSON only with keys: title, hook, script, scenes (array of objects with narration and visual_direction), description, hashtags (array).
-Rules: start with a strong but truthful hook; conversational spoken language; one clear idea; no invented facts, statistics, quotes or claims; if source evidence is missing, phrase uncertainty explicitly; end with a natural CTA; target 2.2-2.5 spoken words per second; narration must be clean text without camera directions.
+Creative direction: {creative}
+Return JSON only with keys: title, hook, script, scenes (exactly {shot_count} objects, each with narration, visual_direction, camera_motion, mood, shot_type), description, hashtags (array).
+Rules: every scene must describe a distinct coherent visual shot; maintain continuity of characters, wardrobe, setting and art direction; write rich image-generation prompts with subject, environment, lighting, lens, composition and camera motion; no text, subtitles, logos or watermarks inside generated imagery; do not imitate a living artist or existing film franchise; no invented facts, statistics, quotes or claims; narration is clean spoken text, without camera directions; match total narration to about {duration} seconds and use natural pauses.
 """
     r=requests.post(f"{ollama_url.rstrip('/')}/api/generate",json={"model":model,"prompt":prompt,"stream":False,"format":"json","think":False,"options":{"num_predict":1300}},timeout=180)
     r.raise_for_status()

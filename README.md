@@ -6,9 +6,9 @@
 
 ### Yerel yapay zekâ destekli video analiz, Shorts üretimi ve çok formatlı içerik stüdyosu
 
-**v1.5.9 · Local-first AI · Windows · PWA**
+**v1.6.0 · Local-first AI · Windows · PWA**
 
-[![Version](https://img.shields.io/badge/version-1.5.9-6478ff?style=for-the-badge)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.6.0-6478ff?style=for-the-badge)](CHANGELOG.md)
 [![CI](https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO/actions/workflows/ci.yml/badge.svg?branch=import%2Fv1.2-source)](https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/API-FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
@@ -77,6 +77,16 @@ Aşağıdaki görseller yerel uygulamanın güncel arayüzünden alınmıştır.
 - **Sistem izleme:** GPU, CPU, RAM ve VRAM metrikleri.
 - **Responsive arayüz:** Masaüstü ve mobil ekranlara uyumlu web arayüzü; PWA kurulumu.
 - **Çok dilli arayüz:** Türkçe, İngilizce, Almanca ve İspanyolca.
+
+## Sinematik fragman ve AI B-roll stüdyosu (v1.6.0)
+
+İçerik üretimi artık Shorts ve fragman yaratıcı modlarını destekler. Fragman modu üç perdeli anlatı, güçlü açılış, yükselen gerilim, final başlık kartı ve sinematik sahne yönergeleri üretir.
+
+- **Runway AI:** Her sahne için gerçek AI görseli ve image-to-video B-roll üretir; opsiyonel sinematik enstrümantal müzik ekler. Runway API anahtarı gerekir ve her üretim sağlayıcı kredisi tüketir.
+- **Pexels B-roll:** Sahne yönergelerine göre stok video bulur ve dikey klip olarak indirir. AI üretimi değildir; içerik üreticisi atfı gerekir.
+- **Yerel Motion:** Ücretsiz yerel hareketli grafik yedeği; gerçek AI video değildir.
+- Runway / Pexels API anahtarları Ayarlar > AI Görsel Motorları bölümünde şifreli kasada saklanır. RUNWAY_API_KEY ve PEXELS_API_KEY ortam değişkenleri de desteklenir.
+- GTX 1650 4 GB VRAM modern video diffusion için yetersiz/çok sınırlıdır; bu nedenle yüksek kaliteli AI video üretimi bulut sağlayıcısına yönlendirilir. Yerel kurgu ve montaj FFmpeg ile yapılır.
 
 ## Tek tıkla sıfırdan Shorts üretimi
 

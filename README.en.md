@@ -6,7 +6,7 @@
 
 <p align="center">
 
-[![Version](https://img.shields.io/badge/version-1.5.9-6478ff)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.6.0-6478ff)](CHANGELOG.md)
 [![CI](https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO/actions/workflows/ci.yml/badge.svg?branch=import%2Fv1.2-source)](https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/Python-3.12-3776AB)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/API-FastAPI-009688)](https://fastapi.tiangolo.com/)
@@ -83,6 +83,16 @@ When local AI output is invalid, transcript-based salience scoring selects momen
 - GPU, CPU, RAM and VRAM telemetry.
 - Responsive desktop/mobile web UI and installable PWA.
 - Turkish, English, German and Spanish interface.
+
+## Cinematic trailer and AI B-roll studio
+
+The creator supports both Shorts and cinematic trailer modes. Trailer scripts use a three-act arc, shot-by-shot visual direction, camera movement and a dramatic opening/closing slate.
+
+- **Runway AI:** Generates original scene images, animates each into vertical image-to-video B-roll, and can create an optional instrumental trailer score. A Runway API key is required; each generation consumes provider credits.
+- **Pexels:** Finds and downloads scene-matched stock B-roll. This is licensed stock footage, not AI-generated video; creator attribution is shown in the output.
+- **Local Motion:** Keeps a no-cost motion-graphics fallback available.
+- Provider keys are stored in the local encrypted credential vault. Environment variables RUNWAY_API_KEY and PEXELS_API_KEY are also supported.
+- The current GTX 1650 4 GB GPU is not a practical target for modern local video-diffusion models, so high-quality generated footage is routed to the cloud provider. Final editing and assembly remain local with FFmpeg.
 
 ## Local Autopilot
 
