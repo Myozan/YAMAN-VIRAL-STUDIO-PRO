@@ -1,0 +1,47 @@
+1
+00:00:00,000 --> 00:00:02,880
+Welcome to YUM IN VIRAL STUDIO PRO.
+
+2
+00:00:02,880 --> 00:00:06,480
+This is a local first video production workspace.
+
+3
+00:00:06,480 --> 00:00:12,960
+Start with a long video, then let the studio transcribe the speech and identify strong moments.
+
+4
+00:00:12,960 --> 00:00:18,640
+The AI ranks candidate clips by hook, clarity, curiosity, and payoff.
+
+5
+00:00:18,640 --> 00:00:21,280
+Choose the moment you want to publish.
+
+6
+00:00:21,280 --> 00:00:24,400
+The renderer reframes the footage into a vertical video,
+
+7
+00:00:24,400 --> 00:00:29,440
+adds readable captions, and exports a platform ready MP4.
+
+8
+00:00:29,440 --> 00:00:32,440
+Your source files stay on your computer.
+
+9
+00:00:32,440 --> 00:00:36,440
+Allama powers local language analysis, faster whisper handle
+
+10
+00:00:36,440 --> 00:00:40,440
+transcription, and F.M.B. creates the final video.
+
+11
+00:00:40,440 --> 00:00:45,440
+One source, a focused story, and a ready to publish short.
+
+12
+00:00:45,440 --> 00:00:47,440
+YUM IN VIRAL STUDIO PRO.

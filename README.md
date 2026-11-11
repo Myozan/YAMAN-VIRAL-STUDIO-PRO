@@ -50,6 +50,16 @@ Aşağıdaki ekran görüntüleri, GitHub deposunun güncel sürümü yerel olar
 
 SVG tasarım görselleri arayüz konseptini temsil eder; yukarıdaki PNG dosyaları ise çalışan uygulamadan alınmış ekran görüntüleridir.
 
+## 🎥 Gerçek uçtan uca üretim demosu
+
+**Kaynak videoyu analiz ettik, konuşmayı çözdük ve uygulamanın kendi render motoruyla 9:16 MP4 ürettik.**
+
+[40 saniyelik gerçek YouTube Shorts çıktısını izle](docs/assets/demo-output-youtube-shorts.mp4) · [Demo kaynak videosu](docs/assets/demo-input.mp4) · [Zaman damgalı altyazı (SRT)](docs/assets/demo-transcript.srt) · [Tam demo raporu](docs/DEMO.md)
+
+![YAMAN VIRAL STUDIO PRO tarafından üretilen dikey video karesi](docs/assets/demo-render-frame.png)
+
+Bu örnek, kişisel veya üçüncü taraf bir video değil; test amacıyla üretilmiş sentetik anlatım ve görsel içeriktir. Çıktı 1080 × 1920, H.264/AAC ve yaklaşık 40 saniyedir.
+
 | Masaüstü çalışma alanı | Mobil uyumlu görünüm |
 |:---:|:---:|
 | <img src="docs/assets/dashboard-desktop.svg" alt="Masaüstü uygulama ekranı" width="100%"> | <img src="docs/assets/dashboard-mobile.svg" alt="Mobil uygulama ekranı" width="72%"> |

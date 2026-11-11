@@ -33,6 +33,12 @@ jobs:
           test -s docs/assets/showcase-demo.gif
           test -s docs/assets/showcase-demo.mp4
           test -s docs/SHOWCASE.md
+          test -s docs/DEMO.md
+          test -s docs/assets/demo-input.mp4
+          test -s docs/assets/demo-output-youtube-shorts.mp4
+          test -s docs/assets/demo-render-frame.png
+          test -s docs/assets/demo-transcript.srt
+          grep -q 'WrapStyle: 0' app/main.py
           python -c "import json; json.load(open('web/manifest.webmanifest', encoding='utf-8'))"
       - name: Validate JavaScript syntax
         run: |

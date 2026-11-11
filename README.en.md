@@ -37,6 +37,16 @@ Captured from the current repository branch while the local app was running. The
 
 Illustrative SVG design previews: [desktop](docs/assets/dashboard-desktop.svg) · [mobile](docs/assets/dashboard-mobile.svg).
 
+## End-to-end production demo
+
+**The app imported a source video, transcribed its speech, selected clip candidates and rendered a vertical MP4 with captions.**
+
+[Watch the 40-second YouTube Shorts output](docs/assets/demo-output-youtube-shorts.mp4) · [Demo source video](docs/assets/demo-input.mp4) · [Timestamped subtitles (SRT)](docs/assets/demo-transcript.srt) · [Full demo report](docs/DEMO.md)
+
+![Frame from a vertical video rendered by YAMAN VIRAL STUDIO PRO](docs/assets/demo-render-frame.png)
+
+This is a synthetic test asset, not personal or third-party footage. Output: 1080 × 1920, H.264/AAC, approximately 40 seconds.
+
 ## PWA installation
 
 Install from a supported Chromium browser over HTTPS or localhost. On iOS, use Safari → Share → Add to Home Screen. Offline caching covers the app shell only; AI, video processing, uploads and API features still require the local backend. The Windows launcher binds to `127.0.0.1` by default and is not exposed to the LAN.

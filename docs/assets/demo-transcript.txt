@@ -1,0 +1,12 @@
+[00.00s] Welcome to YUM IN VIRAL STUDIO PRO.
+[02.88s] This is a local first video production workspace.
+[06.48s] Start with a long video, then let the studio transcribe the speech and identify strong moments.
+[12.96s] The AI ranks candidate clips by hook, clarity, curiosity, and payoff.
+[18.64s] Choose the moment you want to publish.
+[21.28s] The renderer reframes the footage into a vertical video,
+[24.40s] adds readable captions, and exports a platform ready MP4.
+[29.44s] Your source files stay on your computer.
+[32.44s] Allama powers local language analysis, faster whisper handle
+[36.44s] transcription, and F.M.B. creates the final video.
+[40.44s] One source, a focused story, and a ready to publish short.
+[45.44s] YUM IN VIRAL STUDIO PRO.
