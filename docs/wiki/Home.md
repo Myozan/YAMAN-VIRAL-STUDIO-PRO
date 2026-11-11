@@ -22,6 +22,9 @@ YAMAN VIRAL STUDIO PRO, Windows üzerinde çalışan yerel öncelikli bir AI vid
 - [Developer Guide](Developer-Guide)
 - [Release Management](Release-Management)
 - [AI Engine Configuration](AI-Engine)
+- [Voice & Whisper](Voice-Engine)
+- [Platform Integrations](Platform-Integrations)
+- [FAQ](FAQ)
 - [Troubleshooting](Troubleshooting)
 
 ## Core production pipeline
