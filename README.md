@@ -134,7 +134,12 @@ requirements.txt     Python bağımlılıkları
 
 - [GitHub Wiki](https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO/wiki) · [Wiki kaynak dosyaları](docs/wiki/Home.md)
 - [Kurulum ve hızlı başlangıç](docs/wiki/Installation.md)
-- [Mimari](docs/ARCHITECTURE.md)
+- [Mevcut sürüm mimarisi ve diyagramlar](docs/ENGINEERING-ARCHITECTURE.md)
+- [Veritabanı ERD](docs/DATABASE-ERD.md)
+- [İş akışı sequence diyagramları](docs/WORKFLOW-SEQUENCES.md)
+- [Test stratejisi](docs/TESTING-STRATEGY.md)
+- [Operasyon ve kurtarma rehberi](docs/OPERATIONS-RUNBOOK.md)
+- [Gelecek mimari hedefi](docs/ARCHITECTURE.md)
 - [API Reference](docs/wiki/API-Reference.md)
 - [AI Agent System](docs/wiki/Agent-System.md)
 - [Autopilot](docs/wiki/Autopilot.md)
