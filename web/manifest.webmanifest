@@ -1,0 +1,36 @@
+{
+  "id": "/",
+  "name": "YAMAN VIRAL STUDIO PRO",
+  "short_name": "YAMAN STUDIO",
+  "description": "Yerel AI destekli video analiz ve Shorts üretim stüdyosu.",
+  "lang": "tr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "any",
+  "background_color": "#080d18",
+  "theme_color": "#080d18",
+  "categories": [
+    "productivity",
+    "video",
+    "utilities"
+  ],
+  "icons": [
+    {
+      "src": "/assets/icons/icon-192.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/icons/icon-512.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
