@@ -194,6 +194,9 @@ class SummaryRequest(BaseModel):
     job_id: str
     target_seconds: int = Field(default=90, ge=30, le=180)
     format: str = Field(default="smart", pattern="^(smart|story|documentary|education|product)$")
+    transition: str = Field(default="fade", pattern="^(fade|cut)$")
+    captions: bool = True
+    chapter_titles: bool = True
 
 
 class TeamRequest(BaseModel):
@@ -1067,6 +1070,26 @@ def run_analyze_task(task_id: str, req: AnalyzeRequest, folder: Path, source_vid
 
 
 
+def segment_importance_score(segment: dict) -> float:
+    """Deterministic transcript-only salience score used when local LLM output is unavailable."""
+    text = str(segment.get("text", "")).strip().lower()
+    words = [word.strip(".,!?;:()[]{}\\\"'") for word in text.split()]
+    if not words:
+        return 0.0
+    cues = (
+        "??nk?", "sonu?", "?nemli", "ancak", "ilk kez", "en b?y?k", "ke?if", "kan?t",
+        "sebep", "??z?m", "sorun", "ba?ar?", "hata", "kritik", "ama?", "veri",
+        "y?zde", "milyon", "neden", "nas?l", "dikkat", "ger?ek", "sonunda",
+        "asl?nda", "?zellikle", "fakat", "b?ylece", "dolay?s?yla", "risk", "fark",
+    )
+    cue_hits = sum(1 for cue in cues if cue in text)
+    unique_ratio = len(set(words)) / max(1, len(words))
+    numeric_hits = sum(1 for word in words if any(char.isdigit() for char in word))
+    punctuation = sum(text.count(mark) for mark in ("?", "!", ":"))
+    length_score = min(len(words), 32) / 32
+    return length_score * 3.0 + unique_ratio * 1.2 + cue_hits * 1.35 + numeric_hits * 0.35 + min(punctuation, 3) * 0.2
+
+
 def fallback_summary_moments(segments: list[dict], duration: float, target_seconds: int) -> list[dict]:
     """Choose a spread of spoken moments when the local model cannot return valid JSON."""
     usable = [x for x in segments if str(x.get("text", "")).strip()]
@@ -1077,7 +1100,13 @@ def fallback_summary_moments(segments: list[dict], duration: float, target_secon
     chosen = []
     for i in range(count):
         target = (i + 0.5) / count * duration
-        seg = min(usable, key=lambda x: abs((float(x.get("start", 0)) + float(x.get("end", 0))) / 2 - target))
+        left, right = i / count * duration, (i + 1) / count * duration
+        candidates = [x for x in usable if left <= (float(x.get("start", 0)) + float(x.get("end", 0))) / 2 < right]
+        pool = candidates or usable
+        seg = max(pool, key=lambda x: (
+            segment_importance_score(x),
+            -abs((float(x.get("start", 0)) + float(x.get("end", 0))) / 2 - target),
+        ))
         start = max(0.0, min(float(seg["start"]), duration - 1))
         end = min(duration, max(float(seg["end"]), start + per_moment))
         if end - start < 4:
@@ -1115,8 +1144,11 @@ def fallback_story_moments(segments: list[dict], duration: float, target_seconds
     for index, label in enumerate(labels):
         left, right = index * beat_window, (index + 1) * beat_window
         in_window = [x for x in usable if left <= (float(x.get("start", 0)) + float(x.get("end", 0))) / 2 < right]
-        seg = in_window[0] if in_window else min(
-            usable, key=lambda x: abs((float(x.get("start", 0)) + float(x.get("end", 0))) / 2 - (left + right) / 2))
+        pool = in_window or usable
+        seg = max(pool, key=lambda x: (
+            segment_importance_score(x),
+            -abs((float(x.get("start", 0)) + float(x.get("end", 0))) / 2 - (left + right) / 2),
+        ))
         start = max(left, min(float(seg.get("start", left)), right - 4.0))
         end = min(right, max(float(seg.get("end", start)), start + min(target_length, beat_window)))
         if end - start < 4:
@@ -1139,8 +1171,11 @@ def fallback_documentary_moments(segments: list[dict], duration: float, target_s
     for index, label in enumerate(labels):
         left, right = index * beat_window, (index + 1) * beat_window
         in_window = [x for x in usable if left <= (float(x.get("start", 0)) + float(x.get("end", 0))) / 2 < right]
-        seg = in_window[0] if in_window else min(
-            usable, key=lambda x: abs((float(x.get("start", 0)) + float(x.get("end", 0))) / 2 - (left + right) / 2))
+        pool = in_window or usable
+        seg = max(pool, key=lambda x: (
+            segment_importance_score(x),
+            -abs((float(x.get("start", 0)) + float(x.get("end", 0))) / 2 - (left + right) / 2),
+        ))
         start = max(left, min(float(seg.get("start", left)), right - 4.0))
         end = min(right, max(float(seg.get("end", start)), start + min(target_length, beat_window)))
         if end - start < 4:
@@ -1165,7 +1200,11 @@ def fallback_structured_moments(segments: list[dict], duration: float, target_se
     for index, label in enumerate(labels):
         left, right = index * window, (index + 1) * window
         candidates = [x for x in usable if left <= (float(x.get("start", 0)) + float(x.get("end", 0))) / 2 < right]
-        segment = candidates[0] if candidates else min(usable, key=lambda x: abs((float(x.get("start", 0)) + float(x.get("end", 0))) / 2 - (left + right) / 2))
+        pool = candidates or usable
+        segment = max(pool, key=lambda x: (
+            segment_importance_score(x),
+            -abs((float(x.get("start", 0)) + float(x.get("end", 0))) / 2 - (left + right) / 2),
+        ))
         start = max(left, min(float(segment.get("start", left)), right - 4))
         end = min(right, max(float(segment.get("end", start)), start + min(desired, window)))
         if end - start >= 4:
@@ -1355,9 +1394,16 @@ def render_summary_video(job: dict, summary: dict, task_id: str) -> Path:
         if length < 3:
             continue
         part = folder / f"{prefix}_part_{index:02d}.mp4"
+        video_filter = "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,setsar=1,fps=30"
+        audio_filter = "aresample=44100,aformat=channel_layouts=stereo"
+        if summary.get("transition", "fade") == "fade":
+            fade_duration = min(0.28, max(0.12, length / 10))
+            fade_out_start = max(0.0, length - fade_duration)
+            video_filter += f",fade=t=in:st=0:d={fade_duration:.3f},fade=t=out:st={fade_out_start:.3f}:d={fade_duration:.3f}"
+            audio_filter += f",afade=t=in:st=0:d={fade_duration:.3f},afade=t=out:st={fade_out_start:.3f}:d={fade_duration:.3f}"
         cmd = ["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-ss", str(start), "-i", str(source),
                "-t", str(length), "-map", "0:v:0", "-map", "0:a?",
-               "-vf", "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,setsar=1,fps=30",
+               "-vf", video_filter, "-af", audio_filter,
                "-c:v", "libx264", "-preset", "veryfast", "-crf", "22", "-pix_fmt", "yuv420p",
                "-c:a", "aac", "-b:a", "128k", "-ar", "44100", "-ac", "2",
                "-avoid_negative_ts", "make_zero", "-movflags", "+faststart", str(part)]
@@ -1381,17 +1427,18 @@ def render_summary_video(job: dict, summary: dict, task_id: str) -> Path:
     command(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-f", "concat",
              "-safe", "0", "-i", str(concat_file), "-c", "copy", "-movflags", "+faststart", str(joined)])
     ass = folder / f"{prefix}_video.ass"
-    create_ass(mapped, {"start": 0.0, "end": timeline, "duration": timeline}, ass, 280)
+    create_ass(mapped if summary.get("captions", True) else [],
+               {"start": 0.0, "end": timeline, "duration": timeline}, ass, 280)
     with ass.open("a", encoding="utf-8") as handle:
-        if summary.get("format") in ("story", "documentary", "education", "product"):
+        if summary.get("chapter_titles", True) and summary.get("format") in ("story", "documentary", "education", "product"):
             cursor = 0.0
             for moment in moments:
                 label = str(moment.get("section", "Gelişme"))
                 handle.write(f"Dialogue: 0,{ass_time(cursor)},{ass_time(min(timeline,cursor+2.8))},Viral,,0,0,300,,{{\\an8\\fs62\\bord5}}{ass_escape(label.upper())}\n")
                 cursor += float(moment["end"]) - float(moment["start"])
-        if summary.get("format") == "smart":
+        if summary.get("chapter_titles", True) and summary.get("format") == "smart":
             handle.write(f"Dialogue: 1,0:00:00.00,{ass_time(min(4.0,timeline))},Viral,,0,0,300,,{{\\an8\\fs76\\bord5}}{ass_escape(summary['title'])}\n")
-        if timeline > 5:
+        if summary.get("chapter_titles", True) and timeline > 5:
             handle.write(f"Dialogue: 1,{ass_time(max(0,timeline-4))},{ass_time(timeline)},Viral,,0,0,300,,{{\\an8\\fs64\\bord5}}{ass_escape(summary['outro'])}\n")
     output = folder / {"documentary": "documentary_video.mp4", "story": "story_video.mp4", "education": "education_video.mp4", "product": "product_video.mp4"}.get(summary.get("format"), "summary_video.mp4")
     command(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-i", str(joined),
@@ -1407,10 +1454,12 @@ def render_summary_video(job: dict, summary: dict, task_id: str) -> Path:
     return output
 
 
-def run_summary_task(task_id: str, job_id: str, job: dict, target_seconds: int, format: str = "smart"):
+def run_summary_task(task_id: str, job_id: str, job: dict, target_seconds: int, format: str = "smart",
+                     transition: str = "fade", captions: bool = True, chapter_titles: bool = True):
     try:
         set_task(task_id, 5, f"{ {'documentary': 'Belgesel anlatimi', 'education': 'Egitim videosu', 'product': 'Urun tanitimi', 'story': 'Hikaye akisi'}.get(format, 'Video ozeti')} hazirlaniyor - Yerel AI")
         summary = build_summary_moments(job, target_seconds, format)
+        summary.update({"transition": transition, "captions": captions, "chapter_titles": chapter_titles})
         set_task(task_id, 38, f"{ {'documentary': 'Belgesel bolumleri', 'education': 'Egitim bolumleri', 'product': 'Urun tanitim bolumleri', 'story': 'Hikaye bolumleri'}.get(format, 'Onemli anlar')} siralandi - Video hazirlaniyor",
                  summary=summary, total_moments=len(summary["moments"]))
         output = render_summary_video(job, summary, task_id)
@@ -1518,7 +1567,8 @@ def generate_summary(req: SummaryRequest, background_tasks: BackgroundTasks):
         raise HTTPException(400, "\u00d6zet i\u00e7in transkript bulunamad\u0131.")
     task_id = uuid.uuid4().hex[:10]
     set_task(task_id, 1, "\u00d6zet video g\u00f6revi kuyru\u011fa al\u0131nd\u0131")
-    background_tasks.add_task(run_summary_task, task_id, req.job_id, job, req.target_seconds, req.format)
+    background_tasks.add_task(run_summary_task, task_id, req.job_id, job, req.target_seconds, req.format,
+                              req.transition, req.captions, req.chapter_titles)
     return {"task_id": task_id, "status": "queued", "job_id": req.job_id}
 
 

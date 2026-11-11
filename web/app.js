@@ -451,9 +451,10 @@ async function generateSummaryVideo(){
  if(!jobId){$("summaryFeedback").textContent="\u00d6nce bir video analiz et.";return;}
  const button=$("generateSummary");button.disabled=true;button.textContent="\u00d6zet haz\u0131rlan\u0131yor...";
  const selectedFormat=$("summaryFormat")?.value||"smart";
- const formatMessages={documentary:"Belgesel bolumleri kronolojik siraya aliniyor; kaynakta olmayan bilgi eklenmiyor.",education:"Ders hedefi, kavramlar, adim adim anlatim, ornek ve mini test hazirlaniyor.",product:"Urun ihtiyaci, ozellikleri, faydalari ve kaynakta kanitlanan detaylar isleniyor.",story:"Konu, giris, gelisme, sonuc ve kapanis bolumleri siralaniyor."};$("summaryFeedback").textContent=formatMessages[selectedFormat]||"Transkript ozetleniyor, onemli anlar seciliyor ve MP4 hazirlaniyor.";
+ const formatMessages={documentary:"Belgesel b?l?mleri se?iliyor; sahneler kesilip s?ralan?yor ve otomatik birle?tiriliyor.",education:"??renme b?l?mleri se?iliyor; sahneler kesilip s?ralan?yor ve otomatik birle?tiriliyor.",product:"?r?n b?l?mleri kaynak transkriptinden se?iliyor ve otomatik birle?tiriliyor.",story:"Hik?ye b?l?mleri s?ralan?yor ve otomatik birle?tiriliyor."};$("summaryFeedback").textContent=(formatMessages[selectedFormat]||"AI ?nemli anlar? se?iyor, gereksiz b?l?mleri at?yor ve videoyu otomatik kurguluyor.")+" Ge?i?: "+(($("editTransition")?.value||"fade")==="fade"?"yumu?ak kararma":"temiz kesme")+".";
+
  try{
-  const r=await fetch("/api/summary/run",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({job_id:jobId,target_seconds:+$("summaryLength").value,format:$("summaryFormat")?.value||"smart"})});
+  const r=await fetch("/api/summary/run",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({job_id:jobId,target_seconds:+$("summaryLength").value,format:$("summaryFormat")?.value||"smart",transition:$("editTransition")?.value||"fade",captions:$("editCaptions")?.checked!==false,chapter_titles:$("editChapters")?.checked!==false})});
   const q=await r.json();if(!r.ok)throw new Error(q.detail||"\u00d6zet video ba\u015flat\u0131lamad\u0131");
   const data=await waitForTask(q.task_id,task=>{$("summaryFeedback").textContent=(task.stage||"\u00d6zet haz\u0131rlan\u0131yor")+" \u00b7 "+(task.percent||0)+"%";});
   showSummaryResult(data);$("summaryFeedback").textContent="\u00d6zet video ba\u015far\u0131yla olu\u015fturuldu.";loadMediaLibrary();

@@ -1,3 +1,19 @@
+# Changelog
+
+## [1.5.6] - 2026-11-11
+
+### Added
+- Home-screen automatic editing workflow for Smart Recap and Documentary, including moment selection, trimming, ordering, merging and MP4 export.
+- Fade-to-black / fade-in transition or clean-cut selection, plus caption and chapter-title toggles.
+- Transcript-only salience scoring fallback to prioritize meaningful spoken moments across the timeline.
+
+### Improved
+- Mobile layout alignment for studio panels, summary controls, navigation, system metrics and editing options.
+- PWA cache version bumped to v1.5.6.
+
+ / Sürüm Geçmişi
+
+
 ## [1.5.5] - 2026-11-11
 
 ### Added
@@ -33,8 +49,6 @@
 - PWA installation and service workers require HTTPS or localhost/127.0.0.1.
 - Offline mode caches the application shell only. Video analysis, AI processing, OAuth, uploads and other API features still require the YAMAN backend and their local services to be running.
 - To install on a phone, the app must be reachable from that phone through a trusted HTTPS origin. The default Windows launcher binds to 127.0.0.1 and is intentionally not exposed to the LAN automatically.
-
-# Changelog / Sürüm Geçmişi
 
 ## [1.4.1] - 2026-11-11
 

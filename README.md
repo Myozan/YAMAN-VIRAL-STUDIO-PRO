@@ -8,20 +8,22 @@
 
 **v1.5.5 · Local-first AI · Windows · PWA**
 
-[![Version](https://img.shields.io/badge/version-1.5.5-6478ff?style=for-the-badge)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.5.6-6478ff?style=for-the-badge)](CHANGELOG.md)
 [![CI](https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO/actions/workflows/ci.yml/badge.svg?branch=import%2Fv1.2-source)](https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/API-FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![PWA](https://img.shields.io/badge/PWA-installable-5B8DEF?style=for-the-badge)](#pwa-kurulumu)
 [![License](https://img.shields.io/badge/License-MIT-2ea44f?style=for-the-badge)](LICENSE)
 
-$1
+[ T?rk?e ](README.md) ? [ English ](README.en.md) ? [ Deutsch ](README.de.md) ? [ Espa?ol ](README.es.md)
 
 </div>
 
 ---
 
-[GitHub sosyal önizleme PNG](docs/assets/social-preview.png) · [Beş format infografiği](docs/assets/video-formats.svg)`r`n`r`n## Genel bakış
+[GitHub sosyal önizleme PNG](docs/assets/social-preview.png) · [Beş format infografiği](docs/assets/video-formats.svg)
+
+## Genel bakış
 
 **YAMAN VIRAL STUDIO PRO**, uzun videoları analiz edip konuşmaları zaman damgalı metne dönüştüren, güçlü anları bulan ve farklı yayın hedefleri için düzenlenmiş videolar üreten yerel öncelikli bir içerik stüdyosudur.
 

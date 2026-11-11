@@ -6,7 +6,7 @@
 
 <p align="center">
 
-[![Version](https://img.shields.io/badge/version-1.5.5-6478ff)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.5.6-6478ff)](CHANGELOG.md)
 [![CI](https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO/actions/workflows/ci.yml/badge.svg?branch=import%2Fv1.2-source)](https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/Python-3.12-3776AB)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/API-FastAPI-009688)](https://fastapi.tiangolo.com/)
@@ -17,7 +17,9 @@
 
 </p>
 
-[Social preview PNG](docs/assets/social-preview.png) · [Five-format infographic](docs/assets/video-formats.svg)`r`n`r`n## Overview
+[Social preview PNG](docs/assets/social-preview.png) · [Five-format infographic](docs/assets/video-formats.svg)
+
+## Overview
 
 YAMAN VIRAL STUDIO PRO turns long-form video into structured, publish-ready content. It transcribes speech, discovers strong moments and renders vertical videos with captions and editorial chapter structure.
 
@@ -55,6 +57,18 @@ Each narrative format renders its own MP4 file and burns chapter titles into the
 - [Demo report](docs/DEMO.md)
 
 Demo media is synthetic test content, not personal or third-party footage.
+
+## Automatic editing studio
+
+Smart Recap and Documentary do more than summarize text. They select important transcript moments with source timestamps, cut the selected ranges, convert them to vertical 1080?1920 video and merge them into one MP4.
+
+Home-screen editing controls:
+- **Transitions:** Soft fade in/out (default) or clean cuts.
+- **Captions:** Burn source-transcript captions into the video.
+- **Chapter titles:** Add documentary/story/lesson/product chapter labels and opening/closing titles.
+- **Automatic edit:** Moment selection, trimming, ordering, joining and MP4 export in one workflow.
+
+When local AI output is invalid, transcript-based salience scoring selects moments across the source timeline. No unsupported footage or product claims are fabricated. Mobile editing controls use a responsive compact layout.
 
 ## Core capabilities
 
