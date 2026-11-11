@@ -4,7 +4,7 @@ This document separates executed automated coverage from remaining release assur
 
 ## 1. QA 3.5 current baseline
 
-The suite collects **67 test cases**. Latest Windows/Python 3.12 run: **65 passed, 2 skipped**. The two skips are workspace symlink tests; the connected Windows account cannot create symlinks.
+The suite collects **70 test cases**. Latest Windows/Python 3.12 run: **68 passed, 2 skipped**. The two skips are workspace symlink tests; the connected Windows account cannot create symlinks.
 
 | Suite | Coverage | Test cases |
 |---|---|---:|
@@ -14,7 +14,7 @@ The suite collects **67 test cases**. Latest Windows/Python 3.12 run: **65 passe
 | Security regression | URL validation, path containment, OAuth vault and SSRF/redirect cases | 32 |
 | QA 3.3 reliability | Agent retry eligibility and source validation, concurrent task journaling, app lifespan, synthetic FFmpeg/FFprobe and corrupt media | 9 |
 | QA 3.4 durability | Cross-process SQLite write contention, retry reservation idempotency and claim persistence | 3 |
-| QA 3.5 security and concurrency | IP-pinned HTTPS transport, OAuth vault key rotation and multi-process Autopilot claim exclusivity | 5 |
+| QA 3.5 security and concurrency | IP-pinned HTTPS transport, OAuth vault key rotation, rollback and persistent key-source selection | 8 |
 | **Total** | | **67** |
 
 No live OAuth, paid provider or external publishing call is made by the tests.
@@ -37,13 +37,15 @@ python -c "import json; json.load(open('web/manifest.webmanifest', encoding='utf
 ## 3. QA 3.5 security and concurrency changes
 
 - Remote media downloads now resolve each HTTPS hostname, reject the entire answer set if any address is non-public, and pin the connection to a validated IP. The TLS connection retains the original hostname for SNI and certificate hostname verification. Ambient proxy settings are not inherited for this security-sensitive fetch. Every redirect is independently validated and pinned.
-- OAuth secret rotation now decrypts and re-encrypts the token, app-credential and visual-provider vaults using a new Fernet key. Existing encrypted files are backed up before replacement; malformed new keys and unreadable source vaults fail before any replacement. Environment-based keys are updated for the running process.
+- OAuth secret rotation now decrypts and re-encrypts the token, app-credential and visual-provider vaults using a new Fernet key. Existing vaults are backed up before replacement; staged ciphertext is verified; a failed replacement restores every already-replaced file. Environment-managed rotation writes a persistent rotated-key file, selected on subsequent startup, instead of relying on an in-memory environment change.
 - Autopilot's existing `BEGIN IMMEDIATE` due-claim transaction is now tested with two independent Python processes racing for the same due schedule. Exactly one process may claim it.
 
 ## 4. QA 3.5 executed tests
 
 - A pinned HTTPS connection opens its socket to the validated IP while preserving the DNS hostname used by urllib3 for TLS identity checks.
 - OAuth key rotation preserves all three vault payloads, creates timestamped backups, rejects the old key afterward and leaves the source vault untouched for an invalid new key.
+- Simulated disk failure during the replacement phase restores the original bytes for all encrypted vaults.
+- Local key-file rotation persists the new key; environment-key rotation writes a dedicated key file that is selected by the next process after the environment variable is absent. A missing legacy key fails closed.
 - Two independent Autopilot processes racing on one due schedule produce exactly one claim and a healthy SQLite integrity check.
 
 ## 5. QA 3.4 durability changes
@@ -97,7 +99,7 @@ python -c "import json; json.load(open('web/manifest.webmanifest', encoding='utf
 **P0**
 - Cross-process coordination for task-state snapshots and Autopilot double-claim stress. The retry reservation is now database-backed, but general task-state writes still use a process-local lock.
 - Windows symlink tests on a runner with symlink privileges.
-- Atomic multi-vault rollback under simulated disk failure; offline restore drill for encrypted vault backups.
+- Offline restore drill for encrypted vault backups, including rotated key material.
 - Full task-state consistency across multiple application worker processes.
 
 **P1**
@@ -112,7 +114,7 @@ CI must install application and development dependencies, run the full pytest su
 
 ## 13. Current limitations
 
-The current local run is not a security certification. Two symlink tests were skipped because this Windows account cannot create symlinks. Task locking is process-local; cross-process coordination remains future work. Remote media GET transport pins the validated IP and preserves TLS hostname verification. General task-state in-memory snapshots still use a process-local lock; do not run multiple application workers against one workspace. OAuth rotation keeps timestamped pre-rotation copies, so backup retention and offline restore remain operator responsibilities. v1.8.0 remains local-use only and must not be exposed directly to a LAN or the public internet.
+The current local run is not a security certification. Two symlink tests were skipped because this Windows account cannot create symlinks. Task locking is process-local; cross-process coordination remains future work. Remote media GET transport pins the validated IP and preserves TLS hostname verification. General task-state in-memory snapshots still use a process-local lock; do not run multiple application workers against one workspace. OAuth rotation keeps timestamped pre-rotation copies and a dedicated rotated-key file when the key is environment-managed, so backup retention and offline restore remain operator responsibilities. Keep the rotated key file protected and include it in the matched offline backup set. v1.8.0 remains local-use only and must not be exposed directly to a LAN or the public internet.
 
 ## Related documentation
 

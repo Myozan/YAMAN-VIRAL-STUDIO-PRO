@@ -22,3 +22,7 @@ platform_profiles.json
 workspace/oauth_tokens.enc
 workspace/orchestration.sqlite3
 workspace/oauth_apps.enc
+.oauth.key.rotated
+*.enc
+*.bak.*
+.oauth.key.rotated.bak.*

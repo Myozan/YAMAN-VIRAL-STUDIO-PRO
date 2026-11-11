@@ -1,4 +1,4 @@
-﻿from pathlib import Path
+from pathlib import Path
 
 import pytest
 from cryptography.fernet import Fernet
@@ -233,6 +233,7 @@ def test_oauth_vault_key_rotation_reencrypts_all_vaults_and_keeps_backups(tmp_pa
     monkeypatch.setattr(main, "OAUTH_APP_FILE", tmp_path / "oauth_apps.enc")
     monkeypatch.setattr(main, "VISUAL_PROVIDER_FILE", tmp_path / "visual_providers.enc")
     monkeypatch.setattr(main, "OAUTH_KEY_FILE", tmp_path / ".oauth.key")
+    monkeypatch.setattr(main, "OAUTH_ROTATED_KEY_FILE", tmp_path / ".oauth.key.rotated")
     main.save_oauth_tokens({"youtube": {"refresh_token": "refresh-secret"}})
     main.OAUTH_APP_FILE.write_bytes(Fernet(old_key.encode()).encrypt(b'{"youtube":{"client_secret":"app-secret"}}'))
     main.VISUAL_PROVIDER_FILE.write_bytes(Fernet(old_key.encode()).encrypt(b'{"runway_api_key":"visual-secret"}'))
@@ -243,6 +244,10 @@ def test_oauth_vault_key_rotation_reencrypts_all_vaults_and_keeps_backups(tmp_pa
     assert main.oauth_app_config()["youtube"]["client_secret"] == "app-secret"
     assert main.visual_provider_config()["runway_api_key"] == "visual-secret"
     assert all(".bak." in name for name in result["backup_files"])
+    assert result["key_file"] == ".oauth.key.rotated"
+    assert (tmp_path / ".oauth.key.rotated").read_text(encoding="ascii") == new_key
+    monkeypatch.delenv("YAMAN_TOKEN_ENCRYPTION_KEY", raising=False)
+    assert main.oauth_token_data() == {"youtube": {"refresh_token": "refresh-secret"}}
     monkeypatch.setenv("YAMAN_TOKEN_ENCRYPTION_KEY", old_key)
     with pytest.raises(RuntimeError, match="cannot be decrypted"):
         main.oauth_token_data()
@@ -294,3 +299,56 @@ def test_pinned_https_adapter_passes_ip_into_urllib3_pool(monkeypatch):
     response = visual_factory.safe_stream_get("https://cdn.example/media.mp4", timeout=4)
     assert response.status_code == 200
     assert captured == {"ip": "93.184.216.34", "host": "cdn.example", "pool_ip": "93.184.216.34"}
+
+
+def test_oauth_key_rotation_failure_rolls_back_every_replaced_file(tmp_path, monkeypatch):
+    old_key = Fernet.generate_key().decode("ascii")
+    new_key = Fernet.generate_key().decode("ascii")
+    monkeypatch.setenv("YAMAN_TOKEN_ENCRYPTION_KEY", old_key)
+    paths = [tmp_path / name for name in ("oauth_tokens.enc", "oauth_apps.enc", "visual_providers.enc")]
+    monkeypatch.setattr(main, "OAUTH_TOKEN_FILE", paths[0])
+    monkeypatch.setattr(main, "OAUTH_APP_FILE", paths[1])
+    monkeypatch.setattr(main, "VISUAL_PROVIDER_FILE", paths[2])
+    monkeypatch.setattr(main, "OAUTH_KEY_FILE", tmp_path / ".oauth.key")
+    monkeypatch.setattr(main, "OAUTH_ROTATED_KEY_FILE", tmp_path / ".oauth.key.rotated")
+    main.save_oauth_tokens({"youtube": {"refresh_token": "rollback-check"}})
+    for index, path in enumerate(paths[1:], start=1):
+        path.write_bytes(Fernet(old_key.encode()).encrypt(("vault-%s" % index).encode()))
+    before = {path: path.read_bytes() for path in paths}
+    original_replace = Path.replace
+    calls = {"count": 0}
+    def fail_second_replace(self, target):
+        calls["count"] += 1
+        if calls["count"] == 2:
+            raise OSError("simulated disk replacement failure")
+        return original_replace(self, target)
+    monkeypatch.setattr(Path, "replace", fail_second_replace)
+    with pytest.raises(OSError, match="simulated disk"):
+        main.rotate_oauth_vault_key(new_key)
+    monkeypatch.setattr(Path, "replace", original_replace)
+    assert {path: path.read_bytes() for path in paths} == before
+    assert main.oauth_token_data()["youtube"]["refresh_token"] == "rollback-check"
+
+
+def test_oauth_key_rotation_with_local_key_persists_the_new_key(tmp_path, monkeypatch):
+    old_key = Fernet.generate_key().decode("ascii")
+    new_key = Fernet.generate_key().decode("ascii")
+    monkeypatch.delenv("YAMAN_TOKEN_ENCRYPTION_KEY", raising=False)
+    monkeypatch.setattr(main, "OAUTH_KEY_FILE", tmp_path / ".oauth.key")
+    monkeypatch.setattr(main, "OAUTH_ROTATED_KEY_FILE", tmp_path / ".oauth.key.rotated")
+    monkeypatch.setattr(main, "OAUTH_TOKEN_FILE", tmp_path / "oauth_tokens.enc")
+    monkeypatch.setattr(main, "OAUTH_APP_FILE", tmp_path / "oauth_apps.enc")
+    monkeypatch.setattr(main, "VISUAL_PROVIDER_FILE", tmp_path / "visual_providers.enc")
+    main.OAUTH_KEY_FILE.write_text(old_key, encoding="ascii")
+    main.save_oauth_tokens({"youtube": {"refresh_token": "persistent-rotation"}})
+    main.rotate_oauth_vault_key(new_key)
+    assert main.OAUTH_KEY_FILE.read_text(encoding="ascii") == new_key
+    assert main.oauth_token_data()["youtube"]["refresh_token"] == "persistent-rotation"
+
+
+def test_oauth_key_rotation_without_key_sources_fails_closed(tmp_path, monkeypatch):
+    monkeypatch.delenv("YAMAN_TOKEN_ENCRYPTION_KEY", raising=False)
+    monkeypatch.setattr(main, "OAUTH_KEY_FILE", tmp_path / "missing.key")
+    with pytest.raises(RuntimeError, match="key file is missing"):
+        main.rotate_oauth_vault_key(Fernet.generate_key().decode("ascii"))
+    assert not main.OAUTH_KEY_FILE.exists()

@@ -829,39 +829,57 @@ OAUTH_PROVIDERS = {
     "instagram":{"client_id_env":"YAMAN_META_APP_ID","client_secret_env":"YAMAN_META_APP_SECRET"},
 }
 OAUTH_KEY_FILE = BASE / ".oauth.key"
+OAUTH_ROTATED_KEY_FILE = BASE / ".oauth.key.rotated"
 OAUTH_TOKEN_FILE = WORK / "oauth_tokens.enc"
 OAUTH_APP_FILE = WORK / "oauth_apps.enc"
 
 def oauth_fernet():
     key=os.getenv("YAMAN_TOKEN_ENCRYPTION_KEY")
     if not key:
-        if not OAUTH_KEY_FILE.exists():
+        key_file = OAUTH_ROTATED_KEY_FILE if OAUTH_ROTATED_KEY_FILE.is_file() else OAUTH_KEY_FILE
+        if not key_file.exists():
             OAUTH_KEY_FILE.write_bytes(Fernet.generate_key())
-        key=OAUTH_KEY_FILE.read_text(encoding="ascii").strip()
+            key_file = OAUTH_KEY_FILE
+        key=key_file.read_text(encoding="ascii").strip()
     return Fernet(key.encode("ascii"))
 
 
 def rotate_oauth_vault_key(new_key: str) -> dict:
-    """Re-encrypt every local secret vault with a new Fernet key, retaining backups."""
+    """Re-encrypt all local secret vaults with a new key using a recoverable staged commit."""
     try:
         new_cipher = Fernet(new_key.encode("ascii"))
     except Exception as exc:
         raise ValueError("New OAuth encryption key is not a valid Fernet key") from exc
+
+    key_in_environment = bool(os.getenv("YAMAN_TOKEN_ENCRYPTION_KEY"))
+    # Without an environment key, the on-disk key must exist and be the old key.
+    if not key_in_environment and not OAUTH_KEY_FILE.is_file():
+        raise RuntimeError("Local OAuth key file is missing; refusing implicit key creation during rotation")
     old_cipher = oauth_fernet()
     vaults = (OAUTH_TOKEN_FILE, OAUTH_APP_FILE, VISUAL_PROVIDER_FILE)
-    prepared = {}
+    prepared: dict[Path, bytes] = {}
     for path in vaults:
         if path.exists():
             try:
-                prepared[path] = new_cipher.encrypt(old_cipher.decrypt(path.read_bytes()))
+                plain = old_cipher.decrypt(path.read_bytes())
+                prepared[path] = new_cipher.encrypt(plain)
+                # Verify staged ciphertext before touching any live file.
+                if new_cipher.decrypt(prepared[path]) != plain:
+                    raise ValueError("staged vault verification failed")
             except Exception as exc:
                 raise RuntimeError(f"Cannot rotate encrypted vault: {path.name}") from exc
-    key_in_environment = bool(os.getenv("YAMAN_TOKEN_ENCRYPTION_KEY"))
-    if not key_in_environment and OAUTH_KEY_FILE.exists():
-        prepared[OAUTH_KEY_FILE] = new_key.encode("ascii")
+
+    # For an environment-managed key, persist the new key in a dedicated file so
+    # the next process start does not silently fall back to the obsolete .oauth.key.
+    key_target = OAUTH_ROTATED_KEY_FILE if key_in_environment else OAUTH_KEY_FILE
+    prepared[key_target] = new_key.encode("ascii")
+
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
-    backups, temps = {}, {}
+    backups: dict[Path, Path] = {}
+    temps: dict[Path, Path] = {}
+    replaced: list[Path] = []
     try:
+        # Stage and fsync every file before beginning the replacement phase.
         for path, payload in prepared.items():
             path.parent.mkdir(parents=True, exist_ok=True)
             if path.exists():
@@ -869,20 +887,41 @@ def rotate_oauth_vault_key(new_key: str) -> dict:
                 shutil.copy2(path, backup)
                 backups[path] = backup
             temp = path.with_name(path.name + f".rotate.{stamp}.tmp")
-            temp.write_bytes(payload)
+            with temp.open("wb") as stream:
+                stream.write(payload)
+                stream.flush()
+                os.fsync(stream.fileno())
             temps[path] = temp
         for path, temp in temps.items():
             temp.replace(path)
+            replaced.append(path)
+        # Validate the installed data and key before declaring success.
+        for path in vaults:
+            if path in prepared:
+                new_cipher.decrypt(path.read_bytes())
     except Exception:
-        for path, backup in backups.items():
-            if backup.exists(): shutil.copy2(backup, path)
+        # Restore every original target, including files newly created in this attempt.
+        for path in reversed(replaced):
+            backup = backups.get(path)
+            if backup and backup.exists():
+                shutil.copy2(backup, path)
+            else:
+                path.unlink(missing_ok=True)
         raise
     finally:
-        for temp in temps.values(): temp.unlink(missing_ok=True)
+        for temp in temps.values():
+            temp.unlink(missing_ok=True)
+
     if key_in_environment:
         os.environ["YAMAN_TOKEN_ENCRYPTION_KEY"] = new_key
-    return {"rotated_vaults": [path.name for path in prepared if path in vaults],
-            "backup_files": [path.name for path in backups.values()]}
+        # Do not leave an obsolete default key that could be mistaken for active key material.
+        if OAUTH_KEY_FILE.exists():
+            OAUTH_KEY_FILE.unlink()
+    return {
+        "rotated_vaults": [path.name for path in vaults if path in prepared],
+        "key_file": key_target.name,
+        "backup_files": [path.name for path in backups.values()],
+    }
 
 def oauth_token_data():
     if not OAUTH_TOKEN_FILE.exists():return {}
