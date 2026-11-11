@@ -1,5 +1,7 @@
 # Database Schema
 
+Visual ERD and data lifecycle diagrams are available in [Database ERD](Database-ERD).
+
 Bu doküman, v1.8.0 kodunda görülen yerel SQLite veri depolarını açıklar. PostgreSQL/Redis gibi mimari tasarım seçenekleri mevcut yerel kurulumun zorunlu bağımlılığı değildir.
 
 ## Storage locations
