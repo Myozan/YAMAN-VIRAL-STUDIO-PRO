@@ -32,11 +32,23 @@ YAMAN VIRAL STUDIO PRO; uzun videoları analiz eden, konuşmaları zaman damgal�
 
 Ollama, Faster-Whisper ve FFmpeg tabanlı iş akışı, içerik üretimini mümkün olduğunca kullanıcının kendi bilgisayarında tutar.
 
-## 🖥️ Uygulamadan görüntüler
+## 🎬 Canlı uygulama demosu
 
-[GitHub paylaşım görseli / Social preview taslağı](docs/assets/social-preview.svg) · [Masaüstü SVG](docs/assets/dashboard-desktop.svg) · [Mobil SVG](docs/assets/dashboard-mobile.svg)
+[20 saniyelik MP4 ürün turunu izle](docs/assets/showcase-demo.mp4) · [Animasyonlu GIF önizlemesi](docs/assets/showcase-demo.gif) · [GitHub sosyal önizleme PNG](docs/assets/social-preview.png)
 
-Yeni görsel seti, masaüstü ve mobil arayüzün responsive yerleşimini ürün önizlemesi olarak gösterir. Bu çizimler gerçek zamanlı uygulama ekran görüntüsü değildir; arayüzün bileşenlerini ve tasarım dilini temsil eder.
+![YAMAN VIRAL STUDIO PRO — canlı arayüz ürün turu](docs/assets/showcase-demo.gif)
+
+## 🖥️ Uygulamadan gerçek ekran görüntüleri
+
+Aşağıdaki ekran görüntüleri, GitHub deposunun güncel sürümü yerel olarak çalıştırılarak alındı. Kompakt görünüm 600 px genişlikte yakalandı. Sistem metrikleri donanıma ve o anki yüke göre değişebilir.
+
+| Masaüstü — canlı uygulama | Kompakt ekran — canlı uygulama |
+|:---:|:---:|
+| <img src="docs/assets/screenshot-live-desktop.png" alt="YAMAN VIRAL STUDIO PRO canlı masaüstü ekran görüntüsü" width="100%"> | <img src="docs/assets/screenshot-live-mobile.png" alt="YAMAN VIRAL STUDIO PRO kompakt ekran görüntüsü" width="72%"> |
+
+[GitHub paylaşım görseli](docs/assets/social-preview.png) · [Masaüstü SVG tasarım önizlemesi](docs/assets/dashboard-desktop.svg) · [Mobil SVG tasarım önizlemesi](docs/assets/dashboard-mobile.svg)
+
+SVG tasarım görselleri arayüz konseptini temsil eder; yukarıdaki PNG dosyaları ise çalışan uygulamadan alınmış ekran görüntüleridir.
 
 | Masaüstü çalışma alanı | Mobil uyumlu görünüm |
 |:---:|:---:|

@@ -27,6 +27,12 @@ jobs:
           test -s docs/assets/dashboard-desktop.svg
           test -s docs/assets/dashboard-mobile.svg
           test -s docs/assets/social-preview.svg
+          test -s docs/assets/social-preview.png
+          test -s docs/assets/screenshot-live-desktop.png
+          test -s docs/assets/screenshot-live-mobile.png
+          test -s docs/assets/showcase-demo.gif
+          test -s docs/assets/showcase-demo.mp4
+          test -s docs/SHOWCASE.md
           python -c "import json; json.load(open('web/manifest.webmanifest', encoding='utf-8'))"
       - name: Validate JavaScript syntax
         run: |

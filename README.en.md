@@ -21,10 +21,21 @@ Local-first **AI video repurposing studio** for video analysis, speech transcrip
 - Configure local Ollama and Whisper models.
 - Track GPU, CPU, RAM and VRAM telemetry.
 
-## Screenshots
-| Desktop | Mobile |
+## Live product preview
+
+[Watch the 20-second MP4 overview](docs/assets/showcase-demo.mp4) · [Animated GIF preview](docs/assets/showcase-demo.gif) · [GitHub social preview PNG](docs/assets/social-preview.png)
+
+![YAMAN VIRAL STUDIO PRO live UI overview](docs/assets/showcase-demo.gif)
+
+## Live application screenshots
+
+Captured from the current repository branch while the local app was running. The compact capture uses a 600 px viewport; system metrics vary with hardware load.
+
+| Desktop | Compact viewport |
 |---|---|
-| ![Desktop dashboard](docs/assets/dashboard-desktop.svg) | ![Mobile dashboard](docs/assets/dashboard-mobile.svg) |
+| ![Live desktop application](docs/assets/screenshot-live-desktop.png) | ![Live compact application](docs/assets/screenshot-live-mobile.png) |
+
+Illustrative SVG design previews: [desktop](docs/assets/dashboard-desktop.svg) · [mobile](docs/assets/dashboard-mobile.svg).
 
 ## PWA installation
 
