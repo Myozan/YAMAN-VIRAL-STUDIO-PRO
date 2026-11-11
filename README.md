@@ -6,11 +6,11 @@
 
 ### Yerel yapay zekâ ile video analiz, Shorts üretimi ve çok platformlu içerik iş akışı
 
-> **v1.5.2 · PWA + Responsive UI** · Mobil uyumlu çalışma alanı, yüklenebilir uygulama deneyimi ve yenilenmiş ürün görselleri.
+> **v1.5.4 · PWA + Responsive UI** · Mobil uyumlu çalışma alanı, yüklenebilir uygulama deneyimi ve yenilenmiş ürün görselleri.
 
 [🇹🇷 Türkçe](README.md) · [🇬🇧 English](README.en.md) · [🇩🇪 Deutsch](README.de.md) · [🇪🇸 Español](README.es.md)
 
-[![Version](https://img.shields.io/badge/version-1.5.2-6478ff?style=for-the-badge)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.5.4-6478ff?style=for-the-badge)](CHANGELOG.md)
 [![CI](https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO/actions/workflows/ci.yml/badge.svg?branch=import%2Fv1.2-source)](https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO/actions/workflows/ci.yml)
 [![PWA](https://img.shields.io/badge/PWA-installable-5B8DEF?style=for-the-badge)](#ana-ekrana-y%C3%BCkleme-pwa)
 [![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
@@ -31,6 +31,10 @@
 YAMAN VIRAL STUDIO PRO; uzun videoları analiz eden, konuşmaları zaman damgalı metne dönüştüren, güçlü anları kısa video kesitlerine ayıran ve YouTube Shorts, Instagram Reels ile TikTok için içerik hazırlayan yerel öncelikli bir AI stüdyosudur.
 
 Ollama, Faster-Whisper ve FFmpeg tabanlı iş akışı, içerik üretimini mümkün olduğunca kullanıcının kendi bilgisayarında tutar.
+
+## Belgesel Anlatimi video formati
+
+Akilli Ozet ve Hikaye Akisi seceneklerine ek olarak **Belgesel Anlatimi** modu; **Konu -> Guclu Acilis -> Arka Plan -> Kronolojik Gelisme -> Bulgular -> Sonuc -> Kapanis** sirasiyla ayri bir dikey MP4 uretir. Bolumler kaynak transkriptin zaman damgalarina baglanir; modelin dogrulayamadigi tarih, alinti, neden-sonuc iliskisi veya bilgi uydurulmaz. Yerel Ollama yaniti eksikse kaynak transkriptten guvenli zaman cizelgesi yedegi kullanilir.
 
 ## 🎬 Canlı uygulama demosu
 

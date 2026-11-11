@@ -85,3 +85,8 @@ Only use and republish media you have rights to use. OAuth publication requires 
 In addition to the highlight recap, the Studio now offers a **Story flow** format. It structures timestamped source speech into five editorial beats: **Topic → Introduction → Development → Conclusion → Closing/CTA**. Chapter labels are burned into the vertical video while original speech captions keep their timing. If the local model returns incomplete beats, a transcript-timestamp fallback is used; unsupported facts or quotes are never invented.
 
 [Watch a real local-Ollama story-flow sample](docs/assets/demo-story-flow.mp4) · [Chapter-label preview](docs/assets/demo-story-flow-frame.png)
+
+
+## Documentary narration format
+
+The Studio adds a **Documentary narration** mode alongside Smart recap and Story flow. It structures source-timestamped footage into **Topic -> Strong opening -> Background -> Chronological development -> Findings -> Conclusion -> Closing**. The local model must ground every chapter in the transcript; unsupported dates, quotations, facts and causal claims are not invented. An incomplete model response falls back to a transcript-based timeline. The result is rendered as a separate `documentary_video.mp4`.

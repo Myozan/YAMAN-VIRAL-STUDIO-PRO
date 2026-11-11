@@ -1,3 +1,13 @@
+## [1.5.4] - 2026-11-11
+
+### Added
+- Documentary narration format with seven timestamp-grounded chapters: topic, strong opening, background, chronological development, findings, conclusion and closing.
+- Separate `documentary_video.mp4` export and media-library entry; Smart recap and Story flow remain independent.
+- Transcript-based fallback for incomplete local-model chapter responses; unsupported facts and quotations are not fabricated.
+
+### Improved
+- Updated PWA shell and asset cache version for the documentary format release.
+
 ## [1.5.2] - 2026-11-11
 
 ### Added

@@ -443,7 +443,7 @@ function showSummaryResult(data){
  (data.moments||[]).forEach((m,i)=>{const row=document.createElement("div");row.className="summary-moment";row.textContent=(m.section?m.section+" · ":(i+1)+". ")+Number(m.start).toFixed(1)+"s - "+Number(m.end).toFixed(1)+"s \u00b7 "+(m.reason||"\u00d6nemli an");moments.append(row);});
  const video=document.createElement("video");video.className="summary-player";video.controls=true;video.preload="metadata";video.src=data.output.file;
  const actions=document.createElement("div");actions.className="actions";
- const download=document.createElement("a");download.className="summary-download";download.href=data.output.file;download.download=data.output.filename||"summary_video.mp4";download.textContent="Özet MP4 indir";
+ const download=document.createElement("a");download.className="summary-download";download.href=data.output.file;download.download=data.output.filename||"summary_video.mp4";download.textContent=data.format==="documentary"?"Belgesel MP4 indir":"Ozet MP4 indir";
  const method=document.createElement("small");method.className="muted";method.textContent="AI y\u00f6ntemi: "+(data.method||"Yerel transkript analizi")+" \u00b7 "+data.output.size_mb+" MB";
  actions.append(download,method);box.append(title,formatBadge,desc,points,moments,video,actions);
 }
@@ -451,18 +451,18 @@ async function generateSummaryVideo(){
  if(!jobId){$("summaryFeedback").textContent="\u00d6nce bir video analiz et.";return;}
  const button=$("generateSummary");button.disabled=true;button.textContent="\u00d6zet haz\u0131rlan\u0131yor...";
  const selectedFormat=$("summaryFormat")?.value||"smart";
- $("summaryFeedback").textContent=selectedFormat==="story"?"Konu, giriş, gelişme, sonuç ve kapanış bölümleri kaynak transkripte göre sıralanıyor; dikey MP4 hazırlanıyor.":"Transkript özetleniyor, önemli anlar seçiliyor ve MP4 hazırlanıyor.";
+ $("summaryFeedback").textContent=selectedFormat==="documentary"?"Belgesel bolumleri kaynak transkripte gore kronolojik siraya aliniyor; dogrulanmamis bilgi eklenmiyor.":(selectedFormat==="story"?"Konu, giris, gelisme, sonuc ve kapanis bolumleri kaynak transkripte gore siralaniyor; dikey MP4 hazirlaniyor.":"Transkript ozetleniyor, onemli anlar seciliyor ve MP4 hazirlaniyor.");
  try{
   const r=await fetch("/api/summary/run",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({job_id:jobId,target_seconds:+$("summaryLength").value,format:$("summaryFormat")?.value||"smart"})});
   const q=await r.json();if(!r.ok)throw new Error(q.detail||"\u00d6zet video ba\u015flat\u0131lamad\u0131");
   const data=await waitForTask(q.task_id,task=>{$("summaryFeedback").textContent=(task.stage||"\u00d6zet haz\u0131rlan\u0131yor")+" \u00b7 "+(task.percent||0)+"%";});
   showSummaryResult(data);$("summaryFeedback").textContent="\u00d6zet video ba\u015far\u0131yla olu\u015fturuldu.";loadMediaLibrary();
  }catch(e){$("summaryFeedback").textContent="\u00d6zet video hatas\u0131: "+e.message;notice("\u00d6zet video hatas\u0131: "+e.message);}
- finally{button.disabled=false;button.textContent=selectedFormat==="story"?"Hikâye akışını tekrar oluştur":"Akıllı özeti tekrar oluştur";}
+ finally{button.disabled=false;button.textContent=selectedFormat==="documentary"?"Belgesel anlatimini tekrar olustur":(selectedFormat==="story"?"Hikaye akisani tekrar olustur":"Akilli ozeti tekrar olustur");}
 }
 $("summaryFormat")?.addEventListener("change",()=>{
  const button=$("generateSummary");if(!button)return;
- button.textContent=$("summaryFormat").value==="story"?"Hikâye akışı videosu oluştur →":"Akıllı özet videosu oluştur →";
+ const format=$("summaryFormat").value;button.textContent=format==="documentary"?"Belgesel anlatimi videosu olustur ->":(format==="story"?"Hikaye akisi videosu olustur ->":"Akilli ozet videosu olustur ->");
 });
 $("generateSummary")?.addEventListener("click",generateSummaryVideo);
 async function scanDownloads(){
