@@ -6,9 +6,9 @@
 
 ### Yerel yapay zekâ destekli video analiz, Shorts üretimi ve çok formatlı içerik stüdyosu
 
-**v1.5.5 · Local-first AI · Windows · PWA**
+**v1.5.7 · Local-first AI · Windows · PWA**
 
-[![Version](https://img.shields.io/badge/version-1.5.6-6478ff?style=for-the-badge)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.5.7-6478ff?style=for-the-badge)](CHANGELOG.md)
 [![CI](https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO/actions/workflows/ci.yml/badge.svg?branch=import%2Fv1.2-source)](https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/API-FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
@@ -77,6 +77,19 @@ Aşağıdaki görseller yerel uygulamanın güncel arayüzünden alınmıştır.
 - **Sistem izleme:** GPU, CPU, RAM ve VRAM metrikleri.
 - **Responsive arayüz:** Masaüstü ve mobil ekranlara uyumlu web arayüzü; PWA kurulumu.
 - **Çok dilli arayüz:** Türkçe, İngilizce, Almanca ve İspanyolca.
+
+## Autopilot — zamanlanmış yerel üretim
+
+Autopilot, seçilen yayın takviminde Windows İndirilenler klasörüne eklenen yeni videoları tarar; videoyu Whisper ile çözümler, yerel AI ile kesitleri sıralar ve en iyi üç kesiti YouTube Shorts, Instagram Reels ve TikTok için render eder. Üretilen MP4 dosyaları Video Kütüphanesi'nde ve proje klasöründe saklanır.
+
+- Günlük veya haftalık çalışma saati ve Europe/Istanbul saat dilimi.
+- Kanal nişi, konuşma dili, kesit adedi ve hedef klip süresi ayarları.
+- Platform başına ayrı çıktı; zamanlama duraklatma, yeniden etkinleştirme ve manuel çalıştırma.
+- Kalıcı SQLite otomasyon ve çalışma kayıtları; uygulama yeniden başladığında planlar korunur.
+- **Güvenlik:** Sosyal medya paylaşımı otomatik yapılmaz. Her çıktı kullanıcı incelemesi ve açık yayın onayı bekler.
+- **Çalışma koşulu:** Zamanlayıcı yerel uygulama çalışırken ve bilgisayar açıkken işler.
+
+Bu sürüm mevcut videoları yeniden kullanır. Konu trendi keşfi, sıfırdan metinden video/ses üretimi, ses klonlama ve otomatik platform gönderimi henüz bu yerel Autopilot kapsamına dahil değildir.
 
 ## Mimari
 

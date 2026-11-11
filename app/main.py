@@ -1,5 +1,5 @@
 from __future__ import annotations
-import ctypes, html, json, math, os, platform, re, secrets, hashlib, base64, shutil, sqlite3, subprocess, sys, time, uuid
+import ctypes, html, json, math, os, platform, re, secrets, hashlib, base64, shutil, sqlite3, subprocess, sys, time, uuid, threading
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlencode
@@ -18,6 +18,7 @@ from pydantic import BaseModel, Field, HttpUrl
 from app.learning import ViralLearningEngine
 from app.agents import AGENT_CATALOG, run_agent_team
 from app.framing import render_face_tracked
+from app import autopilot as autopilot_store
 
 # Windows CUDA runtime DLLs are shipped inside this project's isolated venv.
 # Keep AddDllDirectory handles alive so CTranslate2 can resolve cuBLAS/cuDNN.
@@ -78,7 +79,7 @@ if _PROFILE_FILE.exists():
                 PLATFORM_PROFILES[key].update({k: value[k] for k in ("width", "height", "max_seconds") if k in value})
     except Exception:
         pass
-app = FastAPI(title="YAMAN VIRAL STUDIO PRO", version="1.4.0")
+app = FastAPI(title="YAMAN VIRAL STUDIO PRO", version="1.5.7")
 app.mount("/assets", StaticFiles(directory=BASE / "web"), name="assets")
 
 @app.get("/sw.js", include_in_schema=False)
@@ -113,6 +114,7 @@ def init_task_store():
 
 init_task_store()
 learning = ViralLearningEngine(WORK / "viral_learning.sqlite3")
+autopilot_store.init_autopilot(TASK_DB)
 
 
 def load_saved_jobs():
@@ -198,6 +200,19 @@ class SummaryRequest(BaseModel):
     captions: bool = True
     chapter_titles: bool = True
 
+
+class AutopilotRequest(BaseModel):
+    name: str = Field(min_length=2, max_length=80)
+    niche: str = Field(min_length=2, max_length=160)
+    language: str = Field(default="auto", pattern="^(auto|tr|en)$")
+    clips: int = Field(default=5, ge=1, le=12)
+    min_seconds: int = Field(default=20, ge=10, le=60)
+    max_seconds: int = Field(default=55, ge=20, le=180)
+    platforms: list[str] = Field(default_factory=lambda: ["youtube", "instagram", "tiktok"])
+    frequency: str = Field(default="daily", pattern="^(daily|weekly)$")
+    publish_time: str = Field(default="09:00", pattern="^([01]\\d|2[0-3]):[0-5]\\d$")
+    timezone: str = Field(default="Europe/Istanbul", min_length=3, max_length=80)
+    enabled: bool = True
 
 class TeamRequest(BaseModel):
     job_id: str
@@ -1683,6 +1698,138 @@ def learning_insights():
 def record_performance(req: PerformanceRequest):
     if req.platform not in PLATFORMS: raise HTTPException(400,"Geçersiz platform.")
     return learning.record(req.model_dump())
+
+@app.get("/api/autopilot")
+def list_autopilots():
+    return {"autopilots": autopilot_store.list_autopilots(TASK_DB),
+            "source_folder": str(DOWNLOADS_DIR), "mode": "local-folder-watch",
+            "publishing": "manual-approval-required"}
+
+@app.post("/api/autopilot")
+def create_autopilot(req: AutopilotRequest):
+    if req.min_seconds >= req.max_seconds:
+        raise HTTPException(422, "Minimum klip süresi maksimum süreden küçük olmalı.")
+    platforms = list(dict.fromkeys(req.platforms))
+    if not platforms or any(p not in PLATFORMS for p in platforms):
+        raise HTTPException(422, "YouTube, Instagram veya TikTok seçin.")
+    data = req.model_dump()
+    data["platforms"] = platforms
+    try: item = autopilot_store.create_autopilot(TASK_DB, data)
+    except ValueError as exc: raise HTTPException(422, str(exc))
+    return {"autopilot": item}
+
+@app.patch("/api/autopilot/{autopilot_id}")
+def patch_autopilot(autopilot_id: str, req: AutopilotRequest):
+    if req.min_seconds >= req.max_seconds:
+        raise HTTPException(422, "Minimum klip süresi maksimum süreden küçük olmalı.")
+    platforms = list(dict.fromkeys(req.platforms))
+    if not platforms or any(p not in PLATFORMS for p in platforms):
+        raise HTTPException(422, "Geçersiz platform seçimi.")
+    try: item = autopilot_store.update_autopilot(TASK_DB, autopilot_id, {**req.model_dump(), "platforms": platforms})
+    except ValueError as exc: raise HTTPException(422, str(exc))
+    if not item: raise HTTPException(404, "Autopilot bulunamadı.")
+    return {"autopilot": item}
+
+@app.delete("/api/autopilot/{autopilot_id}")
+def remove_autopilot(autopilot_id: str):
+    if not autopilot_store.delete_autopilot(TASK_DB, autopilot_id):
+        raise HTTPException(404, "Autopilot bulunamadı.")
+    return {"deleted": True}
+
+@app.post("/api/autopilot/{autopilot_id}/run")
+def run_autopilot_now(autopilot_id: str, background_tasks: BackgroundTasks):
+    item = autopilot_store.get_autopilot(TASK_DB, autopilot_id)
+    if not item: raise HTTPException(404, "Autopilot bulunamadı.")
+    claim = autopilot_store.claim_manual(TASK_DB, autopilot_id)
+    if claim == "running": raise HTTPException(409, "Bu Autopilot zaten çalışıyor.")
+    if claim == "missing": raise HTTPException(404, "Autopilot bulunamadı.")
+    background_tasks.add_task(run_autopilot_cycle, item)
+    return {"queued": True, "message": "Autopilot çalıştırma kuyruğa alındı."}
+
+def run_autopilot_cycle(item: dict):
+    """Watch Downloads, analyze the newest unseen source, render top clips, and leave them for approval."""
+    source = None
+    task_id = uuid.uuid4().hex[:10]
+    try:
+        if not DOWNLOADS_DIR.is_dir():
+            raise RuntimeError("İndirilenler klasörü bulunamadı.")
+        seen = set(item.get("processed_files", []))
+        candidates = []
+        for file in DOWNLOADS_DIR.iterdir():
+            try:
+                if file.is_file() and file.suffix.lower() in VIDEO_EXTENSIONS and file.name not in seen:
+                    candidates.append(file)
+            except OSError: continue
+        if not candidates:
+            raise RuntimeError("İşlenecek yeni video yok. İndirilenler klasörüne yeni bir video ekleyin.")
+        source = max(candidates, key=lambda p: p.stat().st_mtime)
+        folder = WORK / task_id
+        folder.mkdir(parents=True, exist_ok=True)
+        local_copy = folder / ("source" + source.suffix.lower())
+        shutil.copy2(source, local_copy)
+        req = AnalyzeRequest(url=None, clips=item["clips"], min_seconds=item["min_seconds"],
+                             max_seconds=item["max_seconds"], language=item["language"])
+        set_task(task_id, 1, "Autopilot · kaynak analiz ediliyor", task_type="autopilot",
+                 autopilot_id=item["id"], source_file=source.name)
+        run_analyze_task(task_id, req, folder, local_copy)
+        state = task_states.get(task_id, {})
+        if state.get("status") != "completed":
+            raise RuntimeError(state.get("error", "Video analizi tamamlanamadı."))
+        job = jobs.get(task_id)
+        if not job: raise RuntimeError("Analiz projesi oluşturulamadı.")
+        # Re-rank transcript clips for the channel niche; retain existing scores on fallback.
+        try:
+            set_task(task_id, 88, "Autopilot · kanal nişine göre editoryal sıralama")
+            niche_prompt = (
+                "Türkçe yanıt ver. Aşağıdaki video kesitlerini kanal nişine uygunluk, "
+                "tek başına anlaşılabilirlik, güçlü açılış ve izleyiciye sunduğu değer açısından "
+                "0-100 arasında puanla. Kaynak metinde olmayan bilgi ekleme ve viral olma garantisi verme. "
+                "JSON: {clips:[{id,score,reason,title}]}. Kanal nişi: " + item["niche"] +
+                ". Kesitler: " + json.dumps([{"id": c["id"], "text": c["text"][:900]} for c in job["clips"]], ensure_ascii=False)
+            )
+            niche_result = llm_json(niche_prompt, timeout=90, num_predict=900)
+            niche_rows = niche_result.get("clips", []) if isinstance(niche_result, dict) else []
+            niche_by_id = {int(x["id"]): x for x in niche_rows if isinstance(x, dict) and "id" in x}
+            for candidate in job["clips"]:
+                scored = niche_by_id.get(candidate["id"])
+                if scored:
+                    candidate["score"] = max(0, min(100, int(scored.get("score", candidate["score"]))))
+                    candidate["reason"] = str(scored.get("reason", candidate.get("reason", "")))[:500]
+                    candidate["title"] = str(scored.get("title", candidate.get("title", "")))[:160]
+            save_job(task_id, job)
+        except Exception:
+            pass
+        selected = sorted(job["clips"], key=lambda c: c.get("score", 0), reverse=True)[:3]
+        rendered = []
+        for clip in selected:
+            render_id = uuid.uuid4().hex[:10]
+            render_req = RenderRequest(job_id=task_id, clip_id=clip["id"], platforms=item["platforms"], captions=True)
+            set_task(render_id, 1, "Autopilot · platform çıktıları hazırlanıyor",
+                     task_type="autopilot_render", autopilot_id=item["id"], source_file=source.name, outputs=[])
+            run_render_task(render_id, render_req, job, clip, item["platforms"])
+            render_state = task_states.get(render_id, {})
+            if render_state.get("status") != "completed":
+                raise RuntimeError(render_state.get("error", "Platform render işlemi başarısız."))
+            rendered.extend(render_state.get("outputs", []))
+        message = f"{source.name}: {len(selected)} kesit, {len(rendered)} platform çıktısı hazır. Yayın öncesi onay bekliyor."
+        autopilot_store.finish_run(TASK_DB, item["id"], "review", message, task_id, task_id, rendered, source.name)
+    except Exception as exc:
+        autopilot_store.finish_run(TASK_DB, item["id"], "failed", str(exc), task_id,
+                                   task_id if task_id in jobs else None, [], None)
+
+def _autopilot_scheduler():
+    while True:
+        try:
+            for item in autopilot_store.claim_due(TASK_DB):
+                run_autopilot_cycle(item)
+        except Exception:
+            pass
+        time.sleep(20)
+
+@app.on_event("startup")
+def start_autopilot_scheduler():
+    if not any(t.name == "yaman-autopilot-scheduler" for t in threading.enumerate()):
+        threading.Thread(target=_autopilot_scheduler, name="yaman-autopilot-scheduler", daemon=True).start()
 
 def run_agents_task(task_id: str, req: TeamRequest, job: dict, clip: dict, platforms: list[str]):
     """Run the specialist team, journal each step and persist its report."""

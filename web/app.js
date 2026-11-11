@@ -313,7 +313,7 @@ async function refreshLearning(){try{const r=await fetch("/api/learning");const 
 refreshLearning();
 $("saveMetrics").onclick=async()=>{try{const body={clip_fingerprint:$("metricFingerprint").value,platform:$("metricPlatform").value,views:+$("metricViews").value,likes:+$("metricLikes").value,comments:+$("metricComments").value,shares:+$("metricShares").value,avg_watch_seconds:+$("metricWatch").value,video_seconds:+$("metricDuration").value};const r=await fetch("/api/learning/record",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});const d=await r.json();if(!r.ok)throw new Error(d.detail);notice(`Kaydedildi · Etkileşim %${(d.engagement_rate*100).toFixed(1)} · İzlenme tutma %${(d.retention_rate*100).toFixed(1)}`);refreshLearning();}catch(e){notice(e.message)}};
 // Main navigation: each sidebar item opens a real application workspace.
-const pageNames=["studio","content","projects","media","platforms","settings"];
+const pageNames=["studio","content","autopilot","projects","media","platforms","settings"];
 function showPage(name){
  if(!pageNames.includes(name)) name="studio";
  document.querySelectorAll(".page").forEach(x=>x.classList.toggle("active",x.id==="page-"+name));
@@ -323,6 +323,7 @@ function showPage(name){
  if(name==="platforms") loadPlatforms();
  if(name==="settings") loadSettings();
   if(name==="content") loadTaskHistory();
+ if(name==="autopilot") loadAutopilots();
 }
 document.querySelectorAll("#sidebarNav a").forEach(a=>a.addEventListener("click",e=>{e.preventDefault();showPage(a.dataset.page);}));
 document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>showPage(b.dataset.go)));
@@ -496,7 +497,32 @@ async function analyzeLocalVideo(filename,button){
  finally{button.disabled=false;button.textContent="Tekrar analiz et";}
 }
 
+
+async function loadAutopilots(){
+ const box=$("autopilotList");if(!box)return;
+ try{
+  const r=await fetch("/api/autopilot",{cache:"no-store"}),d=await r.json();
+  if(!r.ok)throw new Error(d.detail||"Autopilot listesi alınamadı");
+  $("autoSourceFolder").textContent=d.source_folder||"Downloads";
+  if(!d.autopilots.length){box.innerHTML='<div class="empty">Henüz otomasyon yok. İlk Autopilot görevini yukarıdan oluştur.</div>';return;}
+  box.innerHTML=d.autopilots.map(a=>'<article class="autopilot-card"><div class="autopilot-card-head"><div><b>'+escapeHtml(a.name)+'</b><small>'+escapeHtml(a.niche)+' · '+(a.frequency==="weekly"?"Haftalık":"Her gün")+' · '+escapeHtml(a.publish_time)+' '+escapeHtml(a.timezone)+'</small></div><span class="autopilot-status '+escapeHtml(a.last_status)+'">'+escapeHtml(a.last_status==="ready"?"HAZIR":a.last_status==="running"?"ÇALIŞIYOR":a.last_status==="review"?"ONAY BEKLİYOR":a.last_status==="failed"?"HATA":a.last_status.toUpperCase())+'</span></div><p>'+escapeHtml(a.last_message||("Sonraki çalışma: "+new Date(a.next_run).toLocaleString("tr-TR")))+'</p><small>'+escapeHtml(a.platforms.join(" · "))+' · '+(a.enabled?"Zamanlama açık":"Duraklatıldı")+'</small><div class="autopilot-card-actions"><button class="secondary" data-auto-run="'+a.id+'">Şimdi çalıştır</button><button class="secondary" data-auto-toggle="'+a.id+'" data-enabled="'+(!a.enabled)+'">'+(a.enabled?"Duraklat":"Etkinleştir")+'</button><button class="secondary danger" data-auto-delete="'+a.id+'">Sil</button></div></article>').join("");
+  box.querySelectorAll("[data-auto-run]").forEach(b=>b.addEventListener("click",async()=>{b.disabled=true;b.textContent="Kuyruğa alınıyor…";try{const x=await fetch("/api/autopilot/"+b.dataset.autoRun+"/run",{method:"POST"});const v=await x.json();if(!x.ok)throw new Error(v.detail);$("autopilotFeedback").textContent=v.message||"İşlem kuyruğa alındı."; }catch(e){$("autopilotFeedback").textContent=e.message;}finally{b.disabled=false;b.textContent="Şimdi çalıştır";loadAutopilots();}}));
+  box.querySelectorAll("[data-auto-toggle]").forEach(b=>b.addEventListener("click",async()=>{const id=b.dataset.autoToggle;const item=d.autopilots.find(x=>x.id===id);const body={name:item.name,niche:item.niche,language:item.language,clips:item.clips,min_seconds:item.min_seconds,max_seconds:item.max_seconds,platforms:item.platforms,frequency:item.frequency,publish_time:item.publish_time,timezone:item.timezone,enabled:b.dataset.enabled==="true"};try{const x=await fetch("/api/autopilot/"+id,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});const v=await x.json();if(!x.ok)throw new Error(v.detail);loadAutopilots();}catch(e){$("autopilotFeedback").textContent=e.message;}}));
+  box.querySelectorAll("[data-auto-delete]").forEach(b=>b.addEventListener("click",async()=>{if(!confirm("Bu Autopilot otomasyonunu silmek istiyor musun?"))return;const x=await fetch("/api/autopilot/"+b.dataset.autoDelete,{method:"DELETE"});if(x.ok)loadAutopilots();}));
+ }catch(e){box.innerHTML='<div class="empty">Autopilot yüklenemedi: '+escapeHtml(e.message)+'</div>';}
+}
+function escapeHtml(value){return String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+$("autopilotForm")?.addEventListener("submit",async e=>{
+ e.preventDefault();const btn=$("saveAutopilot"),feedback=$("autopilotFeedback");btn.disabled=true;btn.textContent="Kaydediliyor…";
+ const payload={name:$("autoName").value.trim(),niche:$("autoNiche").value.trim(),language:$("autoLanguage").value,clips:Number($("autoClips").value),min_seconds:Number($("autoMin").value),max_seconds:Number($("autoMax").value),platforms:[...document.querySelectorAll('input[name="autoPlatform"]:checked')].map(x=>x.value),frequency:$("autoFrequency").value,publish_time:$("autoTime").value,timezone:"Europe/Istanbul",enabled:$("autoEnabled").checked};
+ try{const r=await fetch("/api/autopilot",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)}),d=await r.json();if(!r.ok)throw new Error(d.detail||"Autopilot oluşturulamadı");feedback.textContent="Autopilot kaydedildi. İlk çalışma: "+new Date(d.autopilot.next_run).toLocaleString("tr-TR");$("autoNiche").value="";loadAutopilots();}
+ catch(err){feedback.textContent=err.message;}
+ finally{btn.disabled=false;btn.textContent="Autopilot oluştur →";}
+});
+$("refreshAutopilot")?.addEventListener("click",loadAutopilots);
+
 applyLocale(savedLocale);
+loadAutopilots();
 
 window.addEventListener("focus",()=>{if(document.querySelector("#page-platforms.active"))loadPlatforms();});
 
@@ -511,7 +537,7 @@ $("refreshTaskHistory")?.addEventListener("click",loadTaskHistory);
 
 
 /* v1.5: section breadcrumb follows existing navigation */
-(function(){const labels={studio:"Studio",content:"İçerik üretimi",projects:"Projeler",media:"Video kütüphanesi",platforms:"Platform profilleri",settings:"Ayarlar"};function sync(){const a=document.querySelector("#sidebarNav a.active"),t=document.getElementById("currentSection");if(a&&t)t.textContent=labels[a.dataset.page]||"Studio"}document.querySelectorAll("#sidebarNav a[data-page]").forEach(a=>a.addEventListener("click",()=>requestAnimationFrame(sync)));document.querySelectorAll("[data-go]").forEach(a=>a.addEventListener("click",()=>setTimeout(sync,0)));sync()})();
+(function(){const labels={studio:"Studio",content:"İçerik üretimi",autopilot:"Autopilot",projects:"Projeler",media:"Video kütüphanesi",platforms:"Platform profilleri",settings:"Ayarlar"};function sync(){const a=document.querySelector("#sidebarNav a.active"),t=document.getElementById("currentSection");if(a&&t)t.textContent=labels[a.dataset.page]||"Studio"}document.querySelectorAll("#sidebarNav a[data-page]").forEach(a=>a.addEventListener("click",()=>requestAnimationFrame(sync)));document.querySelectorAll("[data-go]").forEach(a=>a.addEventListener("click",()=>setTimeout(sync,0)));sync()})();
 
 
 /* PWA install and service-worker registration */

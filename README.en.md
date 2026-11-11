@@ -6,7 +6,7 @@
 
 <p align="center">
 
-[![Version](https://img.shields.io/badge/version-1.5.6-6478ff)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.5.7-6478ff)](CHANGELOG.md)
 [![CI](https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO/actions/workflows/ci.yml/badge.svg?branch=import%2Fv1.2-source)](https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/Python-3.12-3776AB)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/API-FastAPI-009688)](https://fastapi.tiangolo.com/)
@@ -83,6 +83,12 @@ When local AI output is invalid, transcript-based salience scoring selects momen
 - GPU, CPU, RAM and VRAM telemetry.
 - Responsive desktop/mobile web UI and installable PWA.
 - Turkish, English, German and Spanish interface.
+
+## Local Autopilot
+
+Autopilot watches the Windows Downloads folder on a daily or weekly schedule, transcribes new videos with Whisper, ranks clips with the local AI pipeline and renders the top three clips for YouTube Shorts, Instagram Reels and TikTok. Schedules and run history are stored in SQLite and survive restarts.
+
+Publishing is intentionally manual: every generated MP4 waits for user review and the existing explicit publishing confirmation. This release does not yet include trend discovery, text-to-video, voice cloning or unattended social posting.
 
 ## Architecture
 

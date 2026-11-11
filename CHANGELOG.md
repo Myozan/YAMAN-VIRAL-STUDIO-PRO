@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.5.7] - 2026-11-11
+
+### Added
+- Local-first Autopilot workspace with daily/weekly schedules, niche/language settings, clip limits, platform selection and run-now controls.
+- Persistent SQLite automation schedules and run history, plus atomic due-run claiming for multiple local app instances.
+- Downloads-folder watcher that analyzes new local videos, selects the top three clips, renders chosen platform variants and leaves outputs for manual review.
+
+### Improved
+- Autopilot navigation, responsive setup wizard, automation cards, pause/resume and delete controls.
+- PWA asset cache version bumped to v1.5.7.
+
+### Safety
+- Autopilot never publishes automatically; social posting remains behind the existing explicit confirmation flow.
+- Clearly documents current local capabilities and features not yet implemented (trend discovery, text-to-video, voice cloning and automatic posting).
+
 ## [1.5.6] - 2026-11-11
 
 ### Added

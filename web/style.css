@@ -507,3 +507,14 @@ button,a{touch-action:manipulation}
   main{padding-inline:9px!important}
   .topbar-right{gap:5px}
 }
+
+/* v1.5.7 — local-first autopilot wizard */
+.autopilot-steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.autopilot-steps>div,.autopilot-card{min-width:0;border:1px solid var(--line);border-radius:14px;background:var(--panel-soft,rgba(255,255,255,.025));padding:14px}
+.autopilot-steps b{display:block;color:var(--accent);font-size:12px;margin-bottom:8px}
+.autopilot-steps strong,.autopilot-steps small{display:block}.autopilot-steps small{color:var(--muted);margin-top:5px;line-height:1.45}
+.autopilot-form{display:grid;gap:14px}.autopilot-form .options{margin:0}.autopilot-form input:not([type=checkbox]),.autopilot-form select{width:100%;min-width:0}
+.autopilot-platforms{display:flex;flex-wrap:wrap;gap:10px}.autopilot-platforms label{display:flex;align-items:center;gap:8px;border:1px solid var(--line);padding:10px 12px;border-radius:10px;margin:0}
+.autopilot-platforms input{accent-color:var(--accent)}.autopilot-list{display:grid;gap:12px}.autopilot-card-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.autopilot-card-head b,.autopilot-card-head small{display:block}.autopilot-card-head small,.autopilot-card>small{color:var(--muted);margin-top:4px}.autopilot-card p{margin:12px 0;color:var(--muted);overflow-wrap:anywhere}.autopilot-card-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}.autopilot-status{font-size:10px;letter-spacing:.06em;padding:5px 8px;border-radius:20px;background:rgba(255,255,255,.08);white-space:nowrap}.autopilot-status.review{color:#f0c36b;background:rgba(240,195,107,.12)}.autopilot-status.failed{color:#ff8b8b;background:rgba(255,100,100,.12)}.autopilot-status.running{color:#83c8ff;background:rgba(80,160,255,.12)}.danger{color:#ff9999!important}
+@media(max-width:760px){.autopilot-steps{grid-template-columns:repeat(2,minmax(0,1fr))}.autopilot-card-head{flex-direction:column}.autopilot-card-actions>*{flex:1 1 110px}}
+@media(max-width:420px){.autopilot-steps{gap:8px}.autopilot-steps>div,.autopilot-card{padding:11px}.autopilot-platforms{display:grid;grid-template-columns:1fr}.autopilot-form .options{grid-template-columns:1fr}}
