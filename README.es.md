@@ -1,8 +1,12 @@
 # YAMAN VIRAL STUDIO PRO
 
-Estudio de vídeo con IA local para analizar vídeos, crear Shorts y preparar contenido multiplataforma.
+Estudio local de **reutilización de vídeo con IA** para analizar vídeos, transcribir voz y crear clips verticales para YouTube Shorts, Instagram Reels y TikTok.
 
-**Nueva interfaz profesional v1.5:** navegación con iconos, identidad visual y favicon, accesos directos a GitHub, ruta de navegación del espacio de trabajo, superficies oscuras refinadas, foco accesible y navegación móvil.
+<p align="center"><img src="docs/assets/hero.svg" alt="YAMAN VIRAL STUDIO PRO" width="100%"></p>
+
+<p align="center"><a href="https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO/actions/workflows/ci.yml"><img src="https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO/actions/workflows/ci.yml/badge.svg?branch=import%2Fv1.2-source" alt="Estado de CI"></a> <img src="https://img.shields.io/badge/AI-Local--First-7C5CFA" alt="IA local"> <img src="https://img.shields.io/badge/PWA-Instalable-5B8DEF" alt="PWA"></p>
+
+**v1.5.2 · PWA e interfaz adaptable.** Las vistas de escritorio y móvil son ilustraciones de diseño, no capturas en directo de la aplicación.
 
 ## Funciones principales
 - Importación de fuentes de YouTube autorizadas o vídeos locales de Windows.
@@ -16,7 +20,11 @@ Estudio de vídeo con IA local para analizar vídeos, crear Shorts y preparar co
 ## Capturas
 | Escritorio | Móvil |
 |---|---|
-| ![Escritorio](docs/assets/dashboard-desktop.png) | ![Móvil](docs/assets/dashboard-mobile.png) |
+| ![Escritorio](docs/assets/dashboard-desktop.svg) | ![Móvil](docs/assets/dashboard-mobile.svg) |
+
+## Instalación PWA
+
+La instalación requiere HTTPS o localhost. En iOS: Safari → Compartir → Añadir a pantalla de inicio. El modo sin conexión almacena solo la interfaz; la IA, el procesamiento de vídeo y las funciones API necesitan el servidor local.
 
 ## Instalación en Windows
 Requisitos: Windows 10/11, Python 3.12, FFmpeg y Ollama.
