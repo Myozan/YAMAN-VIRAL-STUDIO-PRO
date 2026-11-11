@@ -754,7 +754,8 @@ def auto_editor_silence_remove(req: AutoEditorRequest):
         raise HTTPException(503, "Auto-Editor kurulu değil. Resmî Windows sürümünü indirip PATH'e ekleyin.")
     relative = req.file.replace("\\", "/").lstrip("/")
     if relative.startswith("workspace/"):
-        relative = relative[len("workspace/"):]\n    source = (WORK / relative).resolve()
+        relative = relative[len("workspace/"):]
+    source = (WORK / relative).resolve()
     try:
         source.relative_to(WORK.resolve())
     except ValueError:
