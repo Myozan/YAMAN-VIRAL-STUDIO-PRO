@@ -23,6 +23,10 @@ jobs:
           test -s web/icons/icon-192.svg
           test -s web/icons/icon-512.svg
           test -s docs/assets/favicon.svg
+          test -s docs/assets/hero.svg
+          test -s docs/assets/dashboard-desktop.svg
+          test -s docs/assets/dashboard-mobile.svg
+          test -s docs/assets/social-preview.svg
           python -c "import json; json.load(open('web/manifest.webmanifest', encoding='utf-8'))"
       - name: Validate JavaScript syntax
         run: |
