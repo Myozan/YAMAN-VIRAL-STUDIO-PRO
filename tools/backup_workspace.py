@@ -11,6 +11,7 @@ import argparse
 import json
 import shutil
 import sqlite3
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -65,7 +66,13 @@ def main() -> int:
             continue
         if path.suffix.lower() in DATABASE_SUFFIXES:
             target = db_root / relative
-            backup_sqlite(path, target)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            # Snapshot the live local database locally first; only then copy the
+            # closed, consistent snapshot to the NAS destination.
+            with tempfile.TemporaryDirectory(prefix="yaman-sqlite-snapshot-") as staging:
+                local_snapshot = Path(staging) / relative.name
+                backup_sqlite(path, local_snapshot)
+                shutil.copy2(local_snapshot, target)
             database_manifest.append({
                 "source": relative.as_posix(),
                 "backup": target.relative_to(snapshot).as_posix(),
