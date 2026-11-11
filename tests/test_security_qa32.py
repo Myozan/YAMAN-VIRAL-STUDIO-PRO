@@ -352,3 +352,21 @@ def test_oauth_key_rotation_without_key_sources_fails_closed(tmp_path, monkeypat
     with pytest.raises(RuntimeError, match="key file is missing"):
         main.rotate_oauth_vault_key(Fernet.generate_key().decode("ascii"))
     assert not main.OAUTH_KEY_FILE.exists()
+
+
+def test_pexels_search_uses_pinned_transport_and_auth_header(monkeypatch, tmp_path):
+    captured = {}
+    class Response:
+        status_code = 200
+        text = ""
+        def json(self): return {"videos": []}
+        def close(self): pass
+    def fake_safe_get(url, *, timeout, headers=None, **kwargs):
+        captured.update(url=url, timeout=timeout, headers=headers)
+        return Response()
+    monkeypatch.setattr(visual_factory, "safe_stream_get", fake_safe_get)
+    with pytest.raises(visual_factory.VisualProviderError, match="B-roll"):
+        visual_factory.search_pexels_video("pexels-test-key-123", "forest", tmp_path / "clip.mp4")
+    assert captured["url"].startswith("https://api.pexels.com/v1/videos/search?")
+    assert captured["timeout"] == 45
+    assert captured["headers"]["Authorization"] == "pexels-test-key-123"

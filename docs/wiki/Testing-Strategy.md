@@ -1,10 +1,10 @@
-﻿# Quality Engineering & Testing Strategy â€” v1.8.0
+# Quality Engineering & Testing Strategy â€” v1.8.0
 
 This document separates executed automated coverage from remaining release assurance. Passing tests are evidence for tested paths only, not a security certification.
 
 ## 1. QA 3.5 current baseline
 
-The suite collects **70 test cases**. Latest Windows/Python 3.12 run: **68 passed, 2 skipped**. The two skips are workspace symlink tests; the connected Windows account cannot create symlinks.
+The suite collects **71 test cases**. Latest Windows/Python 3.12 run: **68 passed, 2 skipped**. The two skips are workspace symlink tests; the connected Windows account cannot create symlinks.
 
 | Suite | Coverage | Test cases |
 |---|---|---:|
@@ -14,8 +14,8 @@ The suite collects **70 test cases**. Latest Windows/Python 3.12 run: **68 passe
 | Security regression | URL validation, path containment, OAuth vault and SSRF/redirect cases | 32 |
 | QA 3.3 reliability | Agent retry eligibility and source validation, concurrent task journaling, app lifespan, synthetic FFmpeg/FFprobe and corrupt media | 9 |
 | QA 3.4 durability | Cross-process SQLite write contention, retry reservation idempotency and claim persistence | 3 |
-| QA 3.5 security and concurrency | IP-pinned HTTPS transport, OAuth vault key rotation, rollback and persistent key-source selection | 8 |
-| **Total** | | **67** |
+| QA 3.5 security and concurrency | IP-pinned HTTPS transport (including Pexels API search), OAuth vault key rotation, rollback and persistent key-source selection | 9 |
+| **Total** | | **71** |
 
 No live OAuth, paid provider or external publishing call is made by the tests.
 
@@ -36,7 +36,7 @@ python -c "import json; json.load(open('web/manifest.webmanifest', encoding='utf
 
 ## 3. QA 3.5 security and concurrency changes
 
-- Remote media downloads now resolve each HTTPS hostname, reject the entire answer set if any address is non-public, and pin the connection to a validated IP. The TLS connection retains the original hostname for SNI and certificate hostname verification. Ambient proxy settings are not inherited for this security-sensitive fetch. Every redirect is independently validated and pinned.
+- All remote media GETs, including the Pexels search request, now resolve each HTTPS hostname, reject the entire answer set if any address is non-public, and pin the connection to a validated IP. The TLS connection retains the original hostname for SNI and certificate hostname verification. Ambient proxy settings are not inherited for this security-sensitive fetch. Every redirect is independently validated and pinned. Pexels search and media downloads use this same path.
 - OAuth secret rotation now decrypts and re-encrypts the token, app-credential and visual-provider vaults using a new Fernet key. Existing vaults are backed up before replacement; staged ciphertext is verified; a failed replacement restores every already-replaced file. Environment-managed rotation writes a persistent rotated-key file, selected on subsequent startup, instead of relying on an in-memory environment change.
 - Autopilot's existing `BEGIN IMMEDIATE` due-claim transaction is now tested with two independent Python processes racing for the same due schedule. Exactly one process may claim it.
 

@@ -62,7 +62,7 @@ class _PinnedHTTPSConnectionPool(HTTPSConnectionPool):
     ConnectionCls = _PinnedHTTPSConnection
 
 
-def _pinned_https_get(url: str, ip: str, *, timeout: int):
+def _pinned_https_get(url: str, ip: str, *, timeout: int, headers: dict | None = None):
     from urllib3 import PoolManager
     from requests import Session
 
@@ -81,7 +81,7 @@ def _pinned_https_get(url: str, ip: str, *, timeout: int):
     session = Session()
     session.trust_env = False
     session.mount("https://", PinnedAdapter())
-    response = session.get(url, stream=True, timeout=timeout, allow_redirects=False)
+    response = session.get(url, headers=headers, stream=True, timeout=timeout, allow_redirects=False)
     original_close = response.close
     def close_with_session():
         try:
@@ -92,14 +92,14 @@ def _pinned_https_get(url: str, ip: str, *, timeout: int):
     return response
 
 
-def safe_stream_get(url: str, *, timeout: int, max_redirects: int = 5):
+def safe_stream_get(url: str, *, timeout: int, max_redirects: int = 5, headers: dict | None = None):
     """GET public HTTPS media with IP pinning and per-hop redirect validation."""
     current = url
     for _ in range(max_redirects + 1):
         validate_public_https_url(current)
         host = (urlparse(current).hostname or "").lower().rstrip(".")
         pinned_ip = _resolve_public_ips(host)[0]
-        response = _pinned_https_get(current, pinned_ip, timeout=timeout)
+        response = _pinned_https_get(current, pinned_ip, timeout=timeout, headers=headers)
         if response.status_code not in {301, 302, 303, 307, 308}:
             return response
         location = response.headers.get("Location")
@@ -211,12 +211,13 @@ class RunwayClient:
 def search_pexels_video(api_key: str, query: str, target: Path, orientation: str = "portrait") -> dict:
     if not api_key or len(api_key.strip()) < 12:
         raise VisualProviderError("Pexels API anahtar─▒ Ayarlar > AI G├Ârsel Motorlar─▒ b├Âl├╝m├╝ne girilmelidir.")
-    response = requests.get(
-        "https://api.pexels.com/v1/videos/search",
+    from requests import Request
+    request = Request(
+        "GET", "https://api.pexels.com/v1/videos/search",
         headers={"Authorization": api_key.strip()},
         params={"query": query[:180], "orientation": orientation, "per_page": 8, "locale": "tr-TR"},
-        timeout=45,
-    )
+    ).prepare()
+    response = safe_stream_get(request.url, timeout=45, headers=request.headers)
     if response.status_code >= 400:
         raise VisualProviderError(f"Pexels API ({response.status_code}): {response.text[:600]}")
     videos = response.json().get("videos", [])
