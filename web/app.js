@@ -261,7 +261,9 @@ function createMediaCard(item, compact=false){
     info.textContent=result.published?(en?"Published to platform.":"Platforma g\u00f6nderildi."):(result.note||"Upload processing");
    }catch(e){info.textContent=e.message;}finally{publish.disabled=false;publish.textContent=en?"Publish to platform":"Platformda yay\u0131nla";}
   });
-  actions.append(download,open,publish);card.append(head,video,info,actions);return card;
+  actions.append(download,open);
+  if(["youtube","instagram","tiktok"].includes(item.platform))actions.append(publish);
+  card.append(head,video,info,actions);return card;
 }
 async function loadMediaLibrary(){
  const box=$("mediaLibraryGrid");if(!box)return;
@@ -432,29 +434,36 @@ function revealSummaryPanel(){
 }
 function showSummaryResult(data){
  const box=$("summaryResult");box.innerHTML="";box.classList.remove("hidden");
+ if($("summaryFormat")&&data.format)$("summaryFormat").value=data.format;
  const title=document.createElement("h3");title.textContent=data.title||"Video \u00f6zeti";
  const desc=document.createElement("p");desc.textContent=data.summary||"";
  const points=document.createElement("ul");(data.key_points||[]).forEach(x=>{const li=document.createElement("li");li.textContent=x;points.append(li);});
  const moments=document.createElement("div");moments.className="summary-moments";
- (data.moments||[]).forEach((m,i)=>{const row=document.createElement("div");row.className="summary-moment";row.textContent=(i+1)+". "+Number(m.start).toFixed(1)+"s - "+Number(m.end).toFixed(1)+"s \u00b7 "+(m.reason||"\u00d6nemli an");moments.append(row);});
+ const formatBadge=document.createElement("div");formatBadge.className="story-format-badge";formatBadge.textContent=data.format_label||"Akıllı özet";
+ (data.moments||[]).forEach((m,i)=>{const row=document.createElement("div");row.className="summary-moment";row.textContent=(m.section?m.section+" · ":(i+1)+". ")+Number(m.start).toFixed(1)+"s - "+Number(m.end).toFixed(1)+"s \u00b7 "+(m.reason||"\u00d6nemli an");moments.append(row);});
  const video=document.createElement("video");video.className="summary-player";video.controls=true;video.preload="metadata";video.src=data.output.file;
  const actions=document.createElement("div");actions.className="actions";
  const download=document.createElement("a");download.className="summary-download";download.href=data.output.file;download.download=data.output.filename||"summary_video.mp4";download.textContent="Özet MP4 indir";
  const method=document.createElement("small");method.className="muted";method.textContent="AI y\u00f6ntemi: "+(data.method||"Yerel transkript analizi")+" \u00b7 "+data.output.size_mb+" MB";
- actions.append(download,method);box.append(title,desc,points,moments,video,actions);
+ actions.append(download,method);box.append(title,formatBadge,desc,points,moments,video,actions);
 }
 async function generateSummaryVideo(){
  if(!jobId){$("summaryFeedback").textContent="\u00d6nce bir video analiz et.";return;}
  const button=$("generateSummary");button.disabled=true;button.textContent="\u00d6zet haz\u0131rlan\u0131yor...";
- $("summaryFeedback").textContent="Transkript \u00f6zetleniyor, \u00f6nemli anlar se\u00e7iliyor ve MP4 haz\u0131rlan\u0131yor.";
+ const selectedFormat=$("summaryFormat")?.value||"smart";
+ $("summaryFeedback").textContent=selectedFormat==="story"?"Konu, giriş, gelişme, sonuç ve kapanış bölümleri kaynak transkripte göre sıralanıyor; dikey MP4 hazırlanıyor.":"Transkript özetleniyor, önemli anlar seçiliyor ve MP4 hazırlanıyor.";
  try{
-  const r=await fetch("/api/summary/run",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({job_id:jobId,target_seconds:+$("summaryLength").value})});
+  const r=await fetch("/api/summary/run",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({job_id:jobId,target_seconds:+$("summaryLength").value,format:$("summaryFormat")?.value||"smart"})});
   const q=await r.json();if(!r.ok)throw new Error(q.detail||"\u00d6zet video ba\u015flat\u0131lamad\u0131");
   const data=await waitForTask(q.task_id,task=>{$("summaryFeedback").textContent=(task.stage||"\u00d6zet haz\u0131rlan\u0131yor")+" \u00b7 "+(task.percent||0)+"%";});
   showSummaryResult(data);$("summaryFeedback").textContent="\u00d6zet video ba\u015far\u0131yla olu\u015fturuldu.";loadMediaLibrary();
  }catch(e){$("summaryFeedback").textContent="\u00d6zet video hatas\u0131: "+e.message;notice("\u00d6zet video hatas\u0131: "+e.message);}
- finally{button.disabled=false;button.textContent="Tekrar \u00f6zet olu\u015ftur";}
+ finally{button.disabled=false;button.textContent=selectedFormat==="story"?"Hikâye akışını tekrar oluştur":"Akıllı özeti tekrar oluştur";}
 }
+$("summaryFormat")?.addEventListener("change",()=>{
+ const button=$("generateSummary");if(!button)return;
+ button.textContent=$("summaryFormat").value==="story"?"Hikâye akışı videosu oluştur →":"Akıllı özet videosu oluştur →";
+});
 $("generateSummary")?.addEventListener("click",generateSummaryVideo);
 async function scanDownloads(){
  const box=$("downloadsList");if(!box)return;box.innerHTML='<div class="empty">İndirilenler taranıyor…</div>';

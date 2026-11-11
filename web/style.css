@@ -414,3 +414,8 @@ button,a{touch-action:manipulation}
 .install-app-button:hover{background:rgba(103,234,212,.17)}
 @media(max-width:760px){.install-app-button{min-height:38px;padding:7px 9px;font-size:9px}.install-app-button span{display:inline}}
 @media(max-width:390px){.install-app-button span{display:none}}
+
+/* Narrative format selector and story-flow result label */
+.story-format-badge{display:inline-flex;align-items:center;width:max-content;max-width:100%;padding:7px 11px;border:1px solid rgba(103,234,212,.25);border-radius:999px;background:rgba(103,234,212,.08);color:#a3fff0;font-size:10px;font-weight:800;letter-spacing:.4px}
+.summary-controls{align-items:flex-end}
+.summary-controls>div{min-width:230px}

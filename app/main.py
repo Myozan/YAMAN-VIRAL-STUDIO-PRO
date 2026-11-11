@@ -193,6 +193,7 @@ class PerformanceRequest(BaseModel):
 class SummaryRequest(BaseModel):
     job_id: str
     target_seconds: int = Field(default=90, ge=30, le=180)
+    format: str = Field(default="smart", pattern="^(smart|story)$")
 
 
 class TeamRequest(BaseModel):
@@ -954,17 +955,21 @@ def media_library():
                 continue
     for folder in WORK.iterdir():
         if folder.is_dir():
-            path = folder / "summary_video.mp4"
-            if path.is_file():
-                try:
-                    stat = path.stat()
-                    items.append({"job_id": folder.name, "clip_id": "summary", "platform": "summary",
-                                  "label": "\u0041k\u0131ll\u0131 Video \u00d6zeti", "filename": path.name,
-                                  "file": f"/workspace/{folder.name}/{path.name}",
-                                  "size_mb": round(stat.st_size / (1024 * 1024), 2),
-                                  "modified_at": stat.st_mtime})
-                except OSError:
-                    pass
+            for filename, clip_id, platform, label in (
+                ("summary_video.mp4", "summary", "summary", "Akıllı Video Özeti"),
+                ("story_video.mp4", "story", "story", "Hikâye Akışı"),
+            ):
+                path = folder / filename
+                if path.is_file():
+                    try:
+                        stat = path.stat()
+                        items.append({"job_id": folder.name, "clip_id": clip_id, "platform": platform,
+                                      "label": label, "filename": path.name,
+                                      "file": f"/workspace/{folder.name}/{path.name}",
+                                      "size_mb": round(stat.st_size / (1024 * 1024), 2),
+                                      "modified_at": stat.st_mtime})
+                    except OSError:
+                        pass
     items.sort(key=lambda item: item["modified_at"], reverse=True)
     return {"items": items, "count": len(items)}
 
@@ -1095,86 +1100,164 @@ def fallback_summary_moments(segments: list[dict], duration: float, target_secon
     return output
 
 
-def build_summary_moments(job: dict, target_seconds: int) -> dict:
+def fallback_story_moments(segments: list[dict], duration: float, target_seconds: int) -> list[dict]:
+    """Build five chronological story beats from transcript timestamps without inventing content."""
+    usable = [x for x in segments if str(x.get("text", "")).strip()]
+    if not usable or duration < 20:
+        return fallback_summary_moments(segments, duration, target_seconds)
+    labels = ["Konu", "Giriş", "Gelişme", "Sonuç", "Kapanış"]
+    beat_window = duration / len(labels)
+    target_length = min(12.0, max(4.0, target_seconds / len(labels)))
+    output = []
+    for index, label in enumerate(labels):
+        left, right = index * beat_window, (index + 1) * beat_window
+        in_window = [x for x in usable if left <= (float(x.get("start", 0)) + float(x.get("end", 0))) / 2 < right]
+        seg = in_window[0] if in_window else min(
+            usable, key=lambda x: abs((float(x.get("start", 0)) + float(x.get("end", 0))) / 2 - (left + right) / 2))
+        start = max(left, min(float(seg.get("start", left)), right - 4.0))
+        end = min(right, max(float(seg.get("end", start)), start + min(target_length, beat_window)))
+        if end - start < 4:
+            end = min(right, start + 4)
+        if end - start >= 4:
+            output.append({"start": round(start, 2), "end": round(end, 2), "section": label,
+                           "reason": str(seg.get("text", label)).strip()[:200]})
+    return output if len(output) >= 4 else fallback_summary_moments(segments, duration, target_seconds)
+
+
+def build_summary_moments(job: dict, target_seconds: int, format: str = "smart") -> dict:
+    """Build either a highlight recap or a structured topic-to-conclusion story."""
     segments = job.get("segments", [])
     duration = float(job.get("duration", 0))
     transcript = "\n".join(
         f"{float(x.get('start', 0)):.1f}-{float(x.get('end', 0)):.1f}s: {str(x.get('text', '')).strip()}"
         for x in segments if str(x.get("text", "")).strip()
     )
-    # Keep the prompt compact enough for small local models; retain timeline coverage.
     if len(transcript) > 8500:
         lines = transcript.splitlines()
         stride = max(1, len(lines) // 90)
         transcript = "\n".join(lines[::stride])[:8500]
-    fallback = fallback_summary_moments(segments, duration, target_seconds)
+    is_story = format == "story"
+    fallback = fallback_story_moments(segments, duration, target_seconds) if is_story else fallback_summary_moments(segments, duration, target_seconds)
+    if is_story:
+        instruction = (
+            "Create a coherent Turkish mini-documentary/story with exactly these ordered beats: "
+            "Konu (what this video is about and its central question), Giriş (a compelling opening/hook), "
+            "Gelişme (explanation, evidence, examples or key steps), Sonuç (the conclusion supported by the source), "
+            "Kapanış (a short natural takeaway and optional call to action). "
+            "Choose source timestamps for each beat, keep them chronological, do not fabricate speech, "
+            "and use 5-22 second sections. Return JSON only with title, summary, key_points, "
+            "story_beats:[{section:'Konu|Giriş|Gelişme|Sonuç|Kapanış',start:1,end:12,reason:'...'}], "
+            "intro and outro. Each beat must be grounded in the timestamped transcript."
+        )
+    else:
+        instruction = (
+            "Summarize the main idea and 3-5 key points. Choose up to 5 moments, each 6-22 seconds, "
+            "in chronological order, preserving context. Return JSON only with title, summary, key_points, "
+            "intro, outro and moments:[{start:1,end:12,reason:'...'}]."
+        )
     data = {}
     try:
         prompt = (
-            "You are a concise video editor and summarizer. Answer in Turkish. "
-            "Use only the timestamped transcript; do not invent facts. "
-            "Summarize the main idea and 3-5 key points. Use source timestamps in seconds. "
-            "Choose up to 5 moments, each 6-22 seconds, in chronological order, preserving context. "
-            f"Keep total selected duration close to {target_seconds} seconds without exceeding it. "
-            "Return valid JSON only with this schema: "
-            "{\"title\":\"...\",\"summary\":\"...\",\"key_points\":[\"...\"],"
-            "\"intro\":\"...\",\"outro\":\"...\",\"moments\":[{\"start\":1,\"end\":12,\"reason\":\"...\"}]}. "
-            "Transcript:\n" + transcript
+            "You are an expert Turkish video editor and story producer. Answer in Turkish. "
+            "Use only the timestamped transcript; do not invent facts or quotes. "
+            + instruction + f" Keep total selected duration close to {target_seconds} seconds without exceeding it. "
+            + "Transcript:\n" + transcript
         )
-        data = llm_json(prompt, timeout=180, num_predict=768)
+        data = llm_json(prompt, timeout=180, num_predict=1024 if is_story else 768)
         if not isinstance(data, dict):
             data = {}
     except Exception:
         data = {}
+
     moments = []
-    raw = data.get("moments", []) if isinstance(data, dict) else []
-    for item in raw[:8] if isinstance(raw, list) else []:
-        try:
-            start = max(0.0, float(item.get("start", 0)))
-            end = min(duration, float(item.get("end", 0)))
-            if end <= start:
+    if is_story:
+        raw = data.get("story_beats", []) if isinstance(data, dict) else []
+        allowed = {"Konu", "Giriş", "Gelişme", "Sonuç", "Kapanış"}
+        for item in raw[:5] if isinstance(raw, list) else []:
+            try:
+                start = max(0.0, float(item.get("start", 0)))
+                end = min(duration, float(item.get("end", 0)))
+                section = str(item.get("section", "")).strip()
+                if section not in allowed or end - start < 4:
+                    continue
+                if moments and start < moments[-1]["end"]:
+                    start = float(moments[-1]["end"])
+                if end - start < 4:
+                    continue
+                moments.append({"start": round(start, 2), "end": round(min(end, start + 22), 2),
+                                "section": section, "reason": str(item.get("reason", section))[:200]})
+            except (TypeError, ValueError, AttributeError):
                 continue
-            end = min(end, start + 22)
-            if end - start < 4 or any(abs(start - old["start"]) < 4 for old in moments):
+        moments.sort(key=lambda x: x["start"])
+        # A weak/incomplete model response must not produce a broken narrative.
+        if len(moments) < 4:
+            moments = []
+            labels = ["Konu", "Giriş", "Gelişme", "Sonuç", "Kapanış"]
+            for index, item in enumerate(fallback[:5]):
+                moments.append({**item, "section": labels[min(index, 4)]})
+    else:
+        raw = data.get("moments", []) if isinstance(data, dict) else []
+        for item in raw[:8] if isinstance(raw, list) else []:
+            try:
+                start = max(0.0, float(item.get("start", 0)))
+                end = min(duration, float(item.get("end", 0)))
+                if end - start < 4 or any(abs(start - old["start"]) < 4 for old in moments):
+                    continue
+                moments.append({"start": round(start, 2), "end": round(min(end, start + 22), 2),
+                                "reason": str(item.get("reason", "Önemli içerik bölümü"))[:200]})
+            except (TypeError, ValueError, AttributeError):
                 continue
-            moments.append({"start": round(start, 2), "end": round(end, 2),
-                            "reason": str(item.get("reason", "\u00d6nemli i\u00e7erik b\u00f6l\u00fcm\u00fc"))[:200]})
-        except (TypeError, ValueError, AttributeError):
-            continue
-    moments.sort(key=lambda x: x["start"])
+        moments.sort(key=lambda x: x["start"])
+        selected, remaining = [], float(target_seconds)
+        for item in moments:
+            if remaining < 4:
+                break
+            length = min(item["end"] - item["start"], remaining)
+            if length >= 4:
+                item["end"] = round(item["start"] + length, 2)
+                selected.append(item)
+                remaining -= length
+        moments = selected
+        selected_duration = sum(x["end"] - x["start"] for x in moments)
+        if selected_duration < target_seconds * 0.65:
+            for extra in fallback:
+                if selected_duration >= target_seconds:
+                    break
+                if any(abs(extra["start"] - item["start"]) < 10 for item in moments):
+                    continue
+                length = min(extra["end"] - extra["start"], target_seconds - selected_duration)
+                if length >= 4:
+                    moments.append({"start": extra["start"], "end": round(extra["start"] + length, 2),
+                                    "reason": extra.get("reason", "Önemli içerik bölümü")})
+                    selected_duration += length
+            moments.sort(key=lambda x: x["start"])
+        if not moments:
+            moments = fallback
+
+    # Cap the final timeline and preserve chronological order for both formats.
     selected, remaining = [], float(target_seconds)
     for item in moments:
         if remaining < 4:
             break
-        length = min(item["end"] - item["start"], remaining)
+        length = min(float(item["end"]) - float(item["start"]), remaining)
         if length >= 4:
-            item["end"] = round(item["start"] + length, 2)
-            selected.append(item)
+            selected.append({**item, "end": round(float(item["start"]) + length, 2)})
             remaining -= length
-    selected_duration = sum(x["end"] - x["start"] for x in selected)
-    if selected_duration < target_seconds * 0.65:
-        for extra in fallback:
-            if selected_duration >= target_seconds:
-                break
-            if any(abs(extra["start"] - item["start"]) < 10 for item in selected):
-                continue
-            length = min(extra["end"] - extra["start"], target_seconds - selected_duration)
-            if length >= 4:
-                selected.append({"start": extra["start"], "end": round(extra["start"] + length, 2),
-                                 "reason": extra.get("reason", "Important speech moment")})
-                selected_duration += length
-        selected.sort(key=lambda x: x["start"])
-    if not selected:
-        selected = fallback
-    title = str(data.get("title") or "Videonun k\u0131sa \u00f6zeti")[:100]
-    summary = str(data.get("summary") or "Video i\u00e7indeki \u00f6nemli konu\u015fma b\u00f6l\u00fcmleri se\u00e7ilerek k\u0131sa bir \u00f6zet ak\u0131\u015f\u0131 olu\u015fturuldu.")[:1500]
+    moments = selected or fallback[:1]
+    selected_duration = sum(x["end"] - x["start"] for x in moments)
+    title = str(data.get("title") or ("Konu · Giriş · Gelişme · Sonuç" if is_story else "Videonun kısa özeti"))[:100]
+    summary = str(data.get("summary") or "Video içindeki önemli konuşma bölümleri seçilerek kısa bir akış oluşturuldu.")[:1500]
     key_points = data.get("key_points")
     if not isinstance(key_points, list) or not key_points:
-        key_points = [str(x.get("reason", "\u00d6nemli b\u00f6l\u00fcm")) for x in selected[:5]]
+        key_points = [str(x.get("reason", "Önemli bölüm")) for x in moments[:5]]
+    story_beats = ([{"section": x.get("section", "Gelişme"), "start": x["start"], "end": x["end"],
+                     "reason": x.get("reason", "")} for x in moments] if is_story else [])
     return {"title": title, "summary": summary, "key_points": [str(x)[:220] for x in key_points[:6]],
             "intro": str(data.get("intro") or title)[:150],
-            "outro": str(data.get("outro") or "\u0130zledi\u011fin i\u00e7in te\u015fekk\u00fcrler.")[:150],
-            "moments": selected, "method": "local Ollama" if data else "transcript fallback"}
+            "outro": str(data.get("outro") or "İzlediğin için teşekkürler.")[:150],
+            "format": "story" if is_story else "smart", "format_label": "Hikâye akışı" if is_story else "Akıllı özet",
+            "story_beats": story_beats, "moments": moments,
+            "method": "local Ollama" if data else "transcript fallback"}
 
 
 def render_summary_video(job: dict, summary: dict, task_id: str) -> Path:
@@ -1184,12 +1267,13 @@ def render_summary_video(job: dict, summary: dict, task_id: str) -> Path:
     if not source.is_file():
         raise RuntimeError("\u00d6zet video kaynak dosyas\u0131 bulunamad\u0131.")
     moments, parts, mapped = summary["moments"], [], []
+    prefix = "story" if summary.get("format") == "story" else "summary"
     timeline = 0.0
     for index, moment in enumerate(moments, 1):
         start, length = float(moment["start"]), float(moment["end"]) - float(moment["start"])
         if length < 3:
             continue
-        part = folder / f"summary_part_{index:02d}.mp4"
+        part = folder / f"{prefix}_part_{index:02d}.mp4"
         cmd = ["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-ss", str(start), "-i", str(source),
                "-t", str(length), "-map", "0:v:0", "-map", "0:a?",
                "-vf", "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,setsar=1,fps=30",
@@ -1211,17 +1295,24 @@ def render_summary_video(job: dict, summary: dict, task_id: str) -> Path:
                  completed_moments=index, total_moments=len(moments))
     if not parts:
         raise RuntimeError("FFmpeg gecerli ozet bolumu uretemedi.")
-    concat_file, joined = folder / "summary_concat.txt", folder / "summary_joined.mp4"
+    concat_file, joined = folder / f"{prefix}_concat.txt", folder / f"{prefix}_joined.mp4"
     concat_file.write_text("".join(f"file '{x.name}'\n" for x in parts), encoding="utf-8")
     command(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-f", "concat",
              "-safe", "0", "-i", str(concat_file), "-c", "copy", "-movflags", "+faststart", str(joined)])
-    ass = folder / "summary_video.ass"
+    ass = folder / f"{prefix}_video.ass"
     create_ass(mapped, {"start": 0.0, "end": timeline, "duration": timeline}, ass, 280)
     with ass.open("a", encoding="utf-8") as handle:
-        handle.write(f"Dialogue: 1,0:00:00.00,{ass_time(min(4.0,timeline))},Viral,,0,0,300,,{{\\an8\\fs76\\bord5}}{ass_escape(summary['title'])}\n")
+        if summary.get("format") == "story":
+            cursor = 0.0
+            for moment in moments:
+                label = str(moment.get("section", "Gelişme"))
+                handle.write(f"Dialogue: 0,{ass_time(cursor)},{ass_time(min(timeline,cursor+2.8))},Viral,,0,0,300,,{{\\an8\\fs62\\bord5}}{ass_escape(label.upper())}\n")
+                cursor += float(moment["end"]) - float(moment["start"])
+        if summary.get("format") != "story":
+            handle.write(f"Dialogue: 1,0:00:00.00,{ass_time(min(4.0,timeline))},Viral,,0,0,300,,{{\\an8\\fs76\\bord5}}{ass_escape(summary['title'])}\n")
         if timeline > 5:
             handle.write(f"Dialogue: 1,{ass_time(max(0,timeline-4))},{ass_time(timeline)},Viral,,0,0,300,,{{\\an8\\fs64\\bord5}}{ass_escape(summary['outro'])}\n")
-    output = folder / "summary_video.mp4"
+    output = folder / ("story_video.mp4" if summary.get("format") == "story" else "summary_video.mp4")
     command(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-i", str(joined),
              "-vf", f"ass='{escape_filter_path(ass)}'", "-map", "0:v:0", "-map", "0:a?",
              "-c:v", "libx264", "-preset", "veryfast", "-crf", "21", "-pix_fmt", "yuv420p",
@@ -1235,18 +1326,18 @@ def render_summary_video(job: dict, summary: dict, task_id: str) -> Path:
     return output
 
 
-def run_summary_task(task_id: str, job_id: str, job: dict, target_seconds: int):
+def run_summary_task(task_id: str, job_id: str, job: dict, target_seconds: int, format: str = "smart"):
     try:
-        set_task(task_id, 5, "Video ozeti hazirlaniyor - Yerel AI")
-        summary = build_summary_moments(job, target_seconds)
-        set_task(task_id, 38, "Onemli anlar secildi - Ozet videosu hazirlaniyor",
+        set_task(task_id, 5, "Hikaye akisi hazirlaniyor - Yerel AI" if format == "story" else "Video ozeti hazirlaniyor - Yerel AI")
+        summary = build_summary_moments(job, target_seconds, format)
+        set_task(task_id, 38, "Konu, giris, gelisme, sonuc ve kapanis siralandi - Video hazirlaniyor" if format == "story" else "Onemli anlar secildi - Ozet videosu hazirlaniyor",
                  summary=summary, total_moments=len(summary["moments"]))
         output = render_summary_video(job, summary, task_id)
         summary["output"] = {"file": f"/workspace/{job_id}/{output.name}", "filename": output.name,
                              "size_mb": round(output.stat().st_size/(1024*1024),2),
                              "duration_seconds": round(sum(float(x["end"])-float(x["start"]) for x in summary["moments"]),1)}
         (Path(job["folder"])/"summary.json").write_text(json.dumps(summary,ensure_ascii=False,indent=2),encoding="utf-8")
-        set_task(task_id,100,"Akilli ozet videosu hazir","completed",result=summary)
+        set_task(task_id,100,"Hikaye akisi videosu hazir" if format == "story" else "Akilli ozet videosu hazir","completed",result=summary)
     except Exception as exc:
         set_task(task_id,100,"Ozet video olusturulamadi","failed",error=str(exc)[:1000])
 
@@ -1346,7 +1437,7 @@ def generate_summary(req: SummaryRequest, background_tasks: BackgroundTasks):
         raise HTTPException(400, "\u00d6zet i\u00e7in transkript bulunamad\u0131.")
     task_id = uuid.uuid4().hex[:10]
     set_task(task_id, 1, "\u00d6zet video g\u00f6revi kuyru\u011fa al\u0131nd\u0131")
-    background_tasks.add_task(run_summary_task, task_id, req.job_id, job, req.target_seconds)
+    background_tasks.add_task(run_summary_task, task_id, req.job_id, job, req.target_seconds, req.format)
     return {"task_id": task_id, "status": "queued", "job_id": req.job_id}
 
 

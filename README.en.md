@@ -78,3 +78,10 @@ Only use and republish media you have rights to use. OAuth publication requires 
 - **Community Edition:** The existing repository source remains under the [MIT License](LICENSE), including the rights granted for commercial use.
 - **Enterprise / Commercial:** Separately identified commercial modules require a signed commercial agreement. This does not narrow rights already granted to MIT-licensed code.
 - See the [licensing model](LICENSING.md) and the [commercial agreement template](LICENSE-COMMERCIAL-TEMPLATE.md). The template is not an executed license and requires legal review.
+
+
+## Story-flow video format
+
+In addition to the highlight recap, the Studio now offers a **Story flow** format. It structures timestamped source speech into five editorial beats: **Topic → Introduction → Development → Conclusion → Closing/CTA**. Chapter labels are burned into the vertical video while original speech captions keep their timing. If the local model returns incomplete beats, a transcript-timestamp fallback is used; unsupported facts or quotes are never invented.
+
+[Watch a real local-Ollama story-flow sample](docs/assets/demo-story-flow.mp4) · [Chapter-label preview](docs/assets/demo-story-flow-frame.png)

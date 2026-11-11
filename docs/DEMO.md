@@ -30,3 +30,12 @@ This demo was generated through the YAMAN VIRAL STUDIO PRO local API and local s
 - Installed Ollama model: `qwen3:1.7b`. The app's analysis response does not expose a separate success flag for LLM ranking versus its heuristic fallback, so the displayed candidate scores should not be represented as a verified LLM-only judgment.
 - Subtitle overflow was fixed by changing ASS `WrapStyle` from 2 (no wrapping) to 0 (smart wrapping); the final MP4 was re-rendered after the fix.
 - No social account was connected and nothing was published. Publishing requires OAuth configuration and explicit user approval.
+
+## Story-flow format sample
+
+The new **Hikâye Akışı** mode was also exercised on the synthetic sample source using the installed local Ollama model. It produced five chronological beats (Konu, Giriş, Gelişme, Sonuç, Kapanış), then the app rendered a separate portrait MP4 with chapter labels and source-speech captions.
+
+- [Real story-flow MP4 output](assets/demo-story-flow.mp4)
+- [Frame showing the Gelişme chapter label](assets/demo-story-flow-frame.png)
+
+The story sample is a test asset made from synthetic narration and original graphics. It demonstrates the format and render path, not a claim about a third-party video.

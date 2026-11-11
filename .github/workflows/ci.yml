@@ -37,8 +37,14 @@ jobs:
           test -s docs/assets/demo-input.mp4
           test -s docs/assets/demo-output-youtube-shorts.mp4
           test -s docs/assets/demo-render-frame.png
+          test -s docs/assets/demo-story-flow.mp4
+          test -s docs/assets/demo-story-flow-frame.png
           test -s docs/assets/demo-transcript.srt
           grep -q 'WrapStyle: 0' app/main.py
+          grep -q 'story_beats' app/main.py
+          grep -q 'fallback_story_moments' app/main.py
+          grep -q 'summaryFormat' web/index.html
+          grep -q 'summaryFormat' web/app.js
           python -c "import json; json.load(open('web/manifest.webmanifest', encoding='utf-8'))"
       - name: Validate JavaScript syntax
         run: |

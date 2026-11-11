@@ -58,3 +58,10 @@
 
 ## [1.2.1] - 2026-11-10
 - Studio sayfası onarıldı; yerel video tarama, transkripsiyon ve sistem göstergeleri geliştirildi.
+
+## [Unreleased] - Story-flow video format
+
+- Added a selectable narrative video format: Topic, Introduction, Development, Conclusion and Closing/CTA.
+- Added timestamp-grounded AI story beat selection and a five-part transcript fallback.
+- Burned chapter labels into story-format exports and kept speech captions aligned.
+- Kept the existing smart-summary format and its output filename separate.

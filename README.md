@@ -193,3 +193,16 @@ OAuth callback adresini ilgili geliştirici konsoluna birebir ekle. Her yayın i
 **YAMAN VIRAL STUDIO PRO** · Built with focus by [Ozan Yaman](https://github.com/Myozan)
 
 </div>
+
+
+## 🎬 Yeni video anlatım modu: Hikâye akışı
+
+Akıllı özet moduna ek olarak artık **Hikâye akışı** seçilebilir. Yerel AI, kaynak transkriptteki zaman damgalarını kullanarak videoyu şu editoryal sıraya dizer:
+
+1. **Konu:** Ana fikir ve videonun cevapladığı soru
+2. **Giriş:** İzleyiciyi yakalayan açılış
+3. **Gelişme:** Açıklama, örnekler, kanıtlar veya adımlar
+4. **Sonuç:** Kaynağın desteklediği çıkarım
+5. **Kapanış:** Kısa özet ve uygun çağrı (CTA)
+
+Her bölüm videoda bölüm başlığı olarak gösterilir; konuşma altyazıları zamanlamasını korur. Model yeterli bölüm üretemezse sistem, transkript zamanlarına dayalı yedek bölümleme kullanır. Kaynakta bulunmayan bilgi veya alıntı uydurulmaz.
