@@ -711,18 +711,18 @@ def start_ollama():
     status = ollama_status()
     if status["connected"]:
         return {"started": False, **status}
-    candidates = []
-    cli = shutil.which("ollama")
-    if cli:
-        candidates.append(cli)
+    launch_args = None
     if os.name == "nt":
-        local = Path(os.environ.get("LOCALAPPDATA", "")) / "Programs" / "Ollama" / "ollama app.exe"
-        if local.is_file():
-            candidates.append(str(local))
-    if not candidates:
+        gui = Path(os.environ.get("LOCALAPPDATA", "")) / "Programs" / "Ollama" / "ollama app.exe"
+        if gui.is_file():
+            launch_args = [str(gui)]
+    cli = shutil.which("ollama")
+    if launch_args is None and cli:
+        launch_args = [cli, "serve"]
+    if launch_args is None:
         raise HTTPException(503, "Ollama bulunamadı. https://ollama.com/download adresinden kurup tekrar deneyin.")
     try:
-        subprocess.Popen([candidates[-1]], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        subprocess.Popen(launch_args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                          stdin=subprocess.DEVNULL, close_fds=True)
     except OSError as exc:
         raise HTTPException(500, f"Ollama başlatılamadı: {exc}") from exc
