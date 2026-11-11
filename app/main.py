@@ -137,6 +137,7 @@ def init_task_store():
         db.execute("CREATE TABLE IF NOT EXISTS tasks (task_id TEXT PRIMARY KEY, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, status TEXT NOT NULL, percent INTEGER NOT NULL, stage TEXT NOT NULL, payload_json TEXT NOT NULL DEFAULT '{}')")
         db.execute("CREATE TABLE IF NOT EXISTS task_events (id INTEGER PRIMARY KEY AUTOINCREMENT, task_id TEXT NOT NULL, event_type TEXT NOT NULL, created_at TEXT NOT NULL, payload_json TEXT NOT NULL)")
         db.execute("CREATE TABLE IF NOT EXISTS oauth_states (state TEXT PRIMARY KEY, platform TEXT NOT NULL, verifier TEXT NOT NULL, redirect_uri TEXT NOT NULL, created_at REAL NOT NULL)")
+        db.execute("CREATE TABLE IF NOT EXISTS task_retry_claims (source_task_id TEXT PRIMARY KEY, retry_task_id TEXT NOT NULL UNIQUE, created_at TEXT NOT NULL)")
         rows = db.execute("SELECT task_id,payload_json FROM tasks WHERE status IN ('queued','running')").fetchall()
         for task_id, payload in rows:
             state = json.loads(payload or "{}")
@@ -1880,17 +1881,37 @@ def cancel_task(task_id: str):
 
 @app.post("/api/tasks/{task_id}/retry")
 def retry_task(task_id: str,background_tasks: BackgroundTasks):
-    with sqlite3.connect(TASK_DB, timeout=10) as db:
+    # SQLite is the cross-process authority: reserve a retry in one write transaction.
+    with sqlite3.connect(TASK_DB, timeout=20, isolation_level=None) as db:
+        db.execute("PRAGMA busy_timeout=20000")
+        db.execute("BEGIN IMMEDIATE")
         row=db.execute("SELECT payload_json,status FROM tasks WHERE task_id=?",(task_id,)).fetchone()
-    if not row:raise HTTPException(404,"Task not found")
-    old=json.loads(row[0]);data=old.get("request")
-    if old.get("task_type")!="agents" or not data:raise HTTPException(400,"This task type cannot be retried automatically")
-    if row[1] not in ("failed","interrupted","cancelled"):raise HTTPException(409,"Only failed, interrupted or cancelled agent tasks can be retried")
-    req=TeamRequest(**data);job=jobs.get(req.job_id)
-    if not job:raise HTTPException(409,"Reopen the source project before retrying")
-    clip=next((c for c in job["clips"] if c["id"]==req.clip_id),None)
-    if not clip:raise HTTPException(404,"Clip not found")
-    new_id=uuid.uuid4().hex[:10]
+        if not row:
+            db.rollback()
+            raise HTTPException(404,"Task not found")
+        old=json.loads(row[0]);data=old.get("request")
+        if old.get("task_type")!="agents" or not data:
+            db.rollback()
+            raise HTTPException(400,"This task type cannot be retried automatically")
+        if row[1] not in ("failed","interrupted","cancelled"):
+            db.rollback()
+            raise HTTPException(409,"Only failed, interrupted or cancelled agent tasks can be retried")
+        existing=db.execute("SELECT retry_task_id FROM task_retry_claims WHERE source_task_id=?",(task_id,)).fetchone()
+        if existing:
+            db.rollback()
+            raise HTTPException(409,"A retry has already been reserved for this task")
+        req=TeamRequest(**data);job=jobs.get(req.job_id)
+        if not job:
+            db.rollback()
+            raise HTTPException(409,"Reopen the source project before retrying")
+        clip=next((c for c in job["clips"] if c["id"]==req.clip_id),None)
+        if not clip:
+            db.rollback()
+            raise HTTPException(404,"Clip not found")
+        new_id=uuid.uuid4().hex[:10]
+        db.execute("INSERT INTO task_retry_claims(source_task_id,retry_task_id,created_at) VALUES(?,?,?)",
+                   (task_id,new_id,datetime.now(timezone.utc).isoformat()))
+        db.commit()
     set_task(new_id,1,"Agent task queued for retry",task_type="agents",request=data,retry_of=task_id,outputs=[])
     background_tasks.add_task(run_agents_task,new_id,req,job,clip,list(req.platforms))
     return {"task_id":new_id,"status":"queued","retry_of":task_id}

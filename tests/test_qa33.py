@@ -158,3 +158,48 @@ def api(tmp_path, monkeypatch):
     main.jobs.clear()
     main._cancelled_tasks.clear()
 
+
+
+def test_agent_retry_is_idempotently_reserved(api, monkeypatch):
+    main.jobs["job-retry-once"] = {
+        "clips": [{"id": 8, "text": "Retry once", "duration": 5}],
+        "folder": str(Path(main.TASK_DB).parent),
+    }
+    main.set_task(
+        "agent-failed-once", 100, "Agent failed", "failed", task_type="agents",
+        request={"job_id": "job-retry-once", "clip_id": 8, "platforms": ["youtube"]},
+    )
+    scheduled = []
+    monkeypatch.setattr(main, "run_agents_task", lambda *args: scheduled.append(args))
+
+    first = api.post("/api/tasks/agent-failed-once/retry")
+    second = api.post("/api/tasks/agent-failed-once/retry")
+
+    assert first.status_code == 200
+    assert second.status_code == 409
+    assert len(scheduled) == 1
+    with sqlite3.connect(main.TASK_DB) as db:
+        claim = db.execute(
+            "SELECT retry_task_id FROM task_retry_claims WHERE source_task_id=?",
+            ("agent-failed-once",),
+        ).fetchone()
+    assert claim == (first.json()["task_id"],)
+
+
+def test_retry_claim_table_survives_database_reopen(tmp_path):
+    database = tmp_path / "retry-claims.sqlite3"
+    original = main.TASK_DB
+    try:
+        main.TASK_DB = database
+        main.init_task_store()
+        with sqlite3.connect(database) as db:
+            db.execute(
+                "INSERT INTO task_retry_claims(source_task_id,retry_task_id,created_at) VALUES(?,?,?)",
+                ("source", "retry", "2026-01-01T00:00:00+00:00"),
+            )
+        main.init_task_store()
+        with sqlite3.connect(database) as db:
+            assert db.execute("SELECT retry_task_id FROM task_retry_claims WHERE source_task_id='source'").fetchone() == ("retry",)
+            assert db.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
+    finally:
+        main.TASK_DB = original
