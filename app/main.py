@@ -752,7 +752,9 @@ def auto_editor_silence_remove(req: AutoEditorRequest):
     binary = shutil.which("auto-editor") or shutil.which("auto-editor.exe")
     if not binary:
         raise HTTPException(503, "Auto-Editor kurulu değil. Resmî Windows sürümünü indirip PATH'e ekleyin.")
-    relative = req.file.replace("\\\\", "/").lstrip("/")\n    if relative.startswith("workspace/"):\n        relative = relative[len("workspace/"):]\n    source = (WORK / relative).resolve()
+    relative = req.file.replace("\\", "/").lstrip("/")
+    if relative.startswith("workspace/"):
+        relative = relative[len("workspace/"):]\n    source = (WORK / relative).resolve()
     try:
         source.relative_to(WORK.resolve())
     except ValueError:
