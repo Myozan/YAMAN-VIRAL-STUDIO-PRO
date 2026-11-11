@@ -1,5 +1,7 @@
 # Architecture
 
+> This page describes the verified v1.8.0 runtime. The expanded design in the repository's `docs/ARCHITECTURE.md` is a future-state target, not a shipped component list. See [Engineering Architecture](Engineering-Architecture), [Workflow Sequences](Workflow-Sequences) and [Database ERD](Database-ERD).
+
 YAMAN VIRAL STUDIO PRO, yerel öncelikli bir video üretim uygulaması olarak tasarlanmıştır. Bu sayfa, depodaki mimari tanımı ile mevcut kurulum dosyalarının doğruladığı teknolojileri birbirinden ayırır.
 
 ## High-level overview
