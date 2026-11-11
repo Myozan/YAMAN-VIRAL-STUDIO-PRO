@@ -1,14 +1,23 @@
-name: Python syntax check
+name: Python syntax and frontend checks
 on:
   push:
   pull_request:
+  workflow_dispatch:
 jobs:
-  compile:
+  quality:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-      - name: Compile Python sources
+          python-version: "3.12"
+      - name: Compile Python modules
         run: python -m compileall -q app
+      - name: Validate frontend assets
+        run: |
+          test -s web/index.html
+          test -s web/style.css
+          test -s web/app.js
+          test -s docs/assets/favicon.svg
+      - name: Validate JavaScript syntax
+        run: node --check web/app.js
