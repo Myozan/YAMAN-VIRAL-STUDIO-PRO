@@ -1,8 +1,59 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="560" viewBox="0 0 1600 560" role="img" aria-labelledby="t d">
-<title id="t">YAMAN VIRAL STUDIO PRO</title><desc id="d">Local AI video production studio with five editorial formats</desc>
-<defs><linearGradient id="bg" x2="1" y2="1"><stop stop-color="#081426"/><stop offset=".55" stop-color="#142c50"/><stop offset="1" stop-color="#311d55"/></linearGradient><linearGradient id="glow" x2="1"><stop stop-color="#38bdf8"/><stop offset="1" stop-color="#a78bfa"/></linearGradient><filter id="blur"><feGaussianBlur stdDeviation="48"/></filter></defs>
-<rect width="1600" height="560" rx="36" fill="url(#bg)"/><circle cx="1320" cy="90" r="190" fill="#7c3aed" opacity=".28" filter="url(#blur)"/><circle cx="260" cy="500" r="180" fill="#0ea5e9" opacity=".18" filter="url(#blur)"/>
-<g font-family="Segoe UI,Arial,sans-serif"><text x="100" y="120" fill="#93c5fd" font-size="22" font-weight="700" letter-spacing="6">LOCAL-FIRST AI VIDEO STUDIO</text><text x="96" y="225" fill="#fff" font-size="66" font-weight="800">YAMAN VIRAL</text><text x="96" y="302" fill="#fff" font-size="66" font-weight="800">STUDIO <tspan fill="#a5b4fc">PRO</tspan></text><text x="100" y="365" fill="#cbd5e1" font-size="25">Analyze · Transcribe · Discover · Create</text><rect x="100" y="415" width="510" height="58" rx="29" fill="#ffffff" opacity=".1" stroke="#93c5fd" stroke-opacity=".45"/><text x="130" y="452" fill="#e0f2fe" font-size="21" font-weight="600">VERSION 1.5.5  •  FIVE VIDEO FORMATS</text></g>
-<g transform="translate(890 105)"><rect width="560" height="350" rx="28" fill="#0b1224" stroke="#64748b" stroke-opacity=".65"/><rect x="24" y="24" width="512" height="44" rx="12" fill="#1e293b"/><circle cx="48" cy="46" r="6" fill="#fb7185"/><circle cx="70" cy="46" r="6" fill="#fbbf24"/><circle cx="92" cy="46" r="6" fill="#34d399"/><text x="120" y="52" fill="#cbd5e1" font-size="16" font-family="Arial">VIDEO FORMAT SELECTOR</text>
-<rect x="28" y="92" width="504" height="38" rx="10" fill="#17243a"/><circle cx="52" cy="111" r="12" fill="#38bdf8" opacity=".2"/><text x="52" y="116" text-anchor="middle" fill="#38bdf8" font-size="11" font-family="Arial" font-weight="700">01</text><text x="78" y="117" fill="#f8fafc" font-size="15" font-family="Arial" font-weight="700">SMART RECAP</text><path d="M490 111 l8 0 m-4 -4 l4 4 -4 4" stroke="#38bdf8" fill="none" stroke-width="2"/><rect x="28" y="140" width="504" height="38" rx="10" fill="#17243a"/><circle cx="52" cy="159" r="12" fill="#818cf8" opacity=".2"/><text x="52" y="164" text-anchor="middle" fill="#818cf8" font-size="11" font-family="Arial" font-weight="700">02</text><text x="78" y="165" fill="#f8fafc" font-size="15" font-family="Arial" font-weight="700">STORY FLOW</text><path d="M490 159 l8 0 m-4 -4 l4 4 -4 4" stroke="#818cf8" fill="none" stroke-width="2"/><rect x="28" y="188" width="504" height="38" rx="10" fill="#17243a"/><circle cx="52" cy="207" r="12" fill="#a78bfa" opacity=".2"/><text x="52" y="212" text-anchor="middle" fill="#a78bfa" font-size="11" font-family="Arial" font-weight="700">03</text><text x="78" y="213" fill="#f8fafc" font-size="15" font-family="Arial" font-weight="700">DOCUMENTARY</text><path d="M490 207 l8 0 m-4 -4 l4 4 -4 4" stroke="#a78bfa" fill="none" stroke-width="2"/><rect x="28" y="236" width="504" height="38" rx="10" fill="#17243a"/><circle cx="52" cy="255" r="12" fill="#2dd4bf" opacity=".2"/><text x="52" y="260" text-anchor="middle" fill="#2dd4bf" font-size="11" font-family="Arial" font-weight="700">04</text><text x="78" y="261" fill="#f8fafc" font-size="15" font-family="Arial" font-weight="700">EDUCATION</text><path d="M490 255 l8 0 m-4 -4 l4 4 -4 4" stroke="#2dd4bf" fill="none" stroke-width="2"/><rect x="28" y="284" width="504" height="38" rx="10" fill="#17243a"/><circle cx="52" cy="303" r="12" fill="#fbbf24" opacity=".2"/><text x="52" y="308" text-anchor="middle" fill="#fbbf24" font-size="11" font-family="Arial" font-weight="700">05</text><text x="78" y="309" fill="#f8fafc" font-size="15" font-family="Arial" font-weight="700">PRODUCT</text><path d="M490 303 l8 0 m-4 -4 l4 4 -4 4" stroke="#fbbf24" fill="none" stroke-width="2"/>
-</g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="660" viewBox="0 0 1600 660" role="img" aria-labelledby="title desc">
+<title id="title">YAMAN VIRAL STUDIO PRO — v1.8.0 Premium AI Creator Studio</title>
+<desc id="desc">Local-first AI video creator: Whisper transcription, Ollama content intelligence, FFmpeg rendering and vertical short-form publishing.</desc>
+<defs>
+ <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#070b16"/><stop offset=".52" stop-color="#111a31"/><stop offset="1" stop-color="#241b46"/></linearGradient>
+ <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#78e5d4"/><stop offset=".52" stop-color="#73a9ff"/><stop offset="1" stop-color="#ae91ff"/></linearGradient>
+ <radialGradient id="glow"><stop stop-color="#8c72ff" stop-opacity=".34"/><stop offset="1" stop-color="#8c72ff" stop-opacity="0"/></radialGradient>
+ <filter id="blur"><feGaussianBlur stdDeviation="54"/></filter>
+ <filter id="shadow"><feGaussianBlur stdDeviation="18"/></filter>
+</defs>
+<rect width="1600" height="660" rx="38" fill="url(#bg)"/>
+<circle cx="1330" cy="105" r="340" fill="url(#glow)" filter="url(#blur)"/>
+<circle cx="175" cy="640" r="260" fill="#36c5d5" opacity=".10" filter="url(#blur)"/>
+<g stroke="#c6d4ff" opacity=".075"><path d="M0 100H1600M0 200H1600M0 300H1600M0 400H1600M0 500H1600M0 600H1600"/><path d="M100 0V660M200 0V660M300 0V660M400 0V660M500 0V660M600 0V660M700 0V660M800 0V660M900 0V660M1000 0V660M1100 0V660M1200 0V660M1300 0V660M1400 0V660M1500 0V660"/></g>
+<g font-family="Inter,Segoe UI,Arial,sans-serif">
+ <rect x="86" y="66" width="52" height="52" rx="16" fill="url(#accent)"/><path d="M99 78h10l8 18 8-18h10l-18 38z" fill="#091426"/>
+ <text x="158" y="89" fill="#f3f6ff" font-size="24" font-weight="800" letter-spacing="3">YAMAN</text><text x="158" y="112" fill="#96a8c6" font-size="10" font-weight="700" letter-spacing="2.1">VIRAL STUDIO PRO</text>
+ <rect x="86" y="158" width="350" height="36" rx="18" fill="#fff" fill-opacity=".055" stroke="#9b8cff" stroke-opacity=".45"/>
+ <circle cx="108" cy="176" r="5" fill="#71ead4"/><text x="124" y="181" fill="#c4c9fa" font-size="12" font-weight="800" letter-spacing="2">LOCAL-FIRST AI CREATOR STUDIO</text>
+ <text x="84" y="294" fill="#f8f9ff" font-size="72" font-weight="850" letter-spacing="-2.5">One source.</text>
+ <text x="84" y="376" fill="url(#accent)" font-size="72" font-weight="850" letter-spacing="-2.5">Every platform.</text>
+ <text x="90" y="427" fill="#afbed8" font-size="21">Turn long-form video into publish-ready vertical stories.</text>
+ <g transform="translate(88 475)">
+  <rect width="156" height="45" rx="12" fill="#12233a" stroke="#78e5d4" stroke-opacity=".65"/><text x="78" y="28" text-anchor="middle" fill="#b8f6e9" font-size="13" font-weight="800">WHISPER AI</text>
+  <path d="M165 22h22m-7-7 7 7-7 7" stroke="#8392c3" fill="none" stroke-width="2"/>
+  <rect x="198" width="156" height="45" rx="12" fill="#152645" stroke="#73a9ff" stroke-opacity=".65"/><text x="276" y="28" text-anchor="middle" fill="#c8dcff" font-size="13" font-weight="800">OLLAMA</text>
+  <path d="M363 22h22m-7-7 7 7-7 7" stroke="#8392c3" fill="none" stroke-width="2"/>
+  <rect x="396" width="156" height="45" rx="12" fill="#241e42" stroke="#ae91ff" stroke-opacity=".7"/><text x="474" y="28" text-anchor="middle" fill="#e0d3ff" font-size="13" font-weight="800">FFMPEG</text>
+ </g>
+ <rect x="87" y="560" width="164" height="42" rx="12" fill="#8a78ff" fill-opacity=".15" stroke="#a995ff" stroke-opacity=".45"/>
+ <text x="169" y="586" fill="#d7ccff" text-anchor="middle" font-size="15" font-weight="850" letter-spacing="1.4">VERSION 1.8.0</text>
+ <text x="272" y="586" fill="#788cac" font-size="11" font-weight="700" letter-spacing="1.6">WINDOWS · LOCAL AI · PWA</text>
+</g>
+<g transform="translate(825 110)">
+ <rect x="0" y="0" width="690" height="440" rx="28" fill="#0a1223" stroke="#a5b0df" stroke-opacity=".32" stroke-width="2"/>
+ <rect x="24" y="24" width="642" height="45" rx="12" fill="#18233b"/>
+ <circle cx="49" cy="46" r="6" fill="#ff7f9a"/><circle cx="71" cy="46" r="6" fill="#f6c86e"/><circle cx="93" cy="46" r="6" fill="#6de4c3"/>
+ <text x="122" y="51" fill="#c6d2e8" font-size="12" font-weight="700" letter-spacing="1.4">YAMAN / CREATOR PIPELINE</text>
+ <rect x="27" y="90" width="636" height="122" rx="15" fill="#141f35" stroke="#394968"/>
+ <text x="49" y="119" fill="#91a4c4" font-size="10" font-weight="800" letter-spacing="1.4">SOURCE VIDEO</text>
+ <rect x="49" y="137" width="590" height="55" rx="9" fill="#202e49"/>
+ <g fill="url(#accent)" transform="translate(68 147)"><rect width="5" height="34" rx="2"/><rect x="12" y="9" width="5" height="25" rx="2"/><rect x="24" y="2" width="5" height="32" rx="2"/><rect x="36" y="14" width="5" height="20" rx="2"/><rect x="48" y="6" width="5" height="28" rx="2"/><rect x="60" y="1" width="5" height="33" rx="2"/><rect x="72" y="12" width="5" height="22" rx="2"/><rect x="84" y="4" width="5" height="30" rx="2"/><rect x="96" y="13" width="5" height="21" rx="2"/><rect x="108" y="0" width="5" height="34" rx="2"/><rect x="120" y="8" width="5" height="26" rx="2"/><rect x="132" y="3" width="5" height="31" rx="2"/><rect x="144" y="12" width="5" height="22" rx="2"/><rect x="156" y="5" width="5" height="29" rx="2"/><rect x="168" y="1" width="5" height="33" rx="2"/><rect x="180" y="9" width="5" height="25" rx="2"/><rect x="192" y="4" width="5" height="30" rx="2"/><rect x="204" y="13" width="5" height="21" rx="2"/><rect x="216" y="2" width="5" height="32" rx="2"/><rect x="228" y="8" width="5" height="26" rx="2"/></g>
+ <rect x="27" y="235" width="194" height="72" rx="13" fill="#13283a" stroke="#6ee7ce" stroke-opacity=".58"/>
+ <text x="47" y="263" fill="#8cf0da" font-size="11" font-weight="800">01 / WHISPER</text><text x="47" y="285" fill="#dbe9f4" font-size="15">Transcribe</text>
+ <path d="M226 271h19m-7-7 7 7-7 7" stroke="#8da1c8" fill="none" stroke-width="2"/>
+ <rect x="255" y="235" width="194" height="72" rx="13" fill="#172442" stroke="#78aaff" stroke-opacity=".58"/>
+ <text x="275" y="263" fill="#a9c9ff" font-size="11" font-weight="800">02 / OLLAMA</text><text x="275" y="285" fill="#dbe9f4" font-size="15">Understand</text>
+ <path d="M454 271h19m-7-7 7 7-7 7" stroke="#8da1c8" fill="none" stroke-width="2"/>
+ <rect x="483" y="235" width="180" height="72" rx="13" fill="#24203e" stroke="#ad94ff" stroke-opacity=".64"/>
+ <text x="503" y="263" fill="#cab5ff" font-size="11" font-weight="800">03 / FFMPEG</text><text x="503" y="285" fill="#dbe9f4" font-size="15">Render</text>
+ <path d="M124 307v22h432v-22" fill="none" stroke="url(#accent)" stroke-width="2" opacity=".8"/>
+ <rect x="27" y="345" width="636" height="66" rx="13" fill="#1b2945"/>
+ <g transform="translate(48 354)"><rect width="34" height="48" rx="7" fill="#263a61" stroke="#94a5ff"/><rect x="12" y="3" width="10" height="2" rx="1" fill="#fff" opacity=".65"/><circle cx="17" cy="24" r="9" fill="url(#accent)"/><path d="m15 19 7 5-7 5z" fill="#fff"/><text x="17" y="43" fill="#fff" font-size="5" text-anchor="middle">9:16</text></g>
+ <text x="101" y="375" fill="#dce8fa" font-size="12" font-weight="850" letter-spacing="1">SHORT-FORM EXPORT</text>
+ <text x="101" y="394" fill="#8fa6c7" font-size="10">YouTube Shorts · Instagram Reels · TikTok</text>
+ <text x="641" y="389" fill="#bba8ff" font-size="11" font-weight="800" text-anchor="end">1080 × 1920</text>
+</g>
+<text x="87" y="635" fill="#6f829f" font-size="10" font-weight="700" letter-spacing="2">YAMAN VIRAL STUDIO PRO · MADE FOR THE CREATOR WORKFLOW</text>
+</svg>

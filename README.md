@@ -1,152 +1,161 @@
-<div align="center">
-
-<img src="docs/assets/hero.svg" alt="YAMAN VIRAL STUDIO PRO — Yerel AI Video Stüdyosu" width="100%">
-
 # YAMAN VIRAL STUDIO PRO
 
-### Yerel yapay zekâ destekli video analiz, Shorts üretimi ve çok formatlı içerik stüdyosu
+<div align="center">
 
-**v1.8.0 · Premium AI Creator Studio · Local-first AI · Windows · PWA**
+<img src="docs/assets/hero-v1.8.0.png" alt="YAMAN VIRAL STUDIO PRO v1.8.0 Premium AI Creator Studio" width="100%">
 
-[![Version](https://img.shields.io/badge/version-1.8.0-8b78f6?style=for-the-badge)](CHANGELOG.md)
+**YEREL AI VIDEO ÜRETİM STÜDYOSU · WINDOWS · PWA**
+
+[![Sürüm](https://img.shields.io/badge/Sürüm-1.8.0-8b78f6?style=for-the-badge)](CHANGELOG.md)
 [![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/API-FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-[![License](https://img.shields.io/badge/License-MIT-2ea44f?style=for-the-badge)](LICENSE)
+[![PWA](https://img.shields.io/badge/PWA-Kurulabilir-5B8DEF?style=for-the-badge)](#kurulum)
+[![Lisans](https://img.shields.io/badge/Lisans-MIT-2ea44f?style=for-the-badge)](LICENSE)
 
-[ Türkçe ](README.md) · [ English ](README.en.md) · [ Deutsch ](README.de.md) · [ Español ](README.es.md)
+[Türkçe](README.md) · [English](README.en.md) · [Deutsch](README.de.md) · [Español](README.es.md)
+
+**Tek bir uzun videodan, tüm dikey platformlara hazır içerik üretin.**
+
+[Hızlı başlangıç](#hızlı-başlangıç) · [Özellikler](#creator-studio-araçları) · [Ekranlar](#stüdyonun-içinden) · [Mimari](#mimari) · [Lisans](#lisans)
 
 </div>
 
 ---
 
-## Genel bakış
+## ✦ YAMAN VIRAL STUDIO PRO nedir?
 
-**YAMAN VIRAL STUDIO PRO**, uzun videoları analiz eden, konuşmaları zaman damgalı metne dönüştüren, güçlü anları seçen ve YouTube Shorts, Instagram Reels ve TikTok için dikey videolar hazırlayan yerel öncelikli bir içerik stüdyosudur.
+YAMAN VIRAL STUDIO PRO, uzun videoları analiz edip düzenlenmiş ve platformlara hazır kısa videolara dönüştürmek için tasarlanmış **yerel öncelikli bir AI Creator Studio** uygulamasıdır.
 
-Ollama, Faster-Whisper ve FFmpeg tabanlı temel iş akışı bilgisayarınızda çalışır. İsteğe bağlı Runway, Pexels ve Edge TTS entegrasyonları çevrimiçi hizmet kullanır.
+Kaynak videoyu içe aktarın. **Whisper** ile konuşmayı zaman damgalı metne dönüştürün, **Ollama** ile güçlü anları keşfedip içerik akışını oluşturun, **FFmpeg** ile kesin, altyazı ekleyin ve dışa aktarın. YouTube Shorts, Instagram Reels ve TikTok için dikey çıktılar hazırlayın.
 
-## Öne çıkan özellikler
+> **Videolarınız varsayılan olarak bilgisayarınızda kalır. Üretim sürecinin kontrolü sizdedir.**
 
-- Yerel video ve desteklenen YouTube kaynaklarını içe aktarma.
-- Faster-Whisper ile konuşma tanıma ve zaman damgalı transkripsiyon.
-- Ollama ile yerel senaryo üretimi ve klip sıralama.
-- Shorts, Reels ve TikTok için dikey MP4 render.
-- Akıllı özet, hikâye, belgesel, eğitim ve ürün tanıtımı formatları.
-- AI ajanları, görev geçmişi, Autopilot ve medya kütüphanesi.
-- Runway AI ve Pexels ile isteğe bağlı sahne/B-roll üretimi.
-- Video kütüphanesindeki MP4 dosyaları için isteğe bağlı Auto-Editor sessizlik temizleme.
-- Ayarlar içinden Ollama bağlantı kontrolü ve başlatma.
-- Windows video aktarımında istemci bağlantısı kesilmelerinin kontrollü yönetimi.
-- Türkçe, İngilizce, Almanca ve İspanyolca arayüz; üç görünüm teması.
-- v1.8.0 Premium AI Creator Studio: daraltılabilir ikon menüsü, tooltip navigasyonu, mor-mavi tasarım dili ve üst çubuktan hızlı tema değiştirme.
+## ⚡ Hızlı başlangıç
 
-## v1.8.0 — Premium AI Creator Studio
+**Windows 10/11 · Python 3.12 · FFmpeg**
 
-Arayüz; profesyonel mor-mavi vurgu paleti, derin katmanlı paneller, cam efektli üst çubuk, yenilenmiş kartlar ve daha net tipografiyle güncellendi. Masaüstünde sol menü daraltılarak ikon moduna alınabilir; tercih tarayıcıda saklanır ve ikonların üzerine gelindiğinde araç ipuçları görünür. Üst çubuktaki tema düğmesi Gece, Okyanus ve Açık temalar arasında geçiş yapar. Ayarlar bölümündeki tema seçici korunmuştur. Video işleme, Ollama, Autopilot, medya kütüphanesi ve mevcut üretim akışları değiştirilmemiştir.
+```powershell
+git clone https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO.git
+cd YAMAN-VIRAL-STUDIO-PRO
+py -3.12 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+Copy-Item .env.example .env
+.\run_windows.bat
+```
 
-## v1.7.0 — Akıllı kurgu ve yerel motor güvenilirliği
+Tarayıcıdan **http://127.0.0.1:8765** adresini açın.
 
-### Auto-Editor
+Yerel içerik zekâsı için [Ollama](https://ollama.com/download/windows) kurun ve donanımınıza uygun bir model indirin. Whisper modelleri ilk kullanımda indirilebilir.
 
-Video kütüphanesindeki MP4 kartlarına **Sessizlikleri temizle** eylemi eklendi. İşlem orijinal videoyu değiştirmez; _SILENCE_CUT.mp4 uzantılı ayrı bir çıktı oluşturur. Varsayılan eşik yüzde 6, kenar payı 0,3 saniyedir.
+## 🎬 Creator Studio araçları
 
-Auto-Editor CLI resmi Windows ikilisinden kurulmalıdır. CLI artık PyPI üzerinden yayımlanmıyor; pip ile kurulum önerilmez. [Resmî kurulum belgesi](https://auto-editor.com/installing) · [GitHub Releases](https://github.com/WyattBlue/auto-editor/releases)
+| İş akışı | Ne yapar? |
+|---|---|
+| **Whisper transkripsiyon** | Konuşmayı zaman damgalı metne dönüştürür. |
+| **Ollama içerik zekâsı** | Kaynağı analiz eder, senaryo taslağı hazırlar ve klip adaylarını sıralar. |
+| **Smart Recap** | Önemli anları seçerek kısa bir video özeti oluşturur. |
+| **Story Flow** | Açılıştan sonuca kadar anlatı akışı kurar. |
+| **Documentary** | Kronolojik ve kaynakla desteklenen bir hikâye oluşturur. |
+| **Education** | Kavramları, adımları, örnekleri ve öğrenme özetini düzenler. |
+| **Product video** | Dayanağı olmayan iddialar üretmeden ürün videosu akışı hazırlar. |
+| **FFmpeg render** | Videoyu keser, altyazı ekler ve dikey MP4 olarak dışa aktarır. |
+| **Autopilot** | Planlı, yerel öncelikli içerik akışlarını çalıştırır. |
+| **Medya kütüphanesi** | Kaynak videoları, klipleri ve çıktıları yönetir. |
 
-Kurulumdan sonra PowerShell'de auto-editor --help komutuyla doğrulayın. Ardından uygulamayı yeniden başlatın.
+### Tek üretim hattı. Birden fazla platform.
 
-### Ollama bağlantısı
+<p align="center"><img src="docs/assets/pipeline.svg" alt="Whisper, Ollama ve FFmpeg üretim hattı" width="100%"></p>
+<p align="center"><img src="docs/assets/video-formats.svg" alt="Beş farklı video anlatım formatı" width="100%"></p>
 
-- Ayarlar bölümünde bağlantıyı kontrol etme ve Ollama masaüstü uygulamasını başlatma.
-- Model listesinin ve seçili modelin kullanılabilirliğinin kontrolü.
-- Bağlantı yok, zaman aşımı ve API hataları için açıklayıcı hata mesajları.
-- Windows'ta varsayılan Ollama API adresi: http://127.0.0.1:11434.
+## 🖥️ Stüdyonun içinden
 
-Ollama Windows uygulaması arka planda API sunar. [Ollama Windows belgeleri](https://docs.ollama.com/windows) · [API başlangıç kılavuzu](https://docs.ollama.com/api)
+**MASAÜSTÜ ÇALIŞMA ALANI**
 
-### Windows video aktarımı
+<p align="center"><img src="docs/assets/screenshot-live-desktop-framed.png" alt="YAMAN VIRAL STUDIO PRO v1.8.0 masaüstü arayüzü" width="100%"></p>
 
-Tarayıcı video aktarımını durdurduğunda veya bağlantıyı sıfırladığında görülebilen WinError 10054 Proactor callback olayı, yalnızca beklenen bağlantı kapanışı bağlamında filtrelenir. Diğer asyncio hataları normal şekilde loglanmaya devam eder. HTTP 206 Partial Content video Range istekleri için normal bir yanıttır; hata değildir.
+**MOBİL ÇALIŞMA ALANI**
 
-## Kurulum
+<p align="center"><img src="docs/assets/screenshot-live-mobile-framed.png" alt="YAMAN VIRAL STUDIO PRO v1.8.0 mobil arayüzü" width="52%"></p>
 
-### Gereksinimler
+Arayüz; daraltılabilir ikon menüsü, mobil açılır navigasyon, hızlı tema değiştirme ve üretim hattını öne çıkaran ana sayfa içerir.
 
-- Windows 10/11
-- Python 3.12
-- FFmpeg ve FFprobe (PATH içinde)
-- Ollama (yerel AI özellikleri için)
-- Auto-Editor (isteğe bağlı sessizlik temizleme)
-- Edge TTS (çevrimiçi seslendirme için)
+## 🧩 Mimari
 
-### Adımlar
-
-1. Depoyu klonlayın: git clone https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO.git
-2. Proje klasörüne girin.
-3. Sanal ortam oluşturun: py -3.12 -m venv .venv
-4. Ortamı etkinleştirin: .venv\Scripts\Activate.ps1
-5. Bağımlılıkları yükleyin: pip install -r requirements.txt
-6. Ortam dosyasını kopyalayın: Copy-Item .env.example .env
-7. Uygulamayı başlatın: .\run_windows.bat
-8. Tarayıcıda http://127.0.0.1:8765 adresini açın.
-
-### Ollama kurulumu ve sorun giderme
-
-1. [Ollama for Windows](https://ollama.com/download) uygulamasını kurup açın.
-2. PowerShell'de ollama list komutuyla kurulu modelleri kontrol edin.
-3. Örnek model yoksa ollama pull qwen3:1.7b komutunu çalıştırın.
-4. API kontrolü için Invoke-RestMethod http://127.0.0.1:11434/api/tags komutunu çalıştırın.
-5. Studio > Ayarlar bölümünden **Bağlantıyı kontrol et** düğmesine basın.
-6. Ollama kapalıysa aynı sayfadaki **Ollama'yı başlat** düğmesini kullanın.
-
-Ollama bulunamazsa resmi kurulum sayfasından yükleyin.
-
-## Mimari
+<p align="center"><img src="docs/assets/architecture.svg" alt="YAMAN VIRAL STUDIO PRO yazılım mimarisi" width="100%"></p>
 
 | Katman | Teknoloji |
 |---|---|
-| API | Python 3.12, FastAPI |
-| Web arayüzü | HTML, CSS, JavaScript |
-| Yerel LLM | Ollama |
+| API ve uygulama | Python 3.12 · FastAPI |
+| Web arayüzü | HTML · CSS · JavaScript |
+| Yerel dil modeli | Ollama |
 | Konuşma tanıma | Faster-Whisper |
-| Video/ses işleme | FFmpeg, isteğe bağlı Auto-Editor |
+| Video ve ses | FFmpeg · isteğe bağlı Auto-Editor |
 | Görev geçmişi | SQLite |
-| PWA | Web App Manifest, Service Worker |
+| Kurulabilir uygulama | Web App Manifest · Service Worker |
 
-## Gizlilik ve güvenlik
+## 🔐 Yerel öncelikli tasarım
 
-- Yerel AI ve video işleme, yerel servislerle çalışacak şekilde tasarlanmıştır.
-- Runway, Pexels, Edge TTS ve trend araştırması internet bağlantısı kullanır.
-- OAuth sırları ve sağlayıcı API anahtarları yerel şifreli kasada tutulur.
-- Auto-Editor yeni çıktı üretir; kaynak MP4'ü üzerine yazmaz.
-- Sosyal medya paylaşımı açık kullanıcı onayı gerektirir.
-- Yalnızca kullanma ve yeniden yayınlama hakkına sahip olduğunuz içerikleri içe aktarın.
+- Transkripsiyon, analiz ve medya işleme; modeller ve bağımlılıklar kurulduktan sonra yerel olarak çalışabilir.
+- Runway, Pexels, Edge TTS ve trend araştırması gibi isteğe bağlı servisler internet bağlantısı gerektirir.
+- Servis erişim anahtarları ve token'lar yerel şifreli kasada tutulmalıdır.
+- Yayınlama işlemleri kullanıcı onayı gerektirir.
+- Yalnızca kullanım ve yayınlama hakkına sahip olduğunuz medyaları içe aktarın.
 
-## Proje yapısı
+## ♻️ Kurulu sürümler için güncelleme
 
-- app/: FastAPI uygulaması, AI ve video iş mantığı
-- web/: Web arayüzü, stiller ve istemci kodu
-- docs/: Mimari, entegrasyon ve demo dokümantasyonu
-- workspace/: Yerel çalışma alanı ve üretim çıktıları
-- .github/workflows/: CI iş akışları
-- run_windows.bat: Windows başlatıcısı
-- requirements.txt: Python bağımlılıkları
+Uygulama, yapılandırılmış GitHub güncelleme dalını kontrol edebilir ve daha yeni bir commit bulunduğunda **kullanıcı onaylı güncelleme bildirimi** gösterebilir. Uygulama dosyaları değiştirilmeden önce yedek alınır; yerel çalışma alanı, ayarlar, kimlik bilgileri ve medya dosyaları korunacak şekilde tasarlanmıştır.
 
-## Belgeler
+Güncellemeler sessizce kurulmaz. Sürüm bilgisini inceleyin ve yüklemeyi onaylayın.
 
-- [Katkı rehberi](CONTRIBUTING.md)
-- [Güvenlik politikası](SECURITY.md)
-- [Mimari notları](docs/ARCHITECTURE.md)
-- [Platform entegrasyonları](docs/PLATFORM-INTEGRATIONS.md)
+## 📦 Proje yapısı
+
+```text
+app/                 FastAPI uygulaması, AI ve medya iş mantığı
+web/                 Creator Studio arayüzü ve PWA varlıkları
+docs/                Mimari, entegrasyon ve dokümantasyon
+docs/assets/         Ürün görselleri ve ekran görüntüleri
+tools/               Yerel bakım ve güncelleme araçları
+workspace/           Yerel veritabanı, ayarlar ve üretilen medya
+.github/workflows/   CI iş akışları
+run_windows.bat      Windows başlatıcısı
+requirements.txt     Python bağımlılıkları
+```
+
+## 🛠️ Sorun giderme
+
+- **Ollama algılanmıyor:** Yerel servisi başlatın, `ollama list` komutunu çalıştırın ve Studio → Ayarlar bölümünden bağlantıyı kontrol edin.
+- **FFmpeg bulunamıyor:** FFmpeg ve FFprobe kurup çalıştırılabilir dosya klasörünü PATH değişkenine ekleyin.
+- **İlk açılış uzun sürüyor:** Whisper ve Ollama modelleri ilk kullanımda indirilebilir.
+- **Güncelleme kontrolü başarısız:** İnternet bağlantısını ve GitHub API erişimini kontrol edin. Kontrol başarısız olsa da mevcut kurulum kullanılabilir.
+
+## 📚 Dokümantasyon
+
 - [Sürüm geçmişi](CHANGELOG.md)
+- [Mimari](docs/ARCHITECTURE.md)
+- [Platform entegrasyonları](docs/PLATFORM-INTEGRATIONS.md)
+- [Demo rehberi](docs/DEMO.md)
+- [Katkıda bulunma](CONTRIBUTING.md)
+- [Güvenlik politikası](SECURITY.md)
+- [Lisanslama rehberi](LICENSING.md)
 
-## Lisans
+## 🤝 Katkıda bulunun
 
-Community Edition kaynak kodu [MIT Lisansı](LICENSE) kapsamındadır. Ticari modüller için [LICENSING.md](LICENSING.md) dosyasına bakın.
+Hata bildirimleri, öneriler ve pull request'ler memnuniyetle karşılanır. Katkıdan önce [katkı rehberini](CONTRIBUTING.md) ve [güvenlik politikasını](SECURITY.md) inceleyin.
+
+## ⚖️ Lisans
+
+Kök dizindeki [MIT Lisansı](LICENSE) kapsamındaki Community Edition kaynak dosyaları MIT koşullarıyla dağıtılır. Üçüncü taraf bağımlılıkları ve servisler kendi lisans koşullarına tabidir. Ayrıntılar için [LICENSING.md](LICENSING.md) dosyasına bakın.
 
 ---
 
 <div align="center">
 
-**YAMAN VIRAL STUDIO PRO** · [GitHub](https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO)
+**YAMAN VIRAL STUDIO PRO · v1.8.0**
+
+*Yerelde üretin. Akıllıca düzenleyin. Her yerde yayınlayın.*
+
+[GitHub deposu](https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO) · [Sürümler](https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO/releases) · [Sorunlar](https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO/issues)
 
 </div>

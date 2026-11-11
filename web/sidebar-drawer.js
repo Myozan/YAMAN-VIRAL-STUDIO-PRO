@@ -51,7 +51,12 @@
   mobileHeader.querySelector("button").addEventListener("click", () => setDrawer(false));
 
   const brand = aside.querySelector(".brand");
-  if (brand) brand.append(toggle);
+  if (brand) {
+    const control = document.createElement("div");
+    control.className = "sidebar-control-row";
+    control.append(toggle);
+    brand.insertAdjacentElement("afterend", control);
+  }
   const topbar = main.querySelector(".topbar");
   const mobileTrigger = document.createElement("button");
   mobileTrigger.type = "button";
@@ -69,6 +74,7 @@
     const expanded = String(!collapsed);
     toggle.setAttribute("aria-expanded", expanded);
     toggle.title = collapsed ? "Menüyü genişlet" : "Menüyü daralt";
+    toggle.setAttribute("aria-label", toggle.title);
     toggle.querySelector(".toggle-glyph").textContent = collapsed ? "›" : "‹";
     toggle.querySelector(".toggle-text").textContent = collapsed ? "Menüyü genişlet" : "Menüyü daralt";
     syncTooltips();

@@ -1,63 +1,62 @@
-# Lisanslama modeli
+# YAMAN VIRAL STUDIO PRO — Licensing Guide
 
-YAMAN VIRAL STUDIO PRO iki ayrı dağıtım kanalına sahip olabilir; ancak lisans sınırı dosya ve bileşen bazında açıkça belirlenir.
+**Release:** v1.8.0
+**Effective date:** 2026-11-11
+**SPDX:** MIT for the files covered by the root LICENSE
 
-## 1. Community Edition
+This guide explains the licensing boundaries of the repository. It does not replace the license text attached to an individual file or a third-party dependency.
 
-- Depodaki mevcut kaynak kodu, kök dizindeki `LICENSE` dosyasında bulunan MIT Lisansı kapsamındadır.
-- MIT lisansı; kullanım, değiştirme, dağıtma, alt lisanslama ve ticari kullanım hakları verir.
-- Dağıtılan kopyalarda telif ve izin bildirimi korunmalıdır.
-- Bu haklar, ilgili MIT kapsamındaki sürümler için sonradan yayımlanacak bir ticari lisans metniyle geriye dönük olarak kaldırılamaz.
+## 1. Community source code
 
-## 2. Enterprise / Commercial Edition
+Unless a file states otherwise, the Community Edition source files covered by the root LICENSE are distributed under the MIT License.
 
-Ticari lisans yalnızca açıkça tanımlanmış, ayrı tutulan ve ticari lisans bildirimi taşıyan ilave bileşenler için uygulanır. Örnekler:
+The MIT License permits use, copying, modification, merging, publication, distribution, sublicensing and sale, provided that the copyright and permission notice is retained in copies or substantial portions of the Software.
 
-- Kurumsal SSO / merkezi kimlik ve erişim yönetimi eklentileri
-- Çok kullanıcılı yönetim, gelişmiş rol ve denetim modülleri
-- Kurumsal dağıtım, yönetim ve raporlama eklentileri
-- Ücretli destek, SLA, kurulum ve bakım hizmetleri
+The complete, operative terms are in [LICENSE](LICENSE). This guide does not add restrictions to code already granted under MIT and does not retroactively withdraw rights from copies distributed under MIT.
 
-Bu örnekler ürün yol haritası önerisidir; mevcut depoda bu özelliklerin bulunduğu veya ticari lisansla korunduğu anlamına gelmez.
+## 2. Separately licensed commercial modules
 
-### Kod ve depo sınırı
+A future Enterprise or Commercial module may use a separate written commercial license only when all of the following are true:
 
-1. Community çekirdeği MIT olarak kalır.
-2. Yeni ticari kaynak kodu `enterprise/` gibi ayrı bir dizinde tutulur.
-3. Ticari dosyaların başında `SPDX-License-Identifier: LicenseRef-Yaman-Commercial` ve `Copyright` bildirimi bulunur.
-4. Ticari modüller, Community paketine yanlışlıkla dahil edilmemeleri için ayrı paketleme/derleme adımından geçirilir.
-5. Ticari modül MIT kapsamındaki Community koduna bağımlıysa, bu bağımlılık ve dağıtım biçimi ayrıca incelenir. MIT kodunun kendisi MIT koşullarıyla kalır.
-6. Her üçüncü taraf bağımlılığın kendi lisansı geçerlidir; bu model üçüncü taraf lisanslarını değiştirmez.
+- The module is clearly identified as separately licensed.
+- Its files carry an explicit license and copyright notice.
+- It is excluded from the MIT Community package where required.
+- Its distribution and dependencies have been reviewed for compatibility.
 
-## 3. Marka ve varlıklar
+The following are possible product directions, not claims that such modules are currently included or commercially licensed: enterprise SSO, centralized role management, multi-tenant administration, advanced audit/reporting, deployment services, paid support and SLA services.
 
-MIT lisansı, YAMAN VIRAL STUDIO PRO adını, logosunu, ticari markalarını veya alan adlarını kullanma hakkını kendiliğinden vermez. Marka kullanımı ayrıca yazılı izin gerektirebilir. Logolar ve marka varlıkları için ayrı bir marka politikası yayımlanmalıdır.
+A commercial license cannot relicense MIT-covered Community code or remove MIT rights already granted for that code. If a commercial module depends on MIT code, the dependency and distribution model must be reviewed separately.
 
-## 4. Ticari lisans süreci
+## 3. Third-party software and media
 
-Kurumsal kullanım için taraflar arasında yazılı ve imzalı bir sözleşme yapılmalıdır. `LICENSE-COMMERCIAL-TEMPLATE.md` yalnızca müzakere ve hukuk incelemesi için taslak şablondur; doldurulup imzalanmadıkça lisans vermez.
+Third-party packages, models, runtimes, fonts, stock footage, APIs and platform integrations remain subject to their own licenses and terms. This repository's MIT license does not override them.
 
-Sözleşmede en az şu konular netleştirilmelidir:
+Before redistributing a packaged build, maintain a dependency and asset inventory, retain required notices, and verify the redistribution terms of each bundled component.
 
-- Lisans veren ve lisans alanın tam tüzel kişi bilgileri
-- Lisanslanan ürün, modül, sürüm ve teslimat kapsamı
-- Kullanıcı, cihaz, sunucu, tenant veya lokasyon sınırları
-- Süre, yenileme, ücret, vergi ve ödeme koşulları
-- Kurulum, destek, bakım ve SLA kapsamı
-- Veri koruma, gizlilik, güvenlik ve olay bildirimi
-- Fikri mülkiyet, türev çalışmalar ve üçüncü taraf bileşenler
-- Fesih, lisans sona ermesi ve verilerin iadesi/silinmesi
-- Uygulanacak hukuk, yetkili mahkeme ve uyuşmazlık çözümü
+User-provided videos, music, images and other media remain the user's responsibility. Import or publish only material for which the required rights and permissions are held.
 
-## 5. Sürüm etiketi ve lisans beyanı
+## 4. Brand and artwork
 
-| Dağıtım | Lisans |
+The MIT license for source code does not grant trademark rights in the YAMAN name, product name, logos or other brand identifiers. Do not imply endorsement or affiliation without permission.
+
+Screenshots and original repository artwork are supplied to document and present this project. Do not remove attribution or represent the brand as another product.
+
+## 5. Commercial agreements
+
+Commercial use of separately licensed modules requires a written agreement signed by the relevant parties. A template, proposal, email or this guide is not itself a grant of a commercial license.
+
+A commercial agreement should identify the licensed modules and versions, permitted users/devices/servers, term and fees, support obligations, data protection, intellectual property, third-party components, termination and governing law.
+
+## 6. License inventory
+
+| Asset / component | License boundary |
 |---|---|
-| Community kaynak kodu ve MIT kapsamındaki dosyalar | MIT — `LICENSE` |
-| Ayrı ticari modüller | İmzalı ticari sözleşme — ilgili dosya bildirimi |
-| Üçüncü taraf bağımlılıklar | Her bağımlılığın kendi lisansı |
-| Marka, logo ve ticari isim | Ayrı marka izni/politikası |
+| Community source files covered by root LICENSE | MIT |
+| Clearly marked separate commercial modules | Their explicit signed commercial license |
+| Third-party dependencies and runtimes | Each upstream license |
+| Stock media, API services and platform integrations | Provider terms and asset-specific licenses |
+| YAMAN trademarks and brand identifiers | Separate trademark permission |
 
-Bir dosyada lisans bildirimi yoksa otomatik olarak ticari lisans kapsamına girdiği varsayılmamalıdır. Yayın öncesinde her dağıtım paketinin içerik listesi ve lisans envanteri kontrol edilmelidir.
+If a file's license is unclear, do not assume it is proprietary or MIT by default. Resolve the file's origin and license before redistribution.
 
-> Bu doküman operasyonel lisanslama politikasıdır; hukuki görüş veya imzalı sözleşme yerine geçmez.
+> This document is an operational licensing guide, not legal advice. Obtain legal review before commercial redistribution or publishing a separate commercial license.

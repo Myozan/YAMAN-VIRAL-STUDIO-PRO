@@ -1,6 +1,21 @@
 @echo off
-setlocal
+setlocal EnableExtensions
 cd /d "%~dp0"
+
+echo.
+echo  YAMAN VIRAL STUDIO PRO
+echo  =====================
+echo.
+
+rem Check the selected GitHub update branch before starting the server.
+rem Update is never installed without a separate user confirmation.
+if exist ".venv\Scripts\python.exe" (
+  ".venv\Scripts\python.exe" tools\update_check.py
+  if errorlevel 1 echo [UYARI] GitHub guncellemesi kontrol edilemedi; mevcut kurulumla devam ediliyor.
+) else (
+  echo [INFO] Ilk kurulum: guncelleme kontrolu uygulama baslatildiktan sonra yapilacak.
+)
+
 if not exist .venv python -m venv .venv
 call .venv\Scripts\activate
 python -m pip install --upgrade pip

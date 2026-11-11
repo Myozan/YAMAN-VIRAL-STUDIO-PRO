@@ -1,15 +1,23 @@
 ## [1.8.0] - 2026-11-11
 
 ### Added
-- Premium AI Creator Studio visual system with refined violet/blue accents, layered surfaces, a glass-effect top bar and responsive layout.
-- Collapsible desktop sidebar with persistent preference, icon-only mode, hover tooltips and grouped navigation.
-- One-click theme cycling from the top bar while preserving the Settings theme selector (Dark, Light and Ocean).
-- Theme-aware surfaces, form controls, metrics, media cards, progress states and accessible focus indicators.
+- Premium AI Creator Studio home hero with the Whisper → Ollama → FFmpeg workflow and 9:16 output preview.
+- Custom v1.8.0 version artwork for the README hero and GitHub social preview.
+- Updated live desktop and mobile application screenshots for the README showcase.
+- Consistent YAMAN brand mark across favicon, Windows ICO, PWA and Apple touch icons.
+- GitHub branch update checker and user-approved update installation flow with backups and local-data preservation.
 
 ### Improved
-- Updated PWA asset cache version and static asset query strings to v1.8.0.
-- Preserved existing video, AI, Autopilot, media-library, Ollama and settings workflows.
+- Removed the GitHub repository promotion card from the sidebar; repository access remains in the top bar.
+- Moved the desktop sidebar collapse control into a separate control row to prevent overlap with the logo.
+- Reduced theme icon dimensions to prevent overflow.
+- Improved mobile viewport layout for the main hero and dashboard.
+- Rebuilt Turkish, English, German and Spanish README pages with consistent product visuals.
+- Clarified MIT Community source, commercial-module boundaries, third-party dependencies and brand rights in LICENSING.md.
 
+### Preserved
+- Existing Whisper, Ollama, FFmpeg, Autopilot, video library and project workflows.
+- Local workspace, environment settings, user media, tokens and local application data during updates.
 ## [1.7.0] - 2026-11-11
 
 ### Added
@@ -105,7 +113,7 @@
 - Mobile layout alignment for studio panels, summary controls, navigation, system metrics and editing options.
 - PWA cache version bumped to v1.5.6.
 
- / SÔö£ÔòØrÔö£ÔòØm GeÔö£─şmiÔö╝┼şi
+ / S├ö├Â┬ú├ö├▓├İr├ö├Â┬ú├ö├▓├İm Ge├ö├Â┬úÔöÇ┼şmi├ö├ÂÔòØÔö╝┼şi
 
 
 ## [1.5.5] - 2026-11-11
@@ -147,7 +155,7 @@
 ## [1.4.1] - 2026-11-11
 
 ### Added
-- Moved the application language selector into Settings ├ö├Ñ├å Language & localization.
+- Moved the application language selector into Settings Ôö£├ÂÔö£├æÔö£├Ñ Language & localization.
 - Added Turkish, English, German and Spanish locale options with browser-persisted preference.
 - Rebuilt all four README language pages with a consistent professional layout, real desktop/mobile screenshots, feature map, workflow, architecture and roadmap visuals.
 
@@ -158,38 +166,38 @@
 ## [1.4.0] - 2026-11-11
 
 ### Added
-- SQLite tabanlÔöÇÔûÆ kalÔöÇÔûÆcÔöÇÔûÆ gÔö£├érev ve olay gÔö£ÔòØnlÔö£ÔòØÔöÇ┼şÔö£ÔòØ.
-- Ajan gÔö£├érevlerini iptal etme, baÔö╝┼şarÔöÇÔûÆsÔöÇÔûÆz/kesintiye uÔöÇ┼şramÔöÇÔûÆÔö╝┼ş gÔö£├érevleri yeniden deneme ve uygulama yeniden baÔö╝┼şladÔöÇÔûÆÔöÇ┼şÔöÇÔûÆnda gÔö£├érev durumunu kurtarma.
-- Yerel AI ajan Ôö£─şaÔöÇ┼şrÔöÇÔûÆlarÔöÇÔûÆnda sÔöÇÔûÆnÔöÇÔûÆrlÔöÇÔûÆ yeniden deneme politikasÔöÇÔûÆ.
-- YouTube, TikTok ve Instagram iÔö£─şin resmÔö£┬½ OAuth baÔöÇ┼şlantÔöÇÔûÆ akÔöÇÔûÆÔö╝┼şlarÔöÇÔûÆ.
-- OAuth istemci kimlik bilgileri ve kullanÔöÇÔûÆcÔöÇÔûÆ tokenlarÔöÇÔûÆ Fernet ile Ôö╝┼şifrelenerek yerel kasada saklanÔöÇÔûÆr.
-- YouTube Data API ile kullanÔöÇÔûÆcÔöÇÔûÆ onaylÔöÇÔûÆ resumable MP4 yÔö£ÔòØkleme.
-- TikTok Content Posting API ile kullanÔöÇÔûÆcÔöÇÔûÆ onaylÔöÇÔûÆ Direct Post dosya yÔö£ÔòØkleme ve AI-generated etiket tercihi.
-- Instagram Graph API ile Reels container ve yayÔöÇÔûÆnlama akÔöÇÔûÆÔö╝┼şÔöÇÔûÆ; profesyonel hesap/Page baÔöÇ┼şlantÔöÇÔûÆsÔöÇÔûÆ keÔö╝┼şfi.
-- Platform Profilleri ekranÔöÇÔûÆna geliÔö╝┼ştirici Client ID/Secret kaydÔöÇÔûÆ, baÔöÇ┼şlantÔöÇÔûÆ durumu, baÔöÇ┼şlan/kes kontrolleri eklendi.
-- Medya kÔö£ÔòØtÔö£ÔòØphanesine kullanÔöÇÔûÆcÔöÇÔûÆ onaylÔöÇÔûÆ platform yayÔöÇÔûÆnlama eylemi eklendi.
-- TÔö£ÔòØrkÔö£─şe/ÔöÇÔûængilizce arayÔö£ÔòØz dil seÔö£─şici eklendi.
-- README belgeleri dil baÔö╝┼şÔöÇÔûÆna ayrÔöÇÔûÆ dosyalara ayrÔöÇÔûÆldÔöÇÔûÆ: README.md, README.en.md, README.de.md, README.es.md.
+- SQLite tabanl├ö├Â├ç├ö├╗├å kal├ö├Â├ç├ö├╗├åc├ö├Â├ç├ö├╗├å g├ö├Â┬úÔö£├®rev ve olay g├ö├Â┬ú├ö├▓├İnl├ö├Â┬ú├ö├▓├İ├ö├Â├çÔö╝┼ş├ö├Â┬ú├ö├▓├İ.
+- Ajan g├ö├Â┬úÔö£├®revlerini iptal etme, ba├ö├ÂÔòØÔö╝┼şar├ö├Â├ç├ö├╗├ås├ö├Â├ç├ö├╗├åz/kesintiye u├ö├Â├çÔö╝┼şram├ö├Â├ç├ö├╗├å├ö├ÂÔòØÔö╝┼ş g├ö├Â┬úÔö£├®revleri yeniden deneme ve uygulama yeniden ba├ö├ÂÔòØÔö╝┼şlad├ö├Â├ç├ö├╗├å├ö├Â├çÔö╝┼ş├ö├Â├ç├ö├╗├ånda g├ö├Â┬úÔö£├®rev durumunu kurtarma.
+- Yerel AI ajan ├ö├Â┬úÔöÇ┼şa├ö├Â├çÔö╝┼şr├ö├Â├ç├ö├╗├ålar├ö├Â├ç├ö├╗├ånda s├ö├Â├ç├ö├╗├ån├ö├Â├ç├ö├╗├årl├ö├Â├ç├ö├╗├å yeniden deneme politikas├ö├Â├ç├ö├╗├å.
+- YouTube, TikTok ve Instagram i├ö├Â┬úÔöÇ┼şin resm├ö├Â┬úÔö¼┬¢ OAuth ba├ö├Â├çÔö╝┼şlant├ö├Â├ç├ö├╗├å ak├ö├Â├ç├ö├╗├å├ö├ÂÔòØÔö╝┼şlar├ö├Â├ç├ö├╗├å.
+- OAuth istemci kimlik bilgileri ve kullan├ö├Â├ç├ö├╗├åc├ö├Â├ç├ö├╗├å tokenlar├ö├Â├ç├ö├╗├å Fernet ile ├ö├ÂÔòØÔö╝┼şifrelenerek yerel kasada saklan├ö├Â├ç├ö├╗├år.
+- YouTube Data API ile kullan├ö├Â├ç├ö├╗├åc├ö├Â├ç├ö├╗├å onayl├ö├Â├ç├ö├╗├å resumable MP4 y├ö├Â┬ú├ö├▓├İkleme.
+- TikTok Content Posting API ile kullan├ö├Â├ç├ö├╗├åc├ö├Â├ç├ö├╗├å onayl├ö├Â├ç├ö├╗├å Direct Post dosya y├ö├Â┬ú├ö├▓├İkleme ve AI-generated etiket tercihi.
+- Instagram Graph API ile Reels container ve yay├ö├Â├ç├ö├╗├ånlama ak├ö├Â├ç├ö├╗├å├ö├ÂÔòØÔö╝┼ş├ö├Â├ç├ö├╗├å; profesyonel hesap/Page ba├ö├Â├çÔö╝┼şlant├ö├Â├ç├ö├╗├ås├ö├Â├ç├ö├╗├å ke├ö├ÂÔòØÔö╝┼şfi.
+- Platform Profilleri ekran├ö├Â├ç├ö├╗├åna geli├ö├ÂÔòØÔö╝┼ştirici Client ID/Secret kayd├ö├Â├ç├ö├╗├å, ba├ö├Â├çÔö╝┼şlant├ö├Â├ç├ö├╗├å durumu, ba├ö├Â├çÔö╝┼şlan/kes kontrolleri eklendi.
+- Medya k├ö├Â┬ú├ö├▓├İt├ö├Â┬ú├ö├▓├İphanesine kullan├ö├Â├ç├ö├╗├åc├ö├Â├ç├ö├╗├å onayl├ö├Â├ç├ö├╗├å platform yay├ö├Â├ç├ö├╗├ånlama eylemi eklendi.
+- T├ö├Â┬ú├ö├▓├İrk├ö├Â┬úÔöÇ┼şe/├ö├Â├ç├ö├╗├Ğngilizce aray├ö├Â┬ú├ö├▓├İz dil se├ö├Â┬úÔöÇ┼şici eklendi.
+- README belgeleri dil ba├ö├ÂÔòØÔö╝┼ş├ö├Â├ç├ö├╗├åna ayr├ö├Â├ç├ö├╗├å dosyalara ayr├ö├Â├ç├ö├╗├åld├ö├Â├ç├ö├╗├å: README.md, README.en.md, README.de.md, README.es.md.
 
 ### Changed
-- CPU kartÔöÇÔûÆnda yalnÔöÇÔûÆzca iÔö╝┼şlemci modeli ve iÔö╝┼şlemci kullanÔöÇÔûÆmÔöÇÔûÆ gÔö£├ésterilir.
-- CPU sÔöÇÔûÆcaklÔöÇÔûÆÔöÇ┼şÔöÇÔûÆ, Ôö£─şekirdek/thread, saat hÔöÇÔûÆzÔöÇÔûÆ ve GPU sÔöÇÔûÆcaklÔöÇÔûÆÔöÇ┼şÔöÇÔûÆ arayÔö£ÔòØzden ve telemetri yanÔöÇÔûÆtÔöÇÔûÆndan kaldÔöÇÔûÆrÔöÇÔûÆldÔöÇÔûÆ.
-- TÔö£ÔòØrkÔö£─şe gezinme menÔö£ÔòØsÔö£ÔòØ ve gÔö£├érÔö£ÔòØnÔö£ÔòØr metinler UTF-8/HTML entity tabanlÔöÇÔûÆ olarak yeniden dÔö£ÔòØzenlendi.
-- SÔö£ÔòØrÔö£ÔòØm 1.4.0 olarak gÔö£ÔòØncellendi.
+- CPU kart├ö├Â├ç├ö├╗├ånda yaln├ö├Â├ç├ö├╗├åzca i├ö├ÂÔòØÔö╝┼şlemci modeli ve i├ö├ÂÔòØÔö╝┼şlemci kullan├ö├Â├ç├ö├╗├åm├ö├Â├ç├ö├╗├å g├ö├Â┬úÔö£├®sterilir.
+- CPU s├ö├Â├ç├ö├╗├åcakl├ö├Â├ç├ö├╗├å├ö├Â├çÔö╝┼ş├ö├Â├ç├ö├╗├å, ├ö├Â┬úÔöÇ┼şekirdek/thread, saat h├ö├Â├ç├ö├╗├åz├ö├Â├ç├ö├╗├å ve GPU s├ö├Â├ç├ö├╗├åcakl├ö├Â├ç├ö├╗├å├ö├Â├çÔö╝┼ş├ö├Â├ç├ö├╗├å aray├ö├Â┬ú├ö├▓├İzden ve telemetri yan├ö├Â├ç├ö├╗├åt├ö├Â├ç├ö├╗├åndan kald├ö├Â├ç├ö├╗├år├ö├Â├ç├ö├╗├åld├ö├Â├ç├ö├╗├å.
+- T├ö├Â┬ú├ö├▓├İrk├ö├Â┬úÔöÇ┼şe gezinme men├ö├Â┬ú├ö├▓├İs├ö├Â┬ú├ö├▓├İ ve g├ö├Â┬úÔö£├®r├ö├Â┬ú├ö├▓├İn├ö├Â┬ú├ö├▓├İr metinler UTF-8/HTML entity tabanl├ö├Â├ç├ö├╗├å olarak yeniden d├ö├Â┬ú├ö├▓├İzenlendi.
+- S├ö├Â┬ú├ö├▓├İr├ö├Â┬ú├ö├▓├İm 1.4.0 olarak g├ö├Â┬ú├ö├▓├İncellendi.
 
 ### OAuth limitations and requirements
-- GerÔö£─şek hesap baÔöÇ┼şlantÔöÇÔûÆsÔöÇÔûÆ iÔö£─şin platform geliÔö╝┼ştirici uygulamasÔöÇÔûÆ, Client ID/Secret, doÔöÇ┼şru callback adresi ve platform tarafÔöÇÔûÆndan onaylanmÔöÇÔûÆÔö╝┼ş kapsamlar gerekir.
-- TikTok'un denetlenmemiÔö╝┼ş istemcileri yalnÔöÇÔûÆzca Ôö£├ézel gÔö£├énderi yayÔöÇÔûÆnlayabilir.
-- Instagram Reels, Meta'nÔöÇÔûÆn eriÔö╝┼şebildiÔöÇ┼şi genel HTTPS medya URL'si gerektirir; localhost dosyalarÔöÇÔûÆ kullanÔöÇÔûÆlamaz.
-- Her yayÔöÇÔûÆn isteÔöÇ┼şi kullanÔöÇÔûÆcÔöÇÔûÆ onayÔöÇÔûÆ gerektirir; arka planda sessiz yayÔöÇÔûÆn yapÔöÇÔûÆlmaz.
+- Ger├ö├Â┬úÔöÇ┼şek hesap ba├ö├Â├çÔö╝┼şlant├ö├Â├ç├ö├╗├ås├ö├Â├ç├ö├╗├å i├ö├Â┬úÔöÇ┼şin platform geli├ö├ÂÔòØÔö╝┼ştirici uygulamas├ö├Â├ç├ö├╗├å, Client ID/Secret, do├ö├Â├çÔö╝┼şru callback adresi ve platform taraf├ö├Â├ç├ö├╗├åndan onaylanm├ö├Â├ç├ö├╗├å├ö├ÂÔòØÔö╝┼ş kapsamlar gerekir.
+- TikTok'un denetlenmemi├ö├ÂÔòØÔö╝┼ş istemcileri yaln├ö├Â├ç├ö├╗├åzca ├ö├Â┬úÔö£├®zel g├ö├Â┬úÔö£├®nderi yay├ö├Â├ç├ö├╗├ånlayabilir.
+- Instagram Reels, Meta'n├ö├Â├ç├ö├╗├ån eri├ö├ÂÔòØÔö╝┼şebildi├ö├Â├çÔö╝┼şi genel HTTPS medya URL'si gerektirir; localhost dosyalar├ö├Â├ç├ö├╗├å kullan├ö├Â├ç├ö├╗├ålamaz.
+- Her yay├ö├Â├ç├ö├╗├ån iste├ö├Â├çÔö╝┼şi kullan├ö├Â├ç├ö├╗├åc├ö├Â├ç├ö├╗├å onay├ö├Â├ç├ö├╗├å gerektirir; arka planda sessiz yay├ö├Â├ç├ö├╗├ån yap├ö├Â├ç├ö├╗├ålmaz.
 
 ## [1.3.0] - 2026-11-11
-- DÔö£├ért uzman ajan eklendi; toplam ajan sayÔöÇÔûÆsÔöÇÔûÆ 12'ye Ôö£─şÔöÇÔûÆkarÔöÇÔûÆldÔöÇÔûÆ.
-- Mobil dÔö£ÔòØzen, platform profilleri ve kÔöÇÔûÆsa video kesit seÔö£─şimi iyileÔö╝┼ştirildi.
-- Videodan akÔöÇÔûÆllÔöÇÔûÆ Ôö£├ézet MP4 Ôö£ÔòØretimi ve rapor kartlarÔöÇÔûÆ eklendi.
+- D├ö├Â┬úÔö£├®rt uzman ajan eklendi; toplam ajan say├ö├Â├ç├ö├╗├ås├ö├Â├ç├ö├╗├å 12'ye ├ö├Â┬úÔöÇ┼ş├ö├Â├ç├ö├╗├åkar├ö├Â├ç├ö├╗├åld├ö├Â├ç├ö├╗├å.
+- Mobil d├ö├Â┬ú├ö├▓├İzen, platform profilleri ve k├ö├Â├ç├ö├╗├åsa video kesit se├ö├Â┬úÔöÇ┼şimi iyile├ö├ÂÔòØÔö╝┼ştirildi.
+- Videodan ak├ö├Â├ç├ö├╗├åll├ö├Â├ç├ö├╗├å ├ö├Â┬úÔö£├®zet MP4 ├ö├Â┬ú├ö├▓├İretimi ve rapor kartlar├ö├Â├ç├ö├╗├å eklendi.
 
 ## [1.2.1] - 2026-11-10
-- Studio sayfasÔöÇÔûÆ onarÔöÇÔûÆldÔöÇÔûÆ; yerel video tarama, transkripsiyon ve sistem gÔö£├éstergeleri geliÔö╝┼ştirildi.
+- Studio sayfas├ö├Â├ç├ö├╗├å onar├ö├Â├ç├ö├╗├åld├ö├Â├ç├ö├╗├å; yerel video tarama, transkripsiyon ve sistem g├ö├Â┬úÔö£├®stergeleri geli├ö├ÂÔòØÔö╝┼ştirildi.
 
 ## [1.5.3] - Story-flow video format
 

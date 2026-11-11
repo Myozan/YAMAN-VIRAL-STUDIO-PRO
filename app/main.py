@@ -20,6 +20,8 @@ from app.agents import AGENT_CATALOG, run_agent_team
 from app.framing import render_face_tracked
 from app import autopilot as autopilot_store
 from app import content_factory, visual_factory
+from app import updater as update_manager
+from app.update_api import router as update_router
 
 # Windows CUDA runtime DLLs are shipped inside this project's isolated venv.
 # Keep AddDllDirectory handles alive so CTranslate2 can resolve cuBLAS/cuDNN.
@@ -97,6 +99,7 @@ async def configure_asyncio_disconnect_handling():
     asyncio.get_running_loop().set_exception_handler(_windows_disconnect_exception_handler)
 
 app.mount("/assets", StaticFiles(directory=BASE / "web"), name="assets")
+app.include_router(update_router)
 
 @app.get("/sw.js", include_in_schema=False)
 def pwa_service_worker():
