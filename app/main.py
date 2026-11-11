@@ -1017,6 +1017,20 @@ def media_library():
                                       "modified_at": stat.st_mtime})
                     except OSError:
                         pass
+    generated_root = WORK / "autopilot-content"
+    if generated_root.is_dir():
+        for folder in generated_root.iterdir():
+            path = folder / "publish_ready_shorts.mp4"
+            if folder.is_dir() and path.is_file():
+                try:
+                    stat = path.stat()
+                    items.append({"job_id": folder.name, "clip_id": "generated", "platform": "youtube",
+                                  "label": "AI Üretimi Shorts", "filename": path.name,
+                                  "file": f"/workspace/autopilot-content/{folder.name}/{path.name}",
+                                  "size_mb": round(stat.st_size / (1024 * 1024), 2),
+                                  "modified_at": stat.st_mtime})
+                except OSError:
+                    pass
     items.sort(key=lambda item: item["modified_at"], reverse=True)
     return {"items": items, "count": len(items)}
 
