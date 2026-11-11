@@ -1,7 +1,7 @@
 const $=id=>document.getElementById(id);let jobId=null;
 const UI_TEXT={
  tr:{
-  "nav.studio":"\u25c8\u3000Studio","nav.content":"\u25a3\u3000\u0130\u00e7erik \u00fcretimi","nav.projects":"\u25f7\u3000Projeler","nav.media":"\u25b6\u3000Video k\u00fct\u00fcphanesi","nav.platforms":"\u25a4\u3000Platform profilleri","nav.settings":"\u2699\u3000Ayarlar",
+  "nav.studio":"Studio","nav.content":"İçerik üretimi","nav.projects":"Projeler","nav.media":"Video kütüphanesi","nav.platforms":"Platform profilleri","nav.settings":"Ayarlar",
   "appearance.label":"G\u00d6R\u00dcN\u00dcM TEMASI","language.label":"ARAY\u00dcZ D\u0130L\u0130","local.name":"LOCAL AI ENGINE","local.info":"Veriler bilgisayar\u0131nda i\u015flenir",
   "studio.title":"\u0130\u00e7eri\u011fini \u00e7o\u011falt.","studio.subtitle":"Uzun videolar\u0131 analiz et, g\u00fc\u00e7l\u00fc anlar\u0131 se\u00e7 ve t\u00fcm dikey platformlara haz\u0131rla.","studio.newProject":"Yeni video projesi","studio.youtubeUrl":"YouTube video ba\u011flant\u0131s\u0131","studio.analyze":"Analiz et","studio.downloads":"\u0130ndirilen videolar","studio.scan":"\u0130ndirilenler klas\u00f6r\u00fcn\u00fc tara","studio.clipCount":"Short adedi","studio.speechLanguage":"Konu\u015fma dili",
   "projects.title":"Projeler","media.title":"Video k\u00fct\u00fcphanesi","platforms.title":"Platform profilleri","settings.title":"Ayarlar","settings.localAI":"Yerel AI motoru","settings.whisper":"Whisper transkripsiyon","settings.languageTitle":"Dil ve yerelle\u015ftirme","settings.languageDescription":"Uygulama aray\u00fcz\u00fcn\u00fcn dilini se\u00e7. Tercihin bu taray\u0131c\u0131da saklan\u0131r.","settings.languageNote":"Dil tercihi an\u0131nda uygulan\u0131r; uygulamay\u0131 yeniden ba\u015flatman gerekmez.",
@@ -513,3 +513,6 @@ function applyResponsiveMonitor(){
 }
 window.addEventListener("resize",applyResponsiveMonitor);
 applyResponsiveMonitor();
+
+/* v1.5: section breadcrumb follows existing navigation */
+(function(){const labels={studio:"Studio",content:"İçerik üretimi",projects:"Projeler",media:"Video kütüphanesi",platforms:"Platform profilleri",settings:"Ayarlar"};function sync(){const a=document.querySelector("#sidebarNav a.active"),t=document.getElementById("currentSection");if(a&&t)t.textContent=labels[a.dataset.page]||"Studio"}document.querySelectorAll("#sidebarNav a[data-page]").forEach(a=>a.addEventListener("click",()=>requestAnimationFrame(sync)));document.querySelectorAll("[data-go]").forEach(a=>a.addEventListener("click",()=>setTimeout(sync,0)));sync()})();
