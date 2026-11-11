@@ -312,3 +312,97 @@ button{font-weight:800;letter-spacing:.1px}button:focus-visible,a:focus-visible,
 @media(max-width:760px){.layout{display:block!important}aside{position:relative;top:auto;height:auto;min-height:0;padding:14px 12px 12px;border-right:0;border-bottom:1px solid var(--line)}.brand{padding:0 4px}.mark{width:40px;height:40px}.sidebar-caption{display:none}nav{display:flex;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;margin-top:13px;padding:0 0 5px;gap:5px}nav a{flex:0 0 auto;min-height:40px;padding:8px 10px;gap:7px;font-size:10px}nav a.active{box-shadow:inset 0 -2px var(--mint)}.nav-icon{width:22px;height:22px;flex-basis:22px;font-size:12px}.nav-arrow{display:none}.sidebar-bottom{display:none}main{padding:15px 13px 36px}.topbar{margin-bottom:22px;height:38px}.topbar-github{padding:7px 9px}.topbar-github span{display:none}.system-live{font-size:8px}.hero{padding:24px 20px;min-height:190px}.hero-art{width:76px;height:76px}.hero-art>small{display:none}.hero-orbit{inset:-8px}.orbit-two{inset:-15px}}
 @media(max-width:420px){.breadcrumbs{font-size:9px}.topbar-right{gap:7px}.hero-art{display:none}.system-live{display:none}header{align-items:flex-start}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+
+
+/* v1.5.1 — Mobile-first layout hardening */
+*,*::before,*::after{min-width:0}
+html{width:100%;max-width:100%;overflow-x:clip}
+body{width:100%;max-width:100%;overflow-x:clip}
+.layout{width:100%;max-width:1920px;min-width:0}
+main{width:100%;min-width:0}
+img,video,canvas,svg{max-width:100%}
+input,select,button{max-width:100%;min-height:44px}
+button,a{touch-action:manipulation}
+.panel,.hero,.metric-card,.media-card,.platform-card,.agent-grid article,.project-row{min-width:0}
+.urlrow>*{min-width:0}
+.pipeline>div,.clip,.download-item,.task-history-row{min-width:0;overflow-wrap:anywhere}
+@media(max-width:760px){
+  .layout{display:flex!important;flex-direction:column}
+  aside{position:relative!important;top:auto!important;width:100%;height:auto!important;min-height:0!important;padding:12px 12px 10px!important;overflow:visible}
+  .brand{min-height:42px}
+  .theme-control{display:flex;align-items:center;gap:10px;margin:10px 0 0;padding:8px 10px}
+  .theme-control label{margin:0;white-space:nowrap;font-size:8px}
+  .theme-control select{min-height:38px;margin:0;padding:8px 10px}
+  nav{display:flex!important;flex-wrap:nowrap;gap:6px;margin:10px -2px 0;padding:0 2px 7px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x proximity;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+  nav a{flex:0 0 auto;min-height:42px;padding:8px 10px;scroll-snap-align:start}
+  nav a .nav-label{white-space:nowrap}
+  main{padding:14px 12px 32px!important}
+  .topbar{height:auto;min-height:40px;margin-bottom:18px;padding-bottom:10px}
+  .breadcrumbs{min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+  .topbar-right{flex:0 0 auto}
+  header{display:flex;flex-direction:column;align-items:flex-start;gap:10px;margin-bottom:18px}
+  h1{font-size:clamp(27px,7vw,36px);line-height:1.12}
+  header p{font-size:12px;line-height:1.55}
+  .health{max-width:100%;white-space:normal}
+  .hero{min-height:0;padding:22px 18px;border-radius:17px;margin-bottom:14px}
+  .hero h2{font-size:clamp(25px,6.8vw,34px);line-height:1.12}
+  .hero p{max-width:38ch;line-height:1.6}
+  .panel{padding:16px;margin-bottom:14px;border-radius:15px}
+  .panelhead{gap:10px;margin-bottom:17px}
+  .panelhead h3{font-size:17px}
+  .panelhead p{font-size:11px;line-height:1.55}
+  .panelhead>small{font-size:8px;white-space:nowrap}
+  .urlrow{display:flex;flex-direction:column;gap:9px}
+  .urlrow input,.urlrow select,.urlrow button{width:100%;min-height:46px}
+  .urlrow button{padding:12px 16px}
+  .options{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:15px}
+  .options>div:last-child{grid-column:1/-1}
+  .options select{min-height:44px}
+  .system-monitor{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px;margin-bottom:15px;width:100%!important;max-width:100%!important}
+  .system-monitor>.metric-card{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center;width:100%!important;max-width:100%!important;min-width:0!important;padding:12px 8px;text-align:center!important;gap:7px}
+  .system-monitor>.metric-card .metric-gauge{width:76px!important;height:76px!important}
+  .system-monitor>.metric-card .gauge-center strong{font-size:19px}
+  .system-monitor>.metric-card .metric-label{font-size:8px;text-align:center!important;overflow-wrap:anywhere}
+  .system-monitor>.metric-card>small{font-size:9px;min-height:0;text-align:center!important;overflow-wrap:anywhere}
+  .global-progress{position:sticky;top:6px;z-index:40;padding:12px;margin-bottom:14px}
+  .progress-top{font-size:10px}
+  .pipeline{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .pipeline>div{padding:12px}
+  .pipeline strong{font-size:11px}
+  .pipeline small{font-size:9px}
+  .agent-grid,.platform-grid,.dependency-grid,.media-library-grid,.media-render-results{grid-template-columns:minmax(0,1fr)}
+  .clip{grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:14px 0}
+  .clip h4{font-size:13px}
+  .clip p{font-size:11px}
+  .score{font-size:20px}
+  .actions{gap:7px}
+  .actions button,.actions a{min-height:40px}
+  .project-row{align-items:flex-start;flex-direction:column;gap:10px;padding:12px}
+  .project-row .actions{width:100%}
+  .project-row .actions button{flex:1}
+  .download-item{align-items:stretch;flex-direction:column;gap:10px}
+  .download-item button{width:100%}
+  .media-card{padding:11px}
+  .media-player{max-height: min(68vh,480px)}
+  .transcript-text{max-height:45vh;padding:12px;font-size:11px;overflow-wrap:anywhere}
+  #page-settings input,#page-settings select{width:100%;min-height:44px}
+  footer{font-size:9px;line-height:1.6}
+}
+@media(max-width:390px){
+  main{padding-inline:10px!important}
+  .options{grid-template-columns:minmax(0,1fr)}
+  .options>div:last-child{grid-column:auto}
+  .system-monitor{gap:7px}
+  .system-monitor>.metric-card{padding:10px 5px}
+  .system-monitor>.metric-card .metric-gauge{width:66px!important;height:66px!important}
+  .system-monitor>.metric-card .gauge-center strong{font-size:17px}
+  .pipeline{grid-template-columns:minmax(0,1fr)}
+  .topbar-github{padding:7px}
+  .hero-art{display:none}
+  .clip{grid-template-columns:minmax(0,1fr)}
+  .score{text-align:left}
+}
+@media(hover:none) and (pointer:coarse){
+  nav a,button,.secondary,.actions a{min-height:44px}
+  input,select{font-size:16px}
+}
