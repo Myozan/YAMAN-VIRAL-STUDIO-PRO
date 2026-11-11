@@ -6,11 +6,11 @@
 
 ### Yerel yapay zekâ ile video analiz, Shorts üretimi ve çok platformlu içerik iş akışı
 
-> **v1.5 Professional UI** · İkonlu gezinme, yenilenmiş marka alanı, GitHub kısayolları ve mobil çalışma alanı iyileştirmeleri.
+> **v1.5.2 · PWA + Responsive UI** · Mobil uyumlu çalışma alanı, yüklenebilir uygulama deneyimi ve yenilenmiş ürün görselleri.
 
 [🇹🇷 Türkçe](README.md) · [🇬🇧 English](README.en.md) · [🇩🇪 Deutsch](README.de.md) · [🇪🇸 Español](README.es.md)
 
-[![Version](https://img.shields.io/badge/version-1.5.0-6478ff?style=for-the-badge)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.5.2-6478ff?style=for-the-badge)](CHANGELOG.md)
 [![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/API-FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![Local AI](https://img.shields.io/badge/AI-Local--First-8B5CF6?style=for-the-badge)](#mimari)
@@ -30,11 +30,11 @@ Ollama, Faster-Whisper ve FFmpeg tabanlı iş akışı, içerik üretimini mümk
 
 ## 🖥️ Uygulamadan görüntüler
 
-Yeni arayüz; masaüstünde sabit ikonlu yan menü, üst bağlam çubuğu ve GitHub depo erişimi sunar. Küçük ekranlarda menü yatay kaydırılabilir ve içerik alanı tek sütuna geçer.
+Yeni görsel seti, masaüstü ve mobil arayüzün responsive yerleşimini ürün önizlemesi olarak gösterir. Bu çizimler gerçek zamanlı uygulama ekran görüntüsü değildir; arayüzün bileşenlerini ve tasarım dilini temsil eder.
 
 | Masaüstü çalışma alanı | Mobil uyumlu görünüm |
 |:---:|:---:|
-| <img src="docs/assets/dashboard-desktop.png" alt="Masaüstü uygulama ekranı" width="100%"> | <img src="docs/assets/dashboard-mobile.png" alt="Mobil uygulama ekranı" width="72%"> |
+| <img src="docs/assets/dashboard-desktop.svg" alt="Masaüstü uygulama ekranı" width="100%"> | <img src="docs/assets/dashboard-mobile.svg" alt="Mobil uygulama ekranı" width="72%"> |
 
 ## 🚀 Öne çıkan yetenekler
 
@@ -49,7 +49,7 @@ Yeni arayüz; masaüstünde sabit ikonlu yan menü, üst bağlam çubuğu ve Git
 - **Çok dilli arayüz:** Türkçe, English, Deutsch ve Español; dil seçimi Ayarlar bölümünden yönetilir.
 - **Platform iş akışları:** YouTube, TikTok ve Instagram için OAuth bağlantısı ve kullanıcı onaylı yayın hazırlığı.
 - **Sistem izleme:** GPU, CPU, RAM ve VRAM kullanım göstergeleri.
-- **Uyarlanabilir arayüz:** Masaüstü ve mobil ekranlar için duyarlı tasarım.
+- **Uyarlanabilir arayüz:** Masaüstü ve mobil ekranlar için duyarlı tasarım; PWA yükleme deneyimi.
 
 ## 🔄 Üretim akışı
 
