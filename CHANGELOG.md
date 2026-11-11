@@ -1,3 +1,15 @@
+## [1.5.2] - 2026-11-11
+
+### Added
+- Progressive Web App manifest, branded scalable icons and install-to-home-screen support.
+- Service worker with an app-shell cache for the interface; API responses and private workspace files are deliberately excluded from caching.
+- Install button for supported browsers and Add to Home Screen guidance for iOS Safari.
+
+### Notes
+- PWA installation and service workers require HTTPS or localhost/127.0.0.1.
+- Offline mode caches the application shell only. Video analysis, AI processing, OAuth, uploads and other API features still require the YAMAN backend and their local services to be running.
+- To install on a phone, the app must be reachable from that phone through a trusted HTTPS origin. The default Windows launcher binds to 127.0.0.1 and is intentionally not exposed to the LAN automatically.
+
 # Changelog / Sürüm Geçmişi
 
 ## [1.4.1] - 2026-11-11
