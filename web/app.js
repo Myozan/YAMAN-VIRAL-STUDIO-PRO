@@ -502,3 +502,56 @@ $("refreshTaskHistory")?.addEventListener("click",loadTaskHistory);
 
 /* v1.5: section breadcrumb follows existing navigation */
 (function(){const labels={studio:"Studio",content:"İçerik üretimi",projects:"Projeler",media:"Video kütüphanesi",platforms:"Platform profilleri",settings:"Ayarlar"};function sync(){const a=document.querySelector("#sidebarNav a.active"),t=document.getElementById("currentSection");if(a&&t)t.textContent=labels[a.dataset.page]||"Studio"}document.querySelectorAll("#sidebarNav a[data-page]").forEach(a=>a.addEventListener("click",()=>requestAnimationFrame(sync)));document.querySelectorAll("[data-go]").forEach(a=>a.addEventListener("click",()=>setTimeout(sync,0)));sync()})();
+
+
+/* PWA install and service-worker registration */
+(function initPWA(){
+  const installButton=document.getElementById("installApp");
+  let installPrompt=null;
+  const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isStandalone=window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone===true;
+
+  if("serviceWorker" in navigator && window.isSecureContext){
+    window.addEventListener("load",()=>{
+      navigator.serviceWorker.register("/sw.js",{scope:"/"})
+        .catch(error=>console.warn("PWA service worker registration failed:",error));
+    });
+  }
+
+  if(!installButton || isStandalone) return;
+
+  window.addEventListener("beforeinstallprompt",event=>{
+    event.preventDefault();
+    installPrompt=event;
+    installButton.hidden=false;
+  });
+
+  window.addEventListener("appinstalled",()=>{
+    installPrompt=null;
+    installButton.hidden=true;
+    installButton.blur();
+  });
+
+  if(isIOS){
+    installButton.hidden=false;
+    installButton.addEventListener("click",()=>{
+      window.alert("iPhone/iPad: Safari'de Paylaş düğmesine dokun, ardından 'Ana Ekrana Ekle' seçeneğini seç.");
+    });
+    return;
+  }
+
+  installButton.addEventListener("click",async()=>{
+    if(!installPrompt) return;
+    installButton.disabled=true;
+    try{
+      await installPrompt.prompt();
+      await installPrompt.userChoice;
+      installPrompt=null;
+      installButton.hidden=true;
+    }catch(error){
+      console.warn("PWA install prompt failed:",error);
+    }finally{
+      installButton.disabled=false;
+    }
+  });
+})();
