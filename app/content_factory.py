@@ -7,6 +7,7 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 from urllib.parse import quote_plus
 import requests
+from app.secure_http import request_public_https
 
 USER_AGENT = "YAMAN-VIRAL-STUDIO-PRO/1.6.0 (+local creator research)"
 VOICE_CATALOG = {
@@ -18,7 +19,7 @@ VOICE_CATALOG = {
 }
 
 def _rss_items(url: str, source: str, limit: int = 12):
-    response = requests.get(url, headers={"User-Agent":USER_AGENT}, timeout=18)
+    response = request_public_https("GET", url, headers={"User-Agent":USER_AGENT}, timeout=18, max_redirects=4)
     response.raise_for_status()
     root = ET.fromstring(response.content)
     found=[]

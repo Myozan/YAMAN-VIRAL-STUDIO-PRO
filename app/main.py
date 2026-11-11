@@ -22,6 +22,7 @@ from app.framing import render_face_tracked
 from app import autopilot as autopilot_store
 from app import content_factory, visual_factory
 from app import updater as update_manager
+from app.secure_http import request_public_https
 from app.update_api import router as update_router
 
 # Windows CUDA runtime DLLs are shipped inside this project's isolated venv.
@@ -90,6 +91,12 @@ _scheduler_thread = None
 async def app_lifespan(application):
     """Own process-level background services for the FastAPI application."""
     asyncio.get_running_loop().set_exception_handler(_windows_disconnect_exception_handler)
+    register_task_worker()
+    recover_orphaned_tasks()
+    _worker_heartbeat_stop.clear()
+    global _worker_heartbeat_thread
+    _worker_heartbeat_thread = threading.Thread(target=_task_worker_heartbeat_loop, name="yaman-task-worker-heartbeat", daemon=True)
+    _worker_heartbeat_thread.start()
     _scheduler_stop.clear()
     start_autopilot_scheduler()
     try:
@@ -99,6 +106,11 @@ async def app_lifespan(application):
         thread = _scheduler_thread
         if thread and thread.is_alive():
             thread.join(timeout=2)
+        _worker_heartbeat_stop.set()
+        heartbeat_thread = _worker_heartbeat_thread
+        if heartbeat_thread and heartbeat_thread.is_alive():
+            heartbeat_thread.join(timeout=2)
+        unregister_task_worker()
 
 
 app = FastAPI(title="YAMAN VIRAL STUDIO PRO", version="1.8.0", lifespan=app_lifespan)
@@ -129,25 +141,104 @@ jobs: dict[str, dict[str, Any]] = {}
 task_states: dict[str, dict[str, Any]] = {}
 _task_state_lock = threading.RLock()
 TASK_DB = WORK / "orchestration.sqlite3"
-_cancelled_tasks: set[str] = set()
+WORKER_ID = f"{platform.node()}:{os.getpid()}:{uuid.uuid4().hex[:12]}"
+WORKER_STALE_SECONDS = 45
+_worker_heartbeat_stop = threading.Event()
+_worker_heartbeat_thread = None
+_cancelled_tasks: set[str] = set()  # Compatibility cache only; SQLite is authoritative.
 _cpu_sample = None
 
+
+def _task_db_connect():
+    db = sqlite3.connect(TASK_DB, timeout=20, isolation_level=None)
+    db.execute("PRAGMA busy_timeout=20000")
+    return db
+
+
 def init_task_store():
-    with sqlite3.connect(TASK_DB) as db:
-        db.execute("CREATE TABLE IF NOT EXISTS tasks (task_id TEXT PRIMARY KEY, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, status TEXT NOT NULL, percent INTEGER NOT NULL, stage TEXT NOT NULL, payload_json TEXT NOT NULL DEFAULT '{}')")
+    with sqlite3.connect(TASK_DB, timeout=20) as db:
+        db.execute("PRAGMA busy_timeout=20000")
+        db.execute("PRAGMA journal_mode=WAL")
+        db.execute("BEGIN IMMEDIATE")
+        db.execute("CREATE TABLE IF NOT EXISTS tasks (task_id TEXT PRIMARY KEY, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, status TEXT NOT NULL, percent INTEGER NOT NULL, stage TEXT NOT NULL, payload_json TEXT NOT NULL DEFAULT '{}', worker_id TEXT)")
+        columns = {row[1] for row in db.execute("PRAGMA table_info(tasks)")}
+        if "worker_id" not in columns:
+            db.execute("ALTER TABLE tasks ADD COLUMN worker_id TEXT")
         db.execute("CREATE TABLE IF NOT EXISTS task_events (id INTEGER PRIMARY KEY AUTOINCREMENT, task_id TEXT NOT NULL, event_type TEXT NOT NULL, created_at TEXT NOT NULL, payload_json TEXT NOT NULL)")
+        db.execute("CREATE INDEX IF NOT EXISTS idx_task_events_task_id_id ON task_events(task_id,id)")
+        db.execute("CREATE INDEX IF NOT EXISTS idx_tasks_worker_status ON tasks(worker_id,status)")
+        db.execute("CREATE TABLE IF NOT EXISTS task_workers (worker_id TEXT PRIMARY KEY, pid INTEGER NOT NULL, hostname TEXT NOT NULL, started_at TEXT NOT NULL, heartbeat_at TEXT NOT NULL)")
         db.execute("CREATE TABLE IF NOT EXISTS oauth_states (state TEXT PRIMARY KEY, platform TEXT NOT NULL, verifier TEXT NOT NULL, redirect_uri TEXT NOT NULL, created_at REAL NOT NULL)")
         db.execute("CREATE TABLE IF NOT EXISTS task_retry_claims (source_task_id TEXT PRIMARY KEY, retry_task_id TEXT NOT NULL UNIQUE, created_at TEXT NOT NULL)")
-        rows = db.execute("SELECT task_id,payload_json FROM tasks WHERE status IN ('queued','running')").fetchall()
-        for task_id, payload in rows:
-            state = json.loads(payload or "{}")
-            now = datetime.now(timezone.utc).isoformat()
-            state.update({"status":"interrupted","stage":"Application restarted; task can be retried","error":"Process restarted before completion"})
-            db.execute("UPDATE tasks SET status='interrupted',updated_at=?,stage=?,payload_json=? WHERE task_id=?",
-                (now,state["stage"],json.dumps(state,ensure_ascii=False),task_id))
-            db.execute("INSERT INTO task_events(task_id,event_type,created_at,payload_json) VALUES(?,?,?,?)",
-                (task_id,"interrupted",now,json.dumps(state,ensure_ascii=False)))
         db.commit()
+
+
+def register_task_worker():
+    now = datetime.now(timezone.utc).isoformat()
+    with _task_db_connect() as db:
+        db.execute("BEGIN IMMEDIATE")
+        db.execute("INSERT INTO task_workers(worker_id,pid,hostname,started_at,heartbeat_at) VALUES(?,?,?,?,?) "
+                   "ON CONFLICT(worker_id) DO UPDATE SET heartbeat_at=excluded.heartbeat_at",
+                   (WORKER_ID, os.getpid(), platform.node(), now, now))
+        db.commit()
+
+
+def heartbeat_task_worker():
+    now = datetime.now(timezone.utc).isoformat()
+    with _task_db_connect() as db:
+        db.execute("UPDATE task_workers SET heartbeat_at=? WHERE worker_id=?", (now, WORKER_ID))
+
+
+def _interrupt_task_rows(db, rows, reason: str):
+    now = datetime.now(timezone.utc).isoformat()
+    for task_id, payload in rows:
+        try:
+            state = json.loads(payload or "{}")
+        except (TypeError, ValueError):
+            state = {"task_id": task_id}
+        state.update({"status": "interrupted", "stage": "Worker stopped; task can be retried",
+                      "error": reason, "updated_at": now})
+        serialized = json.dumps(state, ensure_ascii=False, default=str)
+        db.execute("UPDATE tasks SET status='interrupted',updated_at=?,stage=?,payload_json=?,worker_id=NULL WHERE task_id=? AND status IN ('queued','running')",
+                   (now, state["stage"], serialized, task_id))
+        db.execute("INSERT INTO task_events(task_id,event_type,created_at,payload_json) VALUES(?,?,?,?)",
+                   (task_id, "interrupted", now, serialized))
+        task_states[task_id] = state
+
+
+def recover_orphaned_tasks():
+    """Recover only tasks whose owning worker has missed its heartbeat lease."""
+    cutoff = datetime.fromtimestamp(time.time() - WORKER_STALE_SECONDS, timezone.utc).isoformat()
+    with _task_db_connect() as db:
+        db.execute("BEGIN IMMEDIATE")
+        rows = db.execute("""SELECT task_id,payload_json FROM tasks t
+            WHERE status IN ('queued','running') AND
+            (worker_id IS NULL OR NOT EXISTS (
+                SELECT 1 FROM task_workers w WHERE w.worker_id=t.worker_id AND w.heartbeat_at>=?
+            ))""", (cutoff,)).fetchall()
+        _interrupt_task_rows(db, rows, "Owning worker heartbeat expired")
+        db.commit()
+    return len(rows)
+
+
+def unregister_task_worker():
+    with _task_db_connect() as db:
+        db.execute("BEGIN IMMEDIATE")
+        rows = db.execute("SELECT task_id,payload_json FROM tasks WHERE worker_id=? AND status IN ('queued','running')",
+                          (WORKER_ID,)).fetchall()
+        _interrupt_task_rows(db, rows, "Owning worker shut down")
+        db.execute("DELETE FROM task_workers WHERE worker_id=?", (WORKER_ID,))
+        db.commit()
+
+
+def _task_worker_heartbeat_loop():
+    while not _worker_heartbeat_stop.wait(10):
+        try:
+            heartbeat_task_worker()
+            recover_orphaned_tasks()
+        except sqlite3.Error:
+            # A transient lock is retried on the next heartbeat interval.
+            continue
 
 init_task_store()
 learning = ViralLearningEngine(WORK / "viral_learning.sqlite3")
@@ -161,6 +252,8 @@ def load_saved_jobs():
         try:
             folder = meta_file.parent.resolve()
             if folder.parent != root:
+                continue
+            if meta_file.resolve().parent != folder:
                 continue
             data = json.loads(meta_file.read_text(encoding="utf-8-sig"))
             video = Path(data.get("video", "")).resolve()
@@ -179,6 +272,39 @@ def load_saved_jobs():
 
 
 load_saved_jobs()
+
+
+def get_job_state(job_id: str):
+    """Load a completed job on demand so any Uvicorn worker can serve it."""
+    cached = jobs.get(job_id)
+    if cached:
+        return cached
+    if not re.fullmatch(r"[A-Za-z0-9_-]{1,80}", str(job_id)):
+        return None
+    root = WORK.resolve()
+    try:
+        folder = (WORK / job_id).resolve()
+        if folder.parent != root:
+            return None
+        meta_file = folder / "job.json"
+        if not meta_file.is_file() or meta_file.resolve().parent != folder:
+            return None
+        data = json.loads(meta_file.read_text(encoding="utf-8-sig"))
+        video = Path(data.get("video", "")).resolve()
+        if video.parent != folder or not video.is_file():
+            return None
+        if not isinstance(data.get("clips"), list) or not isinstance(data.get("segments"), list):
+            return None
+        duration = float(data.get("duration", 0))
+        if not math.isfinite(duration) or duration <= 0:
+            return None
+        job = {"folder": str(folder), "video": str(video), "duration": duration,
+               "language": str(data.get("language", "unknown")),
+               "segments": data["segments"], "clips": data["clips"]}
+        jobs[job_id] = job
+        return job
+    except (OSError, ValueError, TypeError, json.JSONDecodeError):
+        return None
 
 
 def save_job(job_id: str, job: dict):
@@ -1048,7 +1174,7 @@ def oauth_callback(platform_name: str,request: Request,code: str="",state: str="
     else:
         token_url="https://graph.facebook.com/v21.0/oauth/access_token"
         data={"client_id":client_id,"client_secret":secret,"redirect_uri":redirect_uri,"code":code}
-    response=requests.post(token_url,data=data,timeout=25);raw=response.json()
+    response=request_public_https("POST",token_url,data=data,timeout=25);raw=response.json()
     payload=raw.get("data",raw) if platform_name=="tiktok" else raw
     provider_error=raw.get("error");provider_code=provider_error.get("code") if isinstance(provider_error,dict) else provider_error
     if not response.ok or (provider_code and provider_code!="ok"):
@@ -1057,11 +1183,11 @@ def oauth_callback(platform_name: str,request: Request,code: str="",state: str="
     if not token:raise HTTPException(502,"OAuth provider returned no access token")
     account_name="";instagram_user_id=None
     if platform_name=="instagram":
-        long_lived=requests.get("https://graph.facebook.com/v21.0/oauth/access_token",params={
+        long_lived=request_public_https("GET","https://graph.facebook.com/v21.0/oauth/access_token",params={
             "grant_type":"fb_exchange_token","client_id":client_id,"client_secret":secret,"fb_exchange_token":token},timeout=20)
         if long_lived.ok and long_lived.json().get("access_token"):
             payload=long_lived.json();token=payload["access_token"]
-        pages=requests.get("https://graph.facebook.com/v21.0/me/accounts",params={
+        pages=request_public_https("GET","https://graph.facebook.com/v21.0/me/accounts",params={
             "fields":"id,name,access_token,instagram_business_account","access_token":token},timeout=20)
         if pages.ok:
             for page in pages.json().get("data",[]):
@@ -1091,9 +1217,9 @@ def oauth_access_token(platform_name):
         if not refresh or platform_name=="instagram":raise HTTPException(409,"OAuth token expired; reconnect the account")
         client_id,secret=oauth_client(platform_name)
         if platform_name=="youtube":
-            response=requests.post("https://oauth2.googleapis.com/token",data={"client_id":client_id,"client_secret":secret,"refresh_token":refresh,"grant_type":"refresh_token"},timeout=25)
+            response=request_public_https("POST","https://oauth2.googleapis.com/token",data={"client_id":client_id,"client_secret":secret,"refresh_token":refresh,"grant_type":"refresh_token"},timeout=25)
         else:
-            response=requests.post("https://open.tiktokapis.com/v2/oauth/token/",data={"client_key":client_id,"client_secret":secret,"grant_type":"refresh_token","refresh_token":refresh},timeout=25)
+            response=request_public_https("POST","https://open.tiktokapis.com/v2/oauth/token/",data={"client_key":client_id,"client_secret":secret,"grant_type":"refresh_token","refresh_token":refresh},timeout=25)
         raw=response.json();payload=raw.get("data",raw) if platform_name=="tiktok" else raw
         if not response.ok or not payload.get("access_token"):raise HTTPException(409,"OAuth token refresh failed; reconnect the account")
         item["access_token"]=payload["access_token"];item["expires_at"]=time.time()+int(payload.get("expires_in",0))
@@ -1103,7 +1229,7 @@ def oauth_access_token(platform_name):
 @app.get("/api/publish/tiktok/creator")
 def tiktok_creator_info():
     token=oauth_access_token("tiktok")
-    response=requests.post("https://open.tiktokapis.com/v2/post/publish/creator_info/query/",
+    response=request_public_https("POST","https://open.tiktokapis.com/v2/post/publish/creator_info/query/",
         headers={"Authorization":"Bearer "+token,"Content-Type":"application/json"},json={},timeout=25)
     payload=response.json()
     if not response.ok or payload.get("error",{}).get("code") not in (None,"ok"):
@@ -1114,7 +1240,7 @@ def tiktok_creator_info():
 def publish_video(platform_name: str,req: PublishRequest):
     if platform_name not in OAUTH_PROVIDERS:raise HTTPException(404,"Unsupported publishing provider")
     if not req.confirm_publish:raise HTTPException(400,"Explicit user confirmation is required before publishing")
-    job=jobs.get(req.job_id)
+    job=get_job_state(req.job_id)
     if not job:raise HTTPException(404,"Project not found")
     clip=next((c for c in job["clips"] if c["id"]==req.clip_id),None)
     if not clip:raise HTTPException(404,"Clip not found")
@@ -1122,17 +1248,17 @@ def publish_video(platform_name: str,req: PublishRequest):
     if not video.is_file():raise HTTPException(404,"Render this platform's MP4 before publishing")
     token=oauth_access_token(platform_name)
     if platform_name=="youtube":
-        init=requests.post("https://www.googleapis.com/upload/youtube/v3/videos?uploadType=resumable&part=snippet,status",
+        init=request_public_https("POST","https://www.googleapis.com/upload/youtube/v3/videos?uploadType=resumable&part=snippet,status",
             headers={"Authorization":"Bearer "+token,"Content-Type":"application/json; charset=UTF-8","X-Upload-Content-Type":"video/mp4","X-Upload-Content-Length":str(video.stat().st_size)},
             json={"snippet":{"title":req.title,"description":req.description,"categoryId":"22"},"status":{"privacyStatus":req.privacy if req.privacy in ("private","unlisted","public") else "private","selfDeclaredMadeForKids":False}},timeout=30)
         if not init.ok:raise HTTPException(502,"YouTube upload initialization failed: "+init.text[:500])
         upload_url=init.headers.get("Location")
         if not upload_url:raise HTTPException(502,"YouTube did not return a resumable upload URL")
-        with video.open("rb") as f:uploaded=requests.put(upload_url,data=f,headers={"Content-Type":"video/mp4","Content-Length":str(video.stat().st_size)},timeout=900)
+        with video.open("rb") as f:uploaded=request_public_https("PUT",upload_url,data=f,headers={"Content-Type":"video/mp4","Content-Length":str(video.stat().st_size)},timeout=900)
         if not uploaded.ok:raise HTTPException(502,"YouTube upload failed: "+uploaded.text[:500])
         return {"published":True,"platform":"youtube","result":uploaded.json()}
     if platform_name=="tiktok":
-        creator=requests.post("https://open.tiktokapis.com/v2/post/publish/creator_info/query/",headers={"Authorization":"Bearer "+token,"Content-Type":"application/json"},json={},timeout=25).json()
+        creator=request_public_https("POST","https://open.tiktokapis.com/v2/post/publish/creator_info/query/",headers={"Authorization":"Bearer "+token,"Content-Type":"application/json"},json={},timeout=25).json()
         creator_data=creator.get("data",{})
         options=creator_data.get("privacy_level_options",[])
         privacy=req.privacy
@@ -1148,7 +1274,7 @@ def publish_video(platform_name: str,req: PublishRequest):
                 raise HTTPException(400,f"This TikTok account allows up to {max_duration} seconds; the selected video is {duration:.1f} seconds.")
         size=video.stat().st_size;chunk=min(10*1024*1024,size)
         count=max(1,size//chunk)
-        init=requests.post("https://open.tiktokapis.com/v2/post/publish/video/init/",headers={"Authorization":"Bearer "+token,"Content-Type":"application/json"},
+        init=request_public_https("POST","https://open.tiktokapis.com/v2/post/publish/video/init/",headers={"Authorization":"Bearer "+token,"Content-Type":"application/json"},
             json={"post_info":{"title":req.title[:2200],"privacy_level":privacy, "disable_duet":bool(creator_data.get("duet_disabled",False)),
                 "disable_comment":bool(creator_data.get("comment_disabled",False)),
                 "disable_stitch":bool(creator_data.get("stitch_disabled",False)),
@@ -1166,14 +1292,14 @@ def publish_video(platform_name: str,req: PublishRequest):
                 data=f.read(read_size)
                 if not data:raise HTTPException(502,"TikTok upload ended before all bytes were read")
                 end=offset+len(data)-1
-                put=requests.put(upload_url,data=data,headers={"Content-Type":"video/mp4","Content-Length":str(len(data)),"Content-Range":f"bytes {offset}-{end}/{size}"},timeout=180)
+                put=request_public_https("PUT",upload_url,data=data,headers={"Content-Type":"video/mp4","Content-Length":str(len(data)),"Content-Range":f"bytes {offset}-{end}/{size}"},timeout=180)
                 if put.status_code not in (200,201,206):raise HTTPException(502,"TikTok media transfer failed: "+put.text[:400])
                 offset=end+1
         publish_id=payload.get("data",{}).get("publish_id")
         if not publish_id:raise HTTPException(502,"TikTok returned no publish_id")
         latest={}
         for _ in range(15):
-            check=requests.post("https://open.tiktokapis.com/v2/post/publish/status/fetch/",
+            check=request_public_https("POST","https://open.tiktokapis.com/v2/post/publish/status/fetch/",
                 headers={"Authorization":"Bearer "+token,"Content-Type":"application/json"},
                 json={"publish_id":publish_id},timeout=20)
             latest=check.json()
@@ -1192,16 +1318,16 @@ def publish_video(platform_name: str,req: PublishRequest):
     ig_user=os.getenv("YAMAN_INSTAGRAM_USER_ID") or oauth_token_data().get("instagram",{}).get("instagram_user_id")
     if not ig_user:raise HTTPException(503,"Link an Instagram professional account to a Facebook Page with Instagram publishing permissions.")
     graph="https://graph.facebook.com/v21.0"
-    container=requests.post(f"{graph}/{ig_user}/media",data={"media_type":"REELS","video_url":req.media_url,"caption":req.title+"\n\n"+req.description,"access_token":token},timeout=30).json()
+    container=request_public_https("POST",f"{graph}/{ig_user}/media",data={"media_type":"REELS","video_url":req.media_url,"caption":req.title+"\n\n"+req.description,"access_token":token},timeout=30).json()
     if not container.get("id"):raise HTTPException(502,"Instagram container creation failed: "+str(container)[:500])
     media_id=container["id"]
     for _ in range(24):
-        status=requests.get(f"{graph}/{media_id}",params={"fields":"status_code","access_token":token},timeout=15).json()
+        status=request_public_https("GET",f"{graph}/{media_id}",params={"fields":"status_code","access_token":token},timeout=15).json()
         if status.get("status_code")=="FINISHED":break
         if status.get("status_code")=="ERROR":raise HTTPException(502,"Instagram video processing failed")
         time.sleep(5)
     else:raise HTTPException(504,"Instagram video processing timed out")
-    published=requests.post(f"{graph}/{ig_user}/media_publish",data={"creation_id":media_id,"access_token":token},timeout=30).json()
+    published=request_public_https("POST",f"{graph}/{ig_user}/media_publish",data={"creation_id":media_id,"access_token":token},timeout=30).json()
     if not published.get("id"):raise HTTPException(502,"Instagram publish failed: "+str(published)[:500])
     return {"published":True,"platform":"instagram","media_id":published["id"]}
 
@@ -1339,32 +1465,42 @@ def update_settings(req: SettingsRequest):
     return {"saved": True, "settings": req.model_dump()}
 
 def set_task(task_id: str, percent: int, stage: str, status: str = "running", **extra):
-    """Serialize in-process task snapshots and their SQLite journal writes."""
+    """Merge task state under a SQLite write lock so every worker sees one authority."""
+    now = datetime.now(timezone.utc).isoformat()
+    terminal = {"completed", "failed", "cancelled", "interrupted"}
     with _task_state_lock:
-        state = task_states.setdefault(task_id, {})
-        now = datetime.now(timezone.utc).isoformat()
-        created = state.get("created_at", now)
-        state.update({"task_id": task_id, "percent": max(0, min(100, int(percent))),
-                      "stage": stage, "status": status, "created_at": created,
-                      "updated_at": now, **extra})
-        payload = json.dumps(state, ensure_ascii=False, default=str)
-        with sqlite3.connect(TASK_DB, timeout=15) as db:
-            db.execute("""INSERT INTO tasks(task_id,created_at,updated_at,status,percent,stage,payload_json)
-                VALUES(?,?,?,?,?,?,?) ON CONFLICT(task_id) DO UPDATE SET updated_at=excluded.updated_at,
-                status=excluded.status,percent=excluded.percent,stage=excluded.stage,payload_json=excluded.payload_json""",
-                (task_id, created, now, status, state["percent"], stage, payload))
-            event_type = status if status in ("completed", "failed", "cancelled", "interrupted") else "progress"
+        with _task_db_connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            row = db.execute("SELECT created_at,status,payload_json,worker_id FROM tasks WHERE task_id=?",
+                             (task_id,)).fetchone()
+            state = json.loads(row[2] or "{}") if row else {}
+            if row and row[1] in terminal and status != row[1]:
+                db.commit()
+                task_states[task_id] = state
+                return dict(state)
+            created = row[0] if row else now
+            state.update({"task_id": task_id, "percent": max(0, min(100, int(percent))),
+                          "stage": stage, "status": status, "created_at": created,
+                          "updated_at": now, **extra})
+            payload = json.dumps(state, ensure_ascii=False, default=str)
+            owner = row[3] if row and status in terminal else WORKER_ID
+            db.execute("""INSERT INTO tasks(task_id,created_at,updated_at,status,percent,stage,payload_json,worker_id)
+                VALUES(?,?,?,?,?,?,?,?) ON CONFLICT(task_id) DO UPDATE SET updated_at=excluded.updated_at,
+                status=excluded.status,percent=excluded.percent,stage=excluded.stage,payload_json=excluded.payload_json,
+                worker_id=excluded.worker_id""",
+                (task_id, created, now, status, state["percent"], stage, payload, owner))
+            event_type = status if status in terminal else "progress"
             db.execute("INSERT INTO task_events(task_id,event_type,created_at,payload_json) VALUES(?,?,?,?)",
-                (task_id, event_type, now, payload))
+                       (task_id, event_type, now, payload))
             db.commit()
+        task_states[task_id] = state
         return dict(state)
 
+
 def task_is_cancelled(task_id: str) -> bool:
-    if task_id in _cancelled_tasks:
-        return True
-    with sqlite3.connect(TASK_DB) as db:
-        row=db.execute("SELECT status FROM tasks WHERE task_id=?",(task_id,)).fetchone()
-    return bool(row and row[0]=="cancelled")
+    with sqlite3.connect(TASK_DB, timeout=20) as db:
+        row = db.execute("SELECT status FROM tasks WHERE task_id=?", (task_id,)).fetchone()
+    return bool(row and row[0] == "cancelled")
 
 
 def run_analyze_task(task_id: str, req: AnalyzeRequest, folder: Path, source_video: Path | None = None):
@@ -1890,7 +2026,7 @@ def analyze_local(req: LocalAnalyzeRequest, background_tasks: BackgroundTasks):
 
 @app.get("/api/summary/{job_id}")
 def get_saved_summary(job_id: str):
-    job = jobs.get(job_id)
+    job = get_job_state(job_id)
     if not job:
         raise HTTPException(404, "Proje bulunamad\u0131.")
     path = Path(job["folder"]) / "summary.json"
@@ -1901,7 +2037,7 @@ def get_saved_summary(job_id: str):
 
 @app.post("/api/summary/run")
 def generate_summary(req: SummaryRequest, background_tasks: BackgroundTasks):
-    job = jobs.get(req.job_id)
+    job = get_job_state(req.job_id)
     if not job:
         raise HTTPException(404, "Proje bulunamad\u0131. \u00d6nce videoyu analiz et.")
     if not job.get("segments"):
@@ -1915,7 +2051,7 @@ def generate_summary(req: SummaryRequest, background_tasks: BackgroundTasks):
 
 @app.post("/api/render")
 def render(req: RenderRequest, background_tasks: BackgroundTasks):
-    job = jobs.get(req.job_id)
+    job = get_job_state(req.job_id)
     if not job: raise HTTPException(404, "İş bulunamadı. Videoyu yeniden analiz edin.")
     clip = next((c for c in job["clips"] if c["id"] == req.clip_id), None)
     if not clip: raise HTTPException(404, "Klip bulunamadı.")
@@ -1943,9 +2079,7 @@ def task_events(task_id: str):
 
 @app.get("/api/tasks/{task_id}")
 def get_task(task_id: str):
-    state=task_states.get(task_id)
-    if state:return dict(state)
-    with sqlite3.connect(TASK_DB) as db:
+    with sqlite3.connect(TASK_DB, timeout=20) as db:
         row=db.execute("SELECT payload_json FROM tasks WHERE task_id=?",(task_id,)).fetchone()
     if not row:raise HTTPException(404,"Task not found")
     state=json.loads(row[0]);task_states[task_id]=state
@@ -1959,8 +2093,8 @@ def cancel_task(task_id: str):
     if row[1] in ("completed","failed","cancelled","interrupted"):return {"cancelled":False,"status":row[1]}
     _cancelled_tasks.add(task_id);state=json.loads(row[0])
     extra={k:v for k,v in state.items() if k not in ("task_id","percent","stage","status","created_at","updated_at")}
-    set_task(task_id,state.get("percent",0),"Cancelled by user","cancelled",**extra)
-    return {"cancelled":True,"status":"cancelled"}
+    updated = set_task(task_id,state.get("percent",0),"Cancelled by user","cancelled",**extra)
+    return {"cancelled": updated.get("status") == "cancelled", "status": updated.get("status")}
 
 @app.post("/api/tasks/{task_id}/retry")
 def retry_task(task_id: str,background_tasks: BackgroundTasks):
@@ -1983,7 +2117,7 @@ def retry_task(task_id: str,background_tasks: BackgroundTasks):
         if existing:
             db.rollback()
             raise HTTPException(409,"A retry has already been reserved for this task")
-        req=TeamRequest(**data);job=jobs.get(req.job_id)
+        req=TeamRequest(**data);job=get_job_state(req.job_id)
         if not job:
             db.rollback()
             raise HTTPException(409,"Reopen the source project before retrying")
@@ -1992,16 +2126,26 @@ def retry_task(task_id: str,background_tasks: BackgroundTasks):
             db.rollback()
             raise HTTPException(404,"Clip not found")
         new_id=uuid.uuid4().hex[:10]
+        now=datetime.now(timezone.utc).isoformat()
+        retry_state={"task_id":new_id,"percent":1,"stage":"Agent task queued for retry","status":"queued",
+                     "created_at":now,"updated_at":now,"task_type":"agents","request":data,
+                     "retry_of":task_id,"outputs":[]}
+        retry_payload=json.dumps(retry_state,ensure_ascii=False)
+        # Claim and durable task row commit together; a crash cannot leave a claim without its task.
         db.execute("INSERT INTO task_retry_claims(source_task_id,retry_task_id,created_at) VALUES(?,?,?)",
-                   (task_id,new_id,datetime.now(timezone.utc).isoformat()))
+                   (task_id,new_id,now))
+        db.execute("INSERT INTO tasks(task_id,created_at,updated_at,status,percent,stage,payload_json,worker_id) VALUES(?,?,?,?,?,?,?,?)",
+                   (new_id,now,now,"queued",1,retry_state["stage"],retry_payload,WORKER_ID))
+        db.execute("INSERT INTO task_events(task_id,event_type,created_at,payload_json) VALUES(?,?,?,?)",
+                   (new_id,"queued",now,retry_payload))
         db.commit()
-    set_task(new_id,1,"Agent task queued for retry",task_type="agents",request=data,retry_of=task_id,outputs=[])
+    task_states[new_id]=retry_state
     background_tasks.add_task(run_agents_task,new_id,req,job,clip,list(req.platforms))
     return {"task_id":new_id,"status":"queued","retry_of":task_id}
 
 @app.post("/api/metadata")
 def metadata(req: MetadataRequest):
-    job = jobs.get(req.job_id)
+    job = get_job_state(req.job_id)
     if not job: raise HTTPException(404, "İş bulunamadı.")
     clip = next((c for c in job["clips"] if c["id"] == req.clip_id), None)
     if not clip: raise HTTPException(404, "Klip bulunamadı.")
@@ -2029,7 +2173,7 @@ def metadata(req: MetadataRequest):
 
 @app.get("/api/jobs/{job_id}")
 def get_job(job_id: str):
-    job = jobs.get(job_id)
+    job = get_job_state(job_id)
     if not job: raise HTTPException(404, "İş bulunamadı.")
     return {"job_id": job_id, "duration": job["duration"], "language": job["language"], "clips": job["clips"]}
 
@@ -2529,7 +2673,7 @@ def run_agents_task(task_id: str, req: TeamRequest, job: dict, clip: dict, platf
 
 @app.post("/api/agents/run")
 def agents_run(req: TeamRequest, background_tasks: BackgroundTasks):
-    job = jobs.get(req.job_id)
+    job = get_job_state(req.job_id)
     if not job:
         raise HTTPException(404, "\u0130\u015f bulunamad\u0131.")
     clip = next((c for c in job["clips"] if c["id"] == req.clip_id), None)
@@ -2546,7 +2690,7 @@ def agents_run(req: TeamRequest, background_tasks: BackgroundTasks):
 
 @app.get("/api/agents/report/{job_id}/{clip_id}")
 def get_agent_report(job_id: str, clip_id: int):
-    job = jobs.get(job_id)
+    job = get_job_state(job_id)
     if not job:
         raise HTTPException(404, "İş bulunamadı.")
     report_path = Path(job["folder"]) / f"agents_clip_{clip_id}.json"

@@ -4,7 +4,7 @@ import pytest
 from cryptography.fernet import Fernet
 from fastapi import HTTPException
 
-from app import main
+from app import main, secure_http
 
 
 @pytest.mark.parametrize("url", [
@@ -147,13 +147,13 @@ def _dns_result(address):
     "https://cdn.example:9443/video.mp4",
 ])
 def test_remote_media_url_rejects_private_or_ambiguous_targets(url, monkeypatch):
-    monkeypatch.setattr(visual_factory.socket, "getaddrinfo", lambda *a, **k: _dns_result("93.184.216.34"))
+    monkeypatch.setattr(secure_http.socket, "getaddrinfo", lambda *a, **k: _dns_result("93.184.216.34"))
     with pytest.raises(ValueError):
         visual_factory.validate_public_https_url(url)
 
 
 def test_remote_media_url_rejects_hostname_resolving_to_private_ip(monkeypatch):
-    monkeypatch.setattr(visual_factory.socket, "getaddrinfo", lambda *a, **k: _dns_result("192.168.1.20"))
+    monkeypatch.setattr(secure_http.socket, "getaddrinfo", lambda *a, **k: _dns_result("192.168.1.20"))
     with pytest.raises(ValueError, match="non-public"):
         visual_factory.validate_public_https_url("https://cdn.example/video.mp4")
 
@@ -161,13 +161,13 @@ def test_remote_media_url_rejects_hostname_resolving_to_private_ip(monkeypatch):
 def test_remote_media_url_rejects_mixed_public_and_private_dns_answers(monkeypatch):
     def resolve(*_args, **_kwargs):
         return _dns_result("93.184.216.34") + _dns_result("10.0.0.5")
-    monkeypatch.setattr(visual_factory.socket, "getaddrinfo", resolve)
+    monkeypatch.setattr(secure_http.socket, "getaddrinfo", resolve)
     with pytest.raises(ValueError, match="non-public"):
         visual_factory.validate_public_https_url("https://cdn.example/video.mp4")
 
 
 def test_remote_media_url_accepts_public_https_destination(monkeypatch):
-    monkeypatch.setattr(visual_factory.socket, "getaddrinfo", lambda *a, **k: _dns_result("93.184.216.34"))
+    monkeypatch.setattr(secure_http.socket, "getaddrinfo", lambda *a, **k: _dns_result("93.184.216.34"))
     assert visual_factory.validate_public_https_url("https://cdn.example/video.mp4") == "https://cdn.example/video.mp4"
 
 
@@ -183,8 +183,8 @@ def test_remote_media_redirect_to_private_ip_is_blocked(monkeypatch):
         calls.append((url, kwargs))
         return Redirect()
 
-    monkeypatch.setattr(visual_factory, "_pinned_https_get", lambda url, ip, **kwargs: fake_get(url, allow_redirects=False, **kwargs))
-    monkeypatch.setattr(visual_factory.socket, "getaddrinfo", lambda *a, **k: _dns_result("93.184.216.34"))
+    monkeypatch.setattr(secure_http, "_single_request", lambda method, url, **kwargs: fake_get(url, allow_redirects=False, **kwargs))
+    monkeypatch.setattr(secure_http.socket, "getaddrinfo", lambda *a, **k: _dns_result("93.184.216.34"))
     with pytest.raises(ValueError):
         visual_factory.safe_stream_get("https://cdn.example/start", timeout=3)
     assert len(calls) == 1
@@ -206,8 +206,8 @@ def test_remote_media_redirect_target_is_revalidated(monkeypatch):
         calls.append(url)
         return Redirect() if len(calls) == 1 else Success()
 
-    monkeypatch.setattr(visual_factory, "_pinned_https_get", lambda url, ip, **kwargs: fake_get(url, allow_redirects=False, **kwargs))
-    monkeypatch.setattr(visual_factory.socket, "getaddrinfo", lambda *a, **k: _dns_result("93.184.216.34"))
+    monkeypatch.setattr(secure_http, "_single_request", lambda method, url, **kwargs: fake_get(url, allow_redirects=False, **kwargs))
+    monkeypatch.setattr(secure_http.socket, "getaddrinfo", lambda *a, **k: _dns_result("93.184.216.34"))
     response = visual_factory.safe_stream_get("https://cdn.example/start", timeout=3)
     assert isinstance(response, Success)
     assert calls == ["https://cdn.example/start", "https://cdn2.example/final.mp4"]
@@ -219,9 +219,9 @@ def test_remote_media_redirect_limit_is_enforced(monkeypatch):
         headers = {"Location": "/again"}
         def close(self):
             pass
-    monkeypatch.setattr(visual_factory, "_pinned_https_get", lambda *a, **k: Redirect())
-    monkeypatch.setattr(visual_factory.socket, "getaddrinfo", lambda *a, **k: _dns_result("93.184.216.34"))
-    with pytest.raises(visual_factory.VisualProviderError, match="redirect limit"):
+    monkeypatch.setattr(secure_http, "_single_request", lambda *a, **k: Redirect())
+    monkeypatch.setattr(secure_http.socket, "getaddrinfo", lambda *a, **k: _dns_result("93.184.216.34"))
+    with pytest.raises(secure_http.requests.TooManyRedirects, match="redirect limit"):
         visual_factory.safe_stream_get("https://cdn.example/start", timeout=3, max_redirects=2)
 
 
@@ -270,7 +270,7 @@ def test_pinned_https_connection_uses_validated_ip_but_keeps_tls_hostname(monkey
     def connect(address, timeout, source_address):
         calls.append((address, timeout, source_address))
         return sentinel
-    monkeypatch.setattr(visual_factory.socket, "create_connection", connect)
+    monkeypatch.setattr(secure_http.socket, "create_connection", connect)
     connection = visual_factory._PinnedHTTPSConnection(
         host="cdn.example", port=443, pinned_ip="93.184.216.34", timeout=7,
     )
@@ -287,15 +287,16 @@ def test_pinned_https_adapter_passes_ip_into_urllib3_pool(monkeypatch):
         def close(self): pass
     captured = {}
     sentinel = object()
-    monkeypatch.setattr(visual_factory.socket, "getaddrinfo", lambda *a, **k: _dns_result("93.184.216.34"))
-    monkeypatch.setattr(visual_factory.socket, "create_connection", lambda address, *a, **k: sentinel)
-    def fake_session_get(self, url, **kwargs):
+    monkeypatch.setattr(secure_http.socket, "getaddrinfo", lambda *a, **k: _dns_result("93.184.216.34"))
+    monkeypatch.setattr(secure_http.socket, "create_connection", lambda address, *a, **k: sentinel)
+    def fake_session_request(self, method, url, **kwargs):
+        assert self.trust_env is False
         adapter = self.get_adapter(url)
         pool = adapter.poolmanager.connection_from_url(url)
         connection = pool._new_conn()
         captured.update(ip=connection.pinned_ip, host=connection.host, pool_ip=pool.conn_kw["pinned_ip"])
         return FakeResponse()
-    monkeypatch.setattr(Session, "get", fake_session_get)
+    monkeypatch.setattr(Session, "request", fake_session_request)
     response = visual_factory.safe_stream_get("https://cdn.example/media.mp4", timeout=4)
     assert response.status_code == 200
     assert captured == {"ip": "93.184.216.34", "host": "cdn.example", "pool_ip": "93.184.216.34"}
@@ -364,7 +365,7 @@ def test_pexels_search_uses_pinned_transport_and_auth_header(monkeypatch, tmp_pa
     def fake_safe_get(url, *, timeout, headers=None, **kwargs):
         captured.update(url=url, timeout=timeout, headers=headers)
         return Response()
-    monkeypatch.setattr(visual_factory, "safe_stream_get", fake_safe_get)
+    monkeypatch.setattr(visual_factory, "request_public_https", lambda method, url, **kwargs: fake_safe_get(url, **kwargs))
     with pytest.raises(visual_factory.VisualProviderError, match="B-roll"):
         visual_factory.search_pexels_video("pexels-test-key-123", "forest", tmp_path / "clip.mp4")
     assert captured["url"].startswith("https://api.pexels.com/v1/videos/search?")

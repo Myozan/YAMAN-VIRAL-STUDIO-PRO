@@ -1,113 +1,28 @@
 """AI visual and scene-based B-roll providers for YAMAN VIRAL STUDIO PRO."""
 from __future__ import annotations
 import time
-import ipaddress
-import socket
 from pathlib import Path
-from urllib.parse import urljoin, urlparse
-from requests.adapters import HTTPAdapter
-from urllib3.connection import HTTPSConnection
-from urllib3.connectionpool import HTTPSConnectionPool
-import requests
+from urllib.parse import urlparse
+import app.secure_http as secure_http
+socket = secure_http.socket  # Backward-compatible test seam; implementation lives in secure_http.
+from app.secure_http import (
+    PinnedHTTPSConnection as _PinnedHTTPSConnection,
+    PinnedHTTPSConnectionPool as _PinnedHTTPSConnectionPool,
+    resolve_public_ips as _resolve_public_ips,
+    request_public_https,
+    validate_public_https_url,
+)
 
 RUNWAY_BASE = "https://api.dev.runwayml.com/v1"
 RUNWAY_VERSION = "2024-11-06"
 
-def _resolve_public_ips(host: str) -> list[str]:
-    try:
-        literal = ipaddress.ip_address(host)
-        addresses = [literal]
-    except ValueError:
-        try:
-            answers = socket.getaddrinfo(host, 443, type=socket.SOCK_STREAM)
-            addresses = [ipaddress.ip_address(item[4][0]) for item in answers]
-        except (OSError, ValueError, IndexError) as exc:
-            raise ValueError("URL host could not be safely resolved") from exc
-    if not addresses or any(not address.is_global for address in addresses):
-        raise ValueError("URL host resolves to a non-public IP address")
-    return [str(addresses[0])]
+def _pinned_https_get(url: str, ip: str, *, timeout: int, headers=None):
+    # Compatibility shim for the pre-QA 3.6 helper name.
+    return request_public_https("GET", url, timeout=timeout, headers=headers, stream=True)
 
 
-def validate_public_https_url(url: str) -> str:
-    """Validate HTTPS URL and reject private, local and ambiguous destinations."""
-    parsed = urlparse(url)
-    host = (parsed.hostname or "").lower().rstrip(".")
-    try:
-        port = parsed.port
-    except ValueError as exc:
-        raise ValueError("Invalid URL port") from exc
-    if (parsed.scheme.lower() != "https" or not host or host == "localhost"
-            or host.endswith((".localhost", ".local", ".internal"))
-            or parsed.username is not None or parsed.password is not None
-            or port not in (None, 443)):
-        raise ValueError("Only public HTTPS URLs on the standard port are allowed")
-    _resolve_public_ips(host)
-    return url
-
-
-class _PinnedHTTPSConnection(HTTPSConnection):
-    """Connect to a validated IP while keeping the original hostname for TLS/SNI."""
-    def __init__(self, *args, pinned_ip: str, **kwargs):
-        self.pinned_ip = pinned_ip
-        super().__init__(*args, **kwargs)
-
-    def _new_conn(self):
-        try:
-            return socket.create_connection((self.pinned_ip, self.port), self.timeout, self.source_address)
-        except OSError as exc:
-            raise OSError(f"Pinned HTTPS connection failed: {exc}") from exc
-
-
-class _PinnedHTTPSConnectionPool(HTTPSConnectionPool):
-    ConnectionCls = _PinnedHTTPSConnection
-
-
-def _pinned_https_get(url: str, ip: str, *, timeout: int, headers: dict | None = None):
-    from urllib3 import PoolManager
-    from requests import Session
-
-    class PinnedAdapter(HTTPAdapter):
-        def init_poolmanager(self, connections, maxsize, block=False, **pool_kwargs):
-            self.poolmanager = PoolManager(
-                num_pools=connections, maxsize=maxsize, block=block,
-                **pool_kwargs, pinned_ip=ip,
-            )
-            self.poolmanager.pool_classes_by_scheme["https"] = _PinnedHTTPSConnectionPool
-            from urllib3.poolmanager import PoolKey, _default_key_normalizer
-            self.poolmanager.key_fn_by_scheme["https"] = lambda context: _default_key_normalizer(
-                PoolKey, {key: value for key, value in context.items() if key != "pinned_ip"}
-            )
-
-    session = Session()
-    session.trust_env = False
-    session.mount("https://", PinnedAdapter())
-    response = session.get(url, headers=headers, stream=True, timeout=timeout, allow_redirects=False)
-    original_close = response.close
-    def close_with_session():
-        try:
-            original_close()
-        finally:
-            session.close()
-    response.close = close_with_session
-    return response
-
-
-def safe_stream_get(url: str, *, timeout: int, max_redirects: int = 5, headers: dict | None = None):
-    """GET public HTTPS media with IP pinning and per-hop redirect validation."""
-    current = url
-    for _ in range(max_redirects + 1):
-        validate_public_https_url(current)
-        host = (urlparse(current).hostname or "").lower().rstrip(".")
-        pinned_ip = _resolve_public_ips(host)[0]
-        response = _pinned_https_get(current, pinned_ip, timeout=timeout, headers=headers)
-        if response.status_code not in {301, 302, 303, 307, 308}:
-            return response
-        location = response.headers.get("Location")
-        response.close()
-        if not location:
-            raise VisualProviderError("Remote media redirect did not include a Location header")
-        current = urljoin(current, location)
-    raise VisualProviderError("Remote media URL exceeded the redirect limit")
+def safe_stream_get(url: str, *, timeout: int, max_redirects: int = 5):
+    return request_public_https("GET", url, timeout=timeout, stream=True, max_redirects=max_redirects)
 
 class VisualProviderError(RuntimeError):
     pass
@@ -118,15 +33,14 @@ class RunwayClient:
             raise VisualProviderError("Runway API anahtar─▒ Ayarlar > AI G├Ârsel Motorlar─▒ b├Âl├╝m├╝ne girilmelidir.")
         self.api_key = api_key.strip()
         self.timeout = timeout
-        self.session = requests.Session()
-        self.session.headers.update({
+        self.headers = {
             "Authorization": f"Bearer {self.api_key}",
             "X-Runway-Version": RUNWAY_VERSION,
             "Content-Type": "application/json",
-        })
+        }
 
     def _create(self, endpoint: str, payload: dict) -> str:
-        response = self.session.post(f"{RUNWAY_BASE}/{endpoint}", json=payload, timeout=90)
+        response = request_public_https("POST", f"{RUNWAY_BASE}/{endpoint}", headers=self.headers, json=payload, timeout=90)
         if response.status_code >= 400:
             detail = response.text[:1200]
             if response.status_code == 429:
@@ -140,7 +54,7 @@ class RunwayClient:
     def wait(self, task_id: str) -> list[str]:
         deadline = time.monotonic() + self.timeout
         while time.monotonic() < deadline:
-            response = self.session.get(f"{RUNWAY_BASE}/tasks/{task_id}", timeout=45)
+            response = request_public_https("GET", f"{RUNWAY_BASE}/tasks/{task_id}", headers=self.headers, timeout=45)
             if response.status_code >= 400:
                 raise VisualProviderError(f"Runway g├Ârev durumu okunamad─▒ ({response.status_code}): {response.text[:500]}")
             data = response.json()
@@ -210,14 +124,14 @@ class RunwayClient:
 
 def search_pexels_video(api_key: str, query: str, target: Path, orientation: str = "portrait") -> dict:
     if not api_key or len(api_key.strip()) < 12:
-        raise VisualProviderError("Pexels API anahtar─▒ Ayarlar > AI G├Ârsel Motorlar─▒ b├Âl├╝m├╝ne girilmelidir.")
+        raise VisualProviderError("Pexels API anahtar? Ayarlar > AI G?rsel Motorlar? b?l?m?ne girilmelidir.")
     from requests import Request
     request = Request(
         "GET", "https://api.pexels.com/v1/videos/search",
         headers={"Authorization": api_key.strip()},
         params={"query": query[:180], "orientation": orientation, "per_page": 8, "locale": "tr-TR"},
     ).prepare()
-    response = safe_stream_get(request.url, timeout=45, headers=request.headers)
+    response = request_public_https("GET", request.url, timeout=45, headers=request.headers, max_redirects=4)
     if response.status_code >= 400:
         raise VisualProviderError(f"Pexels API ({response.status_code}): {response.text[:600]}")
     videos = response.json().get("videos", [])

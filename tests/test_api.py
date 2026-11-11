@@ -1,4 +1,5 @@
 import pytest
+import sqlite3
 from fastapi.testclient import TestClient
 
 from app import main
@@ -54,14 +55,21 @@ def test_cancel_task_is_persisted_and_idempotent(api):
     assert events.json()["events"][-1]["event"] == "cancelled"
 
 
-def test_task_store_marks_inflight_work_interrupted_after_restart(api):
+def test_task_store_init_does_not_interrupt_an_active_worker(api):
     main.set_task("task-restart-1", 60, "Rendering", task_type="render")
-    main.task_states.clear()
     main.init_task_store()
     response = api.get("/api/tasks/task-restart-1")
     assert response.status_code == 200
-    assert response.json()["status"] == "interrupted"
-    assert "restarted" in response.json()["error"].lower()
+    assert response.json()["status"] == "running"
+    assert main.recover_orphaned_tasks() == 0
+
+
+def test_stale_worker_lease_marks_only_its_tasks_interrupted(api):
+    main.set_task("task-stale-1", 60, "Rendering", task_type="render")
+    with sqlite3.connect(main.TASK_DB) as db:
+        db.execute("UPDATE task_workers SET heartbeat_at='2000-01-01T00:00:00+00:00' WHERE worker_id=?", (main.WORKER_ID,))
+    assert main.recover_orphaned_tasks() == 1
+    assert api.get("/api/tasks/task-stale-1").json()["status"] == "interrupted"
 
 
 def test_publish_requires_explicit_confirmation_before_side_effects(api, monkeypatch):

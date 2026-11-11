@@ -21,6 +21,9 @@ flowchart TB
   MEDIA --> YTDLP[yt-dlp]
   CONTENT --> TTS[Edge TTS network service]
   CONTENT --> RSS[Trend RSS sources]
+  API --> HTTP[Secure pinned HTTPS transport]
+  CONTENT --> HTTP
+  HTTP --> REMOTE[OAuth / Social / GitHub / Runway / Pexels / RSS]
   ORCH --> SQLITE[(SQLite orchestration DB)]
   ORCH --> LEARN[(SQLite learning DB)]
   ORCH --> FS[(Workspace filesystem)]
@@ -35,7 +38,8 @@ flowchart TB
 |---|---|---|
 | Web UI | `web/index.html`, `web/app.js`, `web/style.css` | Creator workspace, job/task status, media and settings UI |
 | HTTP API | FastAPI in `app/main.py` | Validation, endpoints, orchestration entry points |
-| Task orchestration | FastAPI BackgroundTasks + SQLite task store | In-process execution, status, event history, cancel/retry |
+| Task orchestration | FastAPI BackgroundTasks + SQLite task store + worker heartbeat leases | In-process execution; cross-worker task state, event history, cancel/retry and stale-worker recovery |
+| Public HTTPS transport | `app/secure_http.py` | DNS/IP validation and pinning, TLS hostname verification, proxy isolation and controlled redirects for requests-based third-party APIs |
 | Local LLM | Ollama HTTP API | Script and content analysis, AI agent outputs |
 | Speech-to-text | Faster-Whisper | Timestamped transcript segments |
 | Media processing | FFmpeg/FFprobe; optional Auto-Editor | Probe, crop, captions, audio/video render |
@@ -93,7 +97,7 @@ stateDiagram-v2
   cancelled --> [*]
 ```
 
-The application startup marks previously queued/running tasks as interrupted. Task execution is in-process; it is not a distributed worker queue. Cancellation is cooperative and depends on checkpoints in the relevant workflow.
+Task state reads and writes use SQLite as the cross-worker authority. Each process registers a worker ID and refreshes its heartbeat every 10 seconds. Tasks are marked interrupted only when their owner lease expires (45 seconds) or the owning worker shuts down; another worker starting does not interrupt live tasks. Saved jobs can be rehydrated from validated `job.json` snapshots. Task execution still uses process-local FastAPI BackgroundTasks; a lost task is recovered as interrupted, not automatically replayed. Cancellation is cooperative and depends on checkpoints in the relevant workflow.
 
 ## 5. Agent execution topology
 
@@ -120,7 +124,8 @@ Agent outputs are advisory data. They must never be treated as shell commands, t
 
 ## 6. Storage boundaries
 
-- `workspace/orchestration.sqlite3`: tasks, task_events, autopilots, autopilot_runs, oauth_states.
+- `workspace/orchestration.sqlite3`: tasks (including worker ownership), task_events, task_workers heartbeat registry, autopilots, autopilot_runs, oauth_states and retry claims.
+- SQLite WAL supports multiple Uvicorn workers on one host when the database remains on a local filesystem; it is not a multi-host database/queue.
 - `workspace/viral_learning.sqlite3`: performance observations.
 - `workspace/<job_id>/job.json`: completed analysis job snapshot.
 - `workspace`: media, generated files and encrypted provider/OAuth vault files.
@@ -130,6 +135,8 @@ Agent outputs are advisory data. They must never be treated as shell commands, t
 See [Database ERD](DATABASE-ERD.md).
 
 ## 7. External service boundaries
+
+Requests-based third-party HTTPS calls (OAuth, social publishing, GitHub updater, Runway, Pexels and RSS) use the shared pinned transport. Redirects are disabled by default; explicitly enabled GET redirects are revalidated hop by hop and cross-origin authorization/cookie headers are stripped. Local Ollama uses a separate local-service HTTP path. yt-dlp and Edge TTS use their own clients/protocols and are outside the requests-based transport.
 
 | Service | Local or remote | Optional? | Purpose |
 |---|---|---:|---|

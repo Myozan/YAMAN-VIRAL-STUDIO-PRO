@@ -11,9 +11,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 from urllib.parse import quote
-from urllib.request import Request, urlopen
 
-import requests
+from app.secure_http import request_public_https
 
 REPOSITORY = "Myozan/YAMAN-VIRAL-STUDIO-PRO"
 UPDATE_BRANCH = "import/v1.8.0-premium-ai-creator-studio"
@@ -47,7 +46,7 @@ def _github_headers() -> dict[str, str]:
 
 
 def _get_json(url: str, timeout: int = 15) -> dict[str, Any]:
-    response = requests.get(url, headers=_github_headers(), timeout=timeout)
+    response = request_public_https("GET", url, headers=_github_headers(), timeout=timeout, max_redirects=3)
     response.raise_for_status()
     payload = response.json()
     if not isinstance(payload, dict):
@@ -209,12 +208,16 @@ def apply_update(expected_commit: str = "") -> dict[str, Any]:
         archive_path = temp_root / "update.zip"
         # Pin download to the exact SHA that the user approved, never to a moving branch.
         url = f"https://api.github.com/repos/{REPOSITORY}/zipball/{latest_sha}"
-        request = Request(url, headers={
+        response = request_public_https("GET", url, headers={
             "User-Agent": "YAMAN-VIRAL-STUDIO-PRO-Updater",
             "Accept": "application/vnd.github+json",
-        })
-        with urlopen(request, timeout=90) as response, archive_path.open("wb") as output:
-            shutil.copyfileobj(response, output)
+        }, timeout=90, stream=True, max_redirects=3)
+        try:
+            response.raise_for_status()
+            with archive_path.open("wb") as output:
+                shutil.copyfileobj(response.raw, output)
+        finally:
+            response.close()
 
         extracted = _safe_extract(archive_path, temp_root / "source")
         if not (extracted / "app" / "main.py").is_file() or not (extracted / "web" / "index.html").is_file():
