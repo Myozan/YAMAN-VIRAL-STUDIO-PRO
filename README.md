@@ -132,6 +132,7 @@ requirements.txt     Python bağımlılıkları
 
 ## 📚 Dokümantasyon
 
+- [Wiki / Teknik dokümantasyon](docs/wiki/Home.md)
 - [Sürüm geçmişi](CHANGELOG.md)
 - [Mimari](docs/ARCHITECTURE.md)
 - [Platform entegrasyonları](docs/PLATFORM-INTEGRATIONS.md)
