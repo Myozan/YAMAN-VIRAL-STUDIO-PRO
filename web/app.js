@@ -318,10 +318,11 @@ function showPage(name){
  if(!pageNames.includes(name)) name="studio";
  document.querySelectorAll(".page").forEach(x=>x.classList.toggle("active",x.id==="page-"+name));
  document.querySelectorAll("#sidebarNav a").forEach(x=>x.classList.toggle("active",x.dataset.page===name));
+ const crumb=$("currentSection");if(crumb){const active=document.querySelector("#sidebarNav a[data-page=\""+name+"\"] .nav-label");crumb.textContent=active?.textContent?.trim()||name;}
  if(name==="projects") loadProjects();
  if(name==="media") loadMediaLibrary();
  if(name==="platforms") loadPlatforms();
- if(name==="settings") loadSettings();
+ if(name==="settings"){loadSettings();const theme=$("themeSelect");if(theme)theme.value=document.documentElement.dataset.theme||"dark";}
   if(name==="content") loadTaskHistory();
  if(name==="autopilot") loadAutopilots();
 }
@@ -631,3 +632,25 @@ $("refreshTaskHistory")?.addEventListener("click",loadTaskHistory);
     }
   });
 })();
+
+// One-click, source-free creator: trend/topic -> local Ollama -> neural voice -> scene video -> MP4.
+$("createCompleteVideo")?.addEventListener("click",async()=>{
+ const btn=$("createCompleteVideo"),feedback=$("factoryFeedback"),out=$("factoryOutput");
+ btn.disabled=true;btn.textContent="Üretim hazırlanıyor…";feedback.textContent="Trend, senaryo, seslendirme ve sahneler hazırlanıyor. Bu işlem birkaç dakika sürebilir.";out.classList.add("hidden");out.innerHTML="";
+ try{
+  const body={niche:$("factoryNiche").value,topic:$("factoryTopic").value.trim(),region:$("factoryRegion").value,language:$("factoryLanguage").value,duration:Number($("factoryDuration").value),voice:$("factoryVoice").value,captions:$("factoryCaptions").checked,auto_trend:$("factoryAutoTrend").checked};
+  const r=await fetch("/api/content/create-video",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  const d=await r.json();if(!r.ok)throw new Error(d.detail||"Video üretilemedi");
+  feedback.textContent="Tamamlandı · "+d.duration_seconds+" sn · "+d.size_mb+" MB · "+d.visual_mode;
+  out.classList.remove("hidden");
+  const title=document.createElement("h3");title.textContent=d.title;
+  const video=document.createElement("video");video.controls=true;video.playsInline=true;video.src=d.video_url;video.className="factory-preview";
+  const actions=document.createElement("div");actions.className="factory-actions";
+  const download=document.createElement("a");download.href=d.video_url;download.download=d.filename;download.className="nav-cta";download.textContent="MP4 videoyu indir";
+  const script=document.createElement("a");script.href=d.script_url;script.className="secondary-link";script.textContent="Senaryoyu indir";
+  const audio=document.createElement("a");audio.href=d.audio_url;audio.className="secondary-link";audio.textContent="MP3 seslendirmeyi indir";
+  actions.append(download,script,audio);out.append(title,video,actions);
+  if(d.notice){const note=document.createElement("p");note.className="muted";note.textContent=d.notice;out.append(note);}
+ }catch(e){feedback.textContent="Üretim tamamlanamadı: "+e.message;}
+ finally{btn.disabled=false;btn.innerHTML="✦ Senaryo + ses + görseller + MP4 oluştur <span>→</span>";}
+});

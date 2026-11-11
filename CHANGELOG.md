@@ -1,3 +1,19 @@
+## [1.5.9] - 2026-11-11
+
+### Added
+- One-click source-free Shorts production: local Ollama script generation, neural narration, automatic scene-card design, animated 9:16 video rendering and MP4 export.
+- Downloadable MP4, script and MP3 outputs with an in-page video preview.
+- A responsive end-to-end creator workspace with optional trend-based topic discovery.
+
+### Improved
+- Moved appearance themes from the sidebar into Settings and reordered the main navigation.
+- Updated PWA asset cache and interface version to v1.5.9.
+
+### Visual generation and privacy notes
+- This release creates original typographic motion-graphic scenes locally from generated scene directions; it does not yet generate photorealistic AI images or source-footage B-roll.
+- Script generation is local through Ollama. Edge Neural TTS is online and sends narration text to Microsoft's service.
+- Trend discovery requires internet access. Generated videos remain local until the user chooses to share them.
+
 # Changelog
 
 ## [1.5.8] - 2026-11-11

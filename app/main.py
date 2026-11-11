@@ -80,7 +80,7 @@ if _PROFILE_FILE.exists():
                 PLATFORM_PROFILES[key].update({k: value[k] for k in ("width", "height", "max_seconds") if k in value})
     except Exception:
         pass
-app = FastAPI(title="YAMAN VIRAL STUDIO PRO", version="1.5.8")
+app = FastAPI(title="YAMAN VIRAL STUDIO PRO", version="1.5.9")
 app.mount("/assets", StaticFiles(directory=BASE / "web"), name="assets")
 
 @app.get("/sw.js", include_in_schema=False)
@@ -225,6 +225,16 @@ class ScriptRequest(BaseModel):
     topic: str = Field(min_length=3, max_length=300)
     language: str = Field(default="tr", pattern="^(tr|en)$")
     duration: int = Field(default=60, ge=15, le=180)
+
+class CompleteVideoRequest(BaseModel):
+    niche: str = Field(min_length=2, max_length=160)
+    topic: str = Field(default="", max_length=300)
+    region: str = Field(default="TR", pattern="^(TR|US|GB|DE)$")
+    language: str = Field(default="tr", pattern="^(tr|en)$")
+    duration: int = Field(default=60, ge=15, le=90)
+    voice: str = Field(default="tr-TR-EmelNeural", max_length=80)
+    captions: bool = True
+    auto_trend: bool = True
 
 class VoiceoverRequest(BaseModel):
     text: str = Field(min_length=10, max_length=12000)
@@ -1715,6 +1725,75 @@ def record_performance(req: PerformanceRequest):
     if req.platform not in PLATFORMS: raise HTTPException(400,"Geçersiz platform.")
     return learning.record(req.model_dump())
 
+
+def render_generated_content_video(folder: Path, title: str, scenes: list[dict], audio: Path, captions: bool=True) -> Path:
+    """Build a complete 9:16 narrated short from generated scene cards and neural narration."""
+    require_binary("ffmpeg"); require_binary("ffprobe")
+    try:
+        from PIL import Image, ImageDraw, ImageFont
+    except ImportError as exc:
+        raise RuntimeError("Görsel sahne üretimi için Pillow eksik. requirements.txt bağımlılıklarını yükleyin.") from exc
+    probe=subprocess.run(["ffprobe","-v","error","-show_entries","format=duration","-of","default=noprint_wrappers=1:nokey=1",str(audio)],capture_output=True,text=True)
+    if probe.returncode: raise RuntimeError("Ses süresi okunamadı: "+probe.stderr[-500:])
+    total=max(5.0,float(probe.stdout.strip()))
+    clean_scenes=[x for x in scenes if isinstance(x,dict)]
+    if not clean_scenes: clean_scenes=[{"narration":title,"visual_direction":title}]
+    clean_scenes=clean_scenes[:8]
+    weights=[max(1,len(str(x.get("narration","")).split())) for x in clean_scenes]
+    total_weight=sum(weights);durations=[total*w/total_weight for w in weights]
+    font_paths=[Path(r"C:\Windows\Fonts\arial.ttf"),Path(r"C:\Windows\Fonts\segoeui.ttf")]
+    font_path=next((x for x in font_paths if x.exists()),None)
+    def font(size):
+        return ImageFont.truetype(str(font_path),size) if font_path else ImageFont.load_default()
+    palette=[(18,29,57),(29,24,63),(10,55,66),(42,31,68),(20,43,70),(53,35,58),(12,54,59),(29,37,76)]
+    clips=[]
+    for idx,scene in enumerate(clean_scenes):
+        bg=Image.new("RGB",(1080,1920),palette[idx%len(palette)])
+        draw=ImageDraw.Draw(bg)
+        for radius,outline in [(760,(67,221,204,70)),(590,(108,119,244,80)),(410,(255,255,255,30))]:
+            draw.ellipse((540-radius,650-radius,540+radius,650+radius),outline=outline,width=5)
+        draw.rounded_rectangle((72,110,1008,1810),radius=42,outline=(255,255,255),width=3)
+        draw.rounded_rectangle((100,145,350,205),radius=24,fill=(73,205,185))
+        draw.text((125,160),"YAMAN  /  SHORTS",font=font(25),fill=(7,22,33))
+        draw.text((105,300),f"{idx+1:02d}  /  {len(clean_scenes):02d}",font=font(34),fill=(108,232,214))
+        def wrap(text_value, fnt, max_width):
+            words=str(text_value or "").split();lines=[];line=""
+            for word in words:
+                test=(line+" "+word).strip()
+                if draw.textbbox((0,0),test,font=fnt)[2] <= max_width: line=test
+                else:
+                    if line: lines.append(line)
+                    line=word
+            if line: lines.append(line)
+            return lines
+        visual=str(scene.get("visual_direction") or scene.get("narration") or title).strip()
+        lines=wrap(visual[:180],font(66),820)[:6];y=520
+        for line in lines:
+            draw.text((105,y),line,font=font(66),fill=(248,250,255),stroke_width=1,stroke_fill=(20,25,45));y+=92
+        narration=str(scene.get("narration","")).strip()
+        if captions and narration:
+            cap_lines=wrap(narration[:260],font(36),820)[:5];cy=1260
+            draw.rounded_rectangle((85,cy-28,995,cy+len(cap_lines)*54+30),radius=25,fill=(4,9,22))
+            for line in cap_lines:
+                draw.text((120,cy),line,font=font(36),fill=(255,255,255));cy+=54
+        draw.text((105,1690),title[:54],font=font(27),fill=(178,202,226))
+        png=folder/f"visual_scene_{idx+1:02d}.png";bg.save(png);bg.close()
+        clip=folder/f"visual_scene_{idx+1:02d}.mp4";frames=max(1,int(round(durations[idx]*30)))
+        vf=f"scale=1080:1920,zoompan=z='min(zoom+0.00035,1.045)':d={frames}:s=1080x1920:fps=30,format=yuv420p"
+        run=subprocess.run(["ffmpeg","-hide_banner","-loglevel","error","-y","-loop","1","-i",str(png),"-t",f"{durations[idx]:.3f}","-vf",vf,"-an","-c:v","libx264","-preset","veryfast","-crf","22","-pix_fmt","yuv420p",str(clip)],capture_output=True,text=True,encoding="utf-8",errors="replace")
+        if run.returncode or not clip.is_file(): raise RuntimeError("Sahne render hatası: "+run.stderr[-900:])
+        clips.append(clip)
+    concat=folder/"visual_scenes.txt"
+    concat.write_text("".join("file '"+x.name.replace("'","")+"'\n" for x in clips),encoding="utf-8")
+    joined=folder/"visuals_joined.mp4"
+    run=subprocess.run(["ffmpeg","-hide_banner","-loglevel","error","-y","-f","concat","-safe","0","-i",str(concat),"-c","copy",str(joined)],capture_output=True,text=True)
+    if run.returncode: raise RuntimeError("Sahneler birleştirilemedi: "+run.stderr[-900:])
+    output=folder/"publish_ready_shorts.mp4"
+    run=subprocess.run(["ffmpeg","-hide_banner","-loglevel","error","-y","-i",str(joined),"-i",str(audio),"-map","0:v:0","-map","1:a:0","-t",f"{total:.3f}","-vf","fps=30,format=yuv420p","-c:v","libx264","-preset","veryfast","-crf","21","-c:a","aac","-b:a","160k","-shortest","-movflags","+faststart",str(output)],capture_output=True,text=True)
+    if run.returncode or not output.is_file() or output.stat().st_size<1024: raise RuntimeError("Final MP4 render hatası: "+run.stderr[-1200:])
+    return output
+
+
 @app.get("/api/content/voices")
 def content_voice_catalog():
     return {"voices": content_factory.VOICE_CATALOG, "engine":"edge-tts", "mode":"online-neural"}
@@ -1756,6 +1835,33 @@ def content_voiceover(req: VoiceoverRequest):
     except Exception as exc:
         output.unlink(missing_ok=True)
         raise HTTPException(502, f"Seslendirme oluşturulamadı: {str(exc)[:240]}")
+
+
+@app.post("/api/content/create-video")
+def content_create_video(req: CompleteVideoRequest):
+    folder=WORK/"autopilot-content";folder.mkdir(parents=True,exist_ok=True)
+    item_id=uuid.uuid4().hex[:12];work=folder/item_id;work.mkdir(parents=True,exist_ok=True)
+    trend_data=None;topic=req.topic.strip()
+    try:
+        if not topic and req.auto_trend:
+            trend_data=content_factory.research_trends(req.niche,req.region,12)
+            if trend_data.get("topics"): topic=trend_data["topics"][0]["title"]
+        if not topic: raise HTTPException(400,"Bir konu girin veya otomatik trend araştırmasını açın.")
+        script=content_factory.generate_script(OLLAMA_URL,OLLAMA_MODEL,req.niche,topic,req.language,req.duration)
+        audio=work/"narration.mp3";content_factory.create_voiceover(script["script"],req.voice,audio)
+        video=render_generated_content_video(work,script["title"],script.get("scenes",[]),audio,req.captions)
+        script_payload={"id":item_id,"niche":req.niche,"topic":topic,"language":req.language,**script}
+        script_path=work/"script.md";script_path.write_text("# "+script_payload["title"]+"\n\n"+script_payload["script"]+"\n",encoding="utf-8")
+        (work/"script.json").write_text(json.dumps(script_payload,ensure_ascii=False,indent=2),encoding="utf-8")
+        if trend_data: (work/"trend-report.json").write_text(json.dumps(trend_data,ensure_ascii=False,indent=2),encoding="utf-8")
+        return {"id":item_id,"title":script_payload["title"],"topic":topic,"video_url":f"/workspace/autopilot-content/{item_id}/publish_ready_shorts.mp4",
+            "audio_url":f"/workspace/autopilot-content/{item_id}/narration.mp3","script_url":f"/workspace/autopilot-content/{item_id}/script.md",
+            "filename":"YAMAN_"+item_id+"_SHORTS.mp4","duration_seconds":round(probe_duration(video),1),"size_mb":round(video.stat().st_size/(1024*1024),2),
+            "visual_mode":"Yerel AI sahne kartları · hareketli tipografik motion graphics","trend_sources":trend_data.get("sources",[]) if trend_data else [],
+            "notice":"Video, senaryoya göre otomatik tasarlanmış hareketli grafik sahneleri ve AI seslendirme ile üretildi. Fotogerçekçi AI görsel/video üretimi veya stok görüntü bu sürümde kullanılmıyor. Edge TTS çevrimiçidir; ses metni Microsoft hizmetine gönderilir."}
+    except HTTPException: raise
+    except requests.RequestException as exc: raise HTTPException(502,"Yerel Ollama veya trend servisi hatası: "+str(exc)[:240])
+    except Exception as exc: raise HTTPException(500,"Video üretim hatası: "+str(exc)[:500])
 
 @app.get("/api/autopilot")
 def list_autopilots():

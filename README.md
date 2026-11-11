@@ -6,9 +6,9 @@
 
 ### Yerel yapay zekâ destekli video analiz, Shorts üretimi ve çok formatlı içerik stüdyosu
 
-**v1.5.8 · Local-first AI · Windows · PWA**
+**v1.5.9 · Local-first AI · Windows · PWA**
 
-[![Version](https://img.shields.io/badge/version-1.5.8-6478ff?style=for-the-badge)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.5.9-6478ff?style=for-the-badge)](CHANGELOG.md)
 [![CI](https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO/actions/workflows/ci.yml/badge.svg?branch=import%2Fv1.2-source)](https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/API-FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
@@ -77,6 +77,18 @@ Aşağıdaki görseller yerel uygulamanın güncel arayüzünden alınmıştır.
 - **Sistem izleme:** GPU, CPU, RAM ve VRAM metrikleri.
 - **Responsive arayüz:** Masaüstü ve mobil ekranlara uyumlu web arayüzü; PWA kurulumu.
 - **Çok dilli arayüz:** Türkçe, İngilizce, Almanca ve İspanyolca.
+
+## Tek tıkla sıfırdan Shorts üretimi
+
+İçerik üretimi ekranındaki yeni **Tek tıkla yeni video üret** alanı, kaynak video gerektirmeden bir konu fikrinden dikey MP4 üretir:
+
+1. İsteğe bağlı Google Trends / Google News / Reddit RSS konu keşfi.
+2. Yerel Ollama modeliyle hook, anlatım metni, sahne planı, açıklama ve hashtag üretimi.
+3. Seçilen Edge Neural TTS sesiyle MP3 seslendirme.
+4. Sahne yönergelerinden otomatik tipografik motion-graphic görselleri ve hafif kamera hareketi.
+5. Ses ve sahneleri birleştirerek 1080×1920, 30 FPS MP4 çıktısı; senaryo ve MP3 ayrıca indirilebilir.
+
+**Sınır:** Bu sürüm fotogerçekçi AI görsel/video üretmez ve stok görüntü indirmez; özgün hareketli grafik sahneleri üretir. Yerel Ollama senaryo üretirken Edge TTS çevrimiçi çalışır ve metni Microsoft hizmetine iletir.
 
 ## Autopilot — zamanlanmış yerel üretim
 
