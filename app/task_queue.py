@@ -232,3 +232,48 @@ def enqueue_in_transaction(
          int(priority), int(max_attempts), stamp(now + timedelta(seconds=max(0, int(delay_seconds)))),
          stamp(now), stamp(now), idempotency_key),
     )
+
+
+
+def snapshot(database: str | Path, *, stale_after_seconds: int = 45) -> dict[str, Any]:
+    """Return an operational queue snapshot without exposing task payloads."""
+    now = utcnow()
+    cutoff = stamp(now - timedelta(seconds=max(1, int(stale_after_seconds))))
+    with connect(database) as db:
+        counts = {row[0]: row[1] for row in db.execute(
+            "SELECT status,COUNT(*) FROM task_queue GROUP BY status"
+        ).fetchall()}
+        workers = db.execute(
+            """SELECT worker_id,pid,hostname,started_at,heartbeat_at
+               FROM task_workers ORDER BY heartbeat_at DESC"""
+        ).fetchall()
+        oldest = db.execute(
+            "SELECT MIN(created_at) FROM task_queue WHERE status='queued'"
+        ).fetchone()[0]
+        next_retry = db.execute(
+            "SELECT MIN(available_at) FROM task_queue WHERE status='queued'"
+        ).fetchone()[0]
+    worker_items = [{
+        "worker_id": row[0], "pid": row[1], "hostname": row[2],
+        "started_at": row[3], "heartbeat_at": row[4],
+        "healthy": bool(row[4] and row[4] >= cutoff),
+    } for row in workers]
+    queued = int(counts.get("queued", 0))
+    running = int(counts.get("running", 0))
+    stale_workers = sum(1 for worker in worker_items if not worker["healthy"])
+    return {
+        "ok": bool(worker_items) and stale_workers == 0,
+        "counts": {
+            "queued": queued, "running": running,
+            "completed": int(counts.get("completed", 0)),
+            "failed": int(counts.get("failed", 0)),
+            "cancelled": int(counts.get("cancelled", 0)),
+        },
+        "workers": worker_items,
+        "worker_count": len(worker_items),
+        "stale_worker_count": stale_workers,
+        "oldest_queued_at": oldest,
+        "next_available_at": next_retry,
+        "captured_at": stamp(now),
+        "storage": "sqlite-wal-local-filesystem",
+    }

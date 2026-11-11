@@ -920,6 +920,15 @@ def health():
             "auto_editor": bool(shutil.which("auto-editor") or shutil.which("auto-editor.exe")),
             "model": OLLAMA_MODEL, "whisper_model": WHISPER_MODEL, "platforms": list(PLATFORMS)}
 
+
+@app.get("/api/queue/health")
+def durable_queue_health():
+    """Expose queue depth and worker heartbeats for the local operations dashboard."""
+    try:
+        return task_queue.snapshot(TASK_DB, stale_after_seconds=WORKER_STALE_SECONDS)
+    except sqlite3.Error as exc:
+        raise HTTPException(503, f"Görev kuyruğu durumu okunamadı: {exc}") from exc
+
 @app.get("/api/auto-editor/status")
 def auto_editor_status():
     binary = shutil.which("auto-editor") or shutil.which("auto-editor.exe")
