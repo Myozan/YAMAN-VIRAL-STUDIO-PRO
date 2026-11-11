@@ -1,4 +1,4 @@
-from pathlib import Path
+﻿from pathlib import Path
 
 import pytest
 from cryptography.fernet import Fernet
@@ -183,7 +183,7 @@ def test_remote_media_redirect_to_private_ip_is_blocked(monkeypatch):
         calls.append((url, kwargs))
         return Redirect()
 
-    monkeypatch.setattr(visual_factory.requests, "get", fake_get)
+    monkeypatch.setattr(visual_factory, "_pinned_https_get", lambda url, ip, **kwargs: fake_get(url, allow_redirects=False, **kwargs))
     monkeypatch.setattr(visual_factory.socket, "getaddrinfo", lambda *a, **k: _dns_result("93.184.216.34"))
     with pytest.raises(ValueError):
         visual_factory.safe_stream_get("https://cdn.example/start", timeout=3)
@@ -206,7 +206,7 @@ def test_remote_media_redirect_target_is_revalidated(monkeypatch):
         calls.append(url)
         return Redirect() if len(calls) == 1 else Success()
 
-    monkeypatch.setattr(visual_factory.requests, "get", fake_get)
+    monkeypatch.setattr(visual_factory, "_pinned_https_get", lambda url, ip, **kwargs: fake_get(url, allow_redirects=False, **kwargs))
     monkeypatch.setattr(visual_factory.socket, "getaddrinfo", lambda *a, **k: _dns_result("93.184.216.34"))
     response = visual_factory.safe_stream_get("https://cdn.example/start", timeout=3)
     assert isinstance(response, Success)
@@ -219,7 +219,78 @@ def test_remote_media_redirect_limit_is_enforced(monkeypatch):
         headers = {"Location": "/again"}
         def close(self):
             pass
-    monkeypatch.setattr(visual_factory.requests, "get", lambda *a, **k: Redirect())
+    monkeypatch.setattr(visual_factory, "_pinned_https_get", lambda *a, **k: Redirect())
     monkeypatch.setattr(visual_factory.socket, "getaddrinfo", lambda *a, **k: _dns_result("93.184.216.34"))
     with pytest.raises(visual_factory.VisualProviderError, match="redirect limit"):
         visual_factory.safe_stream_get("https://cdn.example/start", timeout=3, max_redirects=2)
+
+
+def test_oauth_vault_key_rotation_reencrypts_all_vaults_and_keeps_backups(tmp_path, monkeypatch):
+    old_key = Fernet.generate_key().decode("ascii")
+    new_key = Fernet.generate_key().decode("ascii")
+    monkeypatch.setenv("YAMAN_TOKEN_ENCRYPTION_KEY", old_key)
+    monkeypatch.setattr(main, "OAUTH_TOKEN_FILE", tmp_path / "oauth_tokens.enc")
+    monkeypatch.setattr(main, "OAUTH_APP_FILE", tmp_path / "oauth_apps.enc")
+    monkeypatch.setattr(main, "VISUAL_PROVIDER_FILE", tmp_path / "visual_providers.enc")
+    monkeypatch.setattr(main, "OAUTH_KEY_FILE", tmp_path / ".oauth.key")
+    main.save_oauth_tokens({"youtube": {"refresh_token": "refresh-secret"}})
+    main.OAUTH_APP_FILE.write_bytes(Fernet(old_key.encode()).encrypt(b'{"youtube":{"client_secret":"app-secret"}}'))
+    main.VISUAL_PROVIDER_FILE.write_bytes(Fernet(old_key.encode()).encrypt(b'{"runway_api_key":"visual-secret"}'))
+    result = main.rotate_oauth_vault_key(new_key)
+    assert len(result["rotated_vaults"]) == 3
+    assert len(result["backup_files"]) == 3
+    assert main.oauth_token_data() == {"youtube": {"refresh_token": "refresh-secret"}}
+    assert main.oauth_app_config()["youtube"]["client_secret"] == "app-secret"
+    assert main.visual_provider_config()["runway_api_key"] == "visual-secret"
+    assert all(".bak." in name for name in result["backup_files"])
+    monkeypatch.setenv("YAMAN_TOKEN_ENCRYPTION_KEY", old_key)
+    with pytest.raises(RuntimeError, match="cannot be decrypted"):
+        main.oauth_token_data()
+
+
+def test_oauth_key_rotation_rejects_bad_new_key_without_touching_vault(tmp_path, monkeypatch):
+    key = Fernet.generate_key().decode("ascii")
+    monkeypatch.setenv("YAMAN_TOKEN_ENCRYPTION_KEY", key)
+    monkeypatch.setattr(main, "OAUTH_TOKEN_FILE", tmp_path / "oauth_tokens.enc")
+    main.save_oauth_tokens({"youtube": {"refresh_token": "keep-me"}})
+    before = main.OAUTH_TOKEN_FILE.read_bytes()
+    with pytest.raises(ValueError, match="valid Fernet"):
+        main.rotate_oauth_vault_key("invalid")
+    assert main.OAUTH_TOKEN_FILE.read_bytes() == before
+
+
+def test_pinned_https_connection_uses_validated_ip_but_keeps_tls_hostname(monkeypatch):
+    calls = []
+    sentinel = object()
+    def connect(address, timeout, source_address):
+        calls.append((address, timeout, source_address))
+        return sentinel
+    monkeypatch.setattr(visual_factory.socket, "create_connection", connect)
+    connection = visual_factory._PinnedHTTPSConnection(
+        host="cdn.example", port=443, pinned_ip="93.184.216.34", timeout=7,
+    )
+    assert connection._new_conn() is sentinel
+    assert calls == [(('93.184.216.34', 443), 7, None)]
+    assert connection.host == "cdn.example"  # urllib3 uses this for SNI/certificate matching.
+
+
+def test_pinned_https_adapter_passes_ip_into_urllib3_pool(monkeypatch):
+    from requests import Session
+    class FakeResponse:
+        status_code = 200
+        headers = {}
+        def close(self): pass
+    captured = {}
+    sentinel = object()
+    monkeypatch.setattr(visual_factory.socket, "getaddrinfo", lambda *a, **k: _dns_result("93.184.216.34"))
+    monkeypatch.setattr(visual_factory.socket, "create_connection", lambda address, *a, **k: sentinel)
+    def fake_session_get(self, url, **kwargs):
+        adapter = self.get_adapter(url)
+        pool = adapter.poolmanager.connection_from_url(url)
+        connection = pool._new_conn()
+        captured.update(ip=connection.pinned_ip, host=connection.host, pool_ip=pool.conn_kw["pinned_ip"])
+        return FakeResponse()
+    monkeypatch.setattr(Session, "get", fake_session_get)
+    response = visual_factory.safe_stream_get("https://cdn.example/media.mp4", timeout=4)
+    assert response.status_code == 200
+    assert captured == {"ip": "93.184.216.34", "host": "cdn.example", "pool_ip": "93.184.216.34"}

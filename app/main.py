@@ -840,6 +840,50 @@ def oauth_fernet():
         key=OAUTH_KEY_FILE.read_text(encoding="ascii").strip()
     return Fernet(key.encode("ascii"))
 
+
+def rotate_oauth_vault_key(new_key: str) -> dict:
+    """Re-encrypt every local secret vault with a new Fernet key, retaining backups."""
+    try:
+        new_cipher = Fernet(new_key.encode("ascii"))
+    except Exception as exc:
+        raise ValueError("New OAuth encryption key is not a valid Fernet key") from exc
+    old_cipher = oauth_fernet()
+    vaults = (OAUTH_TOKEN_FILE, OAUTH_APP_FILE, VISUAL_PROVIDER_FILE)
+    prepared = {}
+    for path in vaults:
+        if path.exists():
+            try:
+                prepared[path] = new_cipher.encrypt(old_cipher.decrypt(path.read_bytes()))
+            except Exception as exc:
+                raise RuntimeError(f"Cannot rotate encrypted vault: {path.name}") from exc
+    key_in_environment = bool(os.getenv("YAMAN_TOKEN_ENCRYPTION_KEY"))
+    if not key_in_environment and OAUTH_KEY_FILE.exists():
+        prepared[OAUTH_KEY_FILE] = new_key.encode("ascii")
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
+    backups, temps = {}, {}
+    try:
+        for path, payload in prepared.items():
+            path.parent.mkdir(parents=True, exist_ok=True)
+            if path.exists():
+                backup = path.with_name(path.name + f".bak.{stamp}")
+                shutil.copy2(path, backup)
+                backups[path] = backup
+            temp = path.with_name(path.name + f".rotate.{stamp}.tmp")
+            temp.write_bytes(payload)
+            temps[path] = temp
+        for path, temp in temps.items():
+            temp.replace(path)
+    except Exception:
+        for path, backup in backups.items():
+            if backup.exists(): shutil.copy2(backup, path)
+        raise
+    finally:
+        for temp in temps.values(): temp.unlink(missing_ok=True)
+    if key_in_environment:
+        os.environ["YAMAN_TOKEN_ENCRYPTION_KEY"] = new_key
+    return {"rotated_vaults": [path.name for path in prepared if path in vaults],
+            "backup_files": [path.name for path in backups.values()]}
+
 def oauth_token_data():
     if not OAUTH_TOKEN_FILE.exists():return {}
     try:return json.loads(oauth_fernet().decrypt(OAUTH_TOKEN_FILE.read_bytes()).decode("utf-8"))

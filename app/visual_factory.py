@@ -1,17 +1,36 @@
-"""AI visual and scene-based B-roll providers for YAMAN VIRAL STUDIO PRO."""
+﻿"""AI visual and scene-based B-roll providers for YAMAN VIRAL STUDIO PRO."""
 from __future__ import annotations
 import time
 import ipaddress
 import socket
 from pathlib import Path
+from requests.adapters import HTTPAdapter
+from urllib3.connection import HTTPSConnection
+from urllib3.connectionpool import HTTPSConnectionPool
 from urllib.parse import urljoin, urlparse
 import requests
 
 RUNWAY_BASE = "https://api.dev.runwayml.com/v1"
 RUNWAY_VERSION = "2024-11-06"
 
+def _resolve_public_ips(host: str) -> list[str]:
+    try:
+        literal = ipaddress.ip_address(host)
+        addresses = [literal]
+    except ValueError:
+        try:
+            answers = socket.getaddrinfo(host, 443, type=socket.SOCK_STREAM)
+            addresses = [ipaddress.ip_address(item[4][0]) for item in answers]
+        except (OSError, ValueError, IndexError) as exc:
+            raise ValueError("URL host could not be safely resolved") from exc
+    if not addresses or any(not address.is_global for address in addresses):
+        raise ValueError("URL host resolves to a non-public IP address")
+    # Pin one of the validated public answers; never let the HTTP stack resolve again.
+    return [str(addresses[0])]
+
+
 def validate_public_https_url(url: str) -> str:
-    """Reject non-HTTPS, credential-bearing, localhost and non-public destinations."""
+    """Validate an HTTPS target and reject private, local or ambiguous destinations."""
     parsed = urlparse(url)
     host = (parsed.hostname or "").lower().rstrip(".")
     try:
@@ -20,25 +39,67 @@ def validate_public_https_url(url: str) -> str:
         raise ValueError("Invalid URL port") from exc
     if (parsed.scheme.lower() != "https" or not host or host == "localhost" or host.endswith((".localhost", ".local", ".internal")) or parsed.username is not None or parsed.password is not None or port not in (None, 443)):
         raise ValueError("Only public HTTPS URLs on the standard port are allowed")
-    try:
-        literal = ipaddress.ip_address(host)
-        addresses = [literal]
-    except ValueError:
-        try:
-            addresses = [ipaddress.ip_address(item[4][0]) for item in socket.getaddrinfo(host, 443, type=socket.SOCK_STREAM)]
-        except (OSError, ValueError, IndexError) as exc:
-            raise ValueError("URL host could not be safely resolved") from exc
-    if not addresses or any(not address.is_global for address in addresses):
-        raise ValueError("URL host resolves to a non-public IP address")
+    _resolve_public_ips(host)
     return url
 
 
+class _PinnedHTTPSConnection(HTTPSConnection):
+    """Connect to a validated IP while retaining hostname-based TLS/SNI checks."""
+    def __init__(self, *args, pinned_ip: str, **kwargs):
+        self.pinned_ip = pinned_ip
+        super().__init__(*args, **kwargs)
+
+    def _new_conn(self):
+        try:
+            return socket.create_connection((self.pinned_ip, self.port), self.timeout, self.source_address)
+        except OSError as exc:
+            raise OSError(f"Pinned HTTPS connection to validated address failed: {exc}") from exc
+
+
+class _PinnedHTTPSConnectionPool(HTTPSConnectionPool):
+    ConnectionCls = _PinnedHTTPSConnection
+
+
+def _pinned_https_get(url: str, ip: str, *, timeout: int):
+    from urllib3 import PoolManager
+    from requests import Session
+    from requests.adapters import BaseAdapter
+
+    class PinnedAdapter(HTTPAdapter):
+        def init_poolmanager(self, connections, maxsize, block=False, **pool_kwargs):
+            self.poolmanager = PoolManager(
+                num_pools=connections, maxsize=maxsize, block=block,
+                **pool_kwargs, pinned_ip=ip,
+            )
+            self.poolmanager.pool_classes_by_scheme["https"] = _PinnedHTTPSConnectionPool
+            from urllib3.poolmanager import PoolKey, _default_key_normalizer
+            self.poolmanager.key_fn_by_scheme["https"] = lambda context: _default_key_normalizer(
+                PoolKey, {key: value for key, value in context.items() if key != "pinned_ip"}
+            )
+
+    session = Session()
+    session.trust_env = False  # Do not route this security-sensitive fetch through ambient proxies.
+    session.mount("https://", PinnedAdapter())
+    response = session.get(url, stream=True, timeout=timeout, allow_redirects=False)
+    response._pinned_session = session
+    original_close = response.close
+    def close_with_session():
+        try:
+            original_close()
+        finally:
+            session.close()
+    response.close = close_with_session
+    return response
+
+
 def safe_stream_get(url: str, *, timeout: int, max_redirects: int = 5):
-    """GET a public HTTPS URL while revalidating every redirect target."""
+    """GET public HTTPS media with validated IP pinning and per-hop redirect checks."""
     current = url
     for _ in range(max_redirects + 1):
         validate_public_https_url(current)
-        response = requests.get(current, stream=True, timeout=timeout, allow_redirects=False)
+        host = (urlparse(current).hostname or "").lower().rstrip(".")
+        pinned_ip = _resolve_public_ips(host)[0]
+        response = _pinned_https_get(current, pinned_ip, timeout=timeout)
         if response.status_code not in {301, 302, 303, 307, 308}:
             return response
         location = response.headers.get("Location")
@@ -54,7 +115,7 @@ class VisualProviderError(RuntimeError):
 class RunwayClient:
     def __init__(self, api_key: str, timeout: int = 1800):
         if not api_key or len(api_key.strip()) < 12:
-            raise VisualProviderError("Runway API anahtarı Ayarlar > AI Görsel Motorları bölümüne girilmelidir.")
+            raise VisualProviderError("Runway API anahtarÄ± Ayarlar > AI GÃ¶rsel MotorlarÄ± bÃ¶lÃ¼mÃ¼ne girilmelidir.")
         self.api_key = api_key.strip()
         self.timeout = timeout
         self.session = requests.Session()
@@ -69,11 +130,11 @@ class RunwayClient:
         if response.status_code >= 400:
             detail = response.text[:1200]
             if response.status_code == 429:
-                detail = "Runway kredi/rate limit sınırı veya iş kuyruğu dolu. " + detail
+                detail = "Runway kredi/rate limit sÄ±nÄ±rÄ± veya iÅŸ kuyruÄŸu dolu. " + detail
             raise VisualProviderError(f"Runway {endpoint} ({response.status_code}): {detail}")
         task_id = response.json().get("id")
         if not task_id:
-            raise VisualProviderError("Runway görev yanıtında task ID bulunamadı.")
+            raise VisualProviderError("Runway gÃ¶rev yanÄ±tÄ±nda task ID bulunamadÄ±.")
         return str(task_id)
 
     def wait(self, task_id: str) -> list[str]:
@@ -81,24 +142,24 @@ class RunwayClient:
         while time.monotonic() < deadline:
             response = self.session.get(f"{RUNWAY_BASE}/tasks/{task_id}", timeout=45)
             if response.status_code >= 400:
-                raise VisualProviderError(f"Runway görev durumu okunamadı ({response.status_code}): {response.text[:500]}")
+                raise VisualProviderError(f"Runway gÃ¶rev durumu okunamadÄ± ({response.status_code}): {response.text[:500]}")
             data = response.json()
             status = str(data.get("status", "")).upper()
             if status == "SUCCEEDED":
                 outputs = data.get("output") or []
                 if not outputs:
-                    raise VisualProviderError("Runway görevi tamamlandı ancak çıktı URL'si dönmedi.")
+                    raise VisualProviderError("Runway gÃ¶revi tamamlandÄ± ancak Ã§Ä±ktÄ± URL'si dÃ¶nmedi.")
                 return [str(x) for x in outputs if isinstance(x, str)]
             if status in {"FAILED", "CANCELED", "CANCELLED"}:
-                raise VisualProviderError("Runway üretim görevi başarısız: " + str(data.get("failure") or data.get("error") or status)[:800])
+                raise VisualProviderError("Runway Ã¼retim gÃ¶revi baÅŸarÄ±sÄ±z: " + str(data.get("failure") or data.get("error") or status)[:800])
             time.sleep(4)
-        raise VisualProviderError("Runway üretimi zaman aşımına uğradı. Runway görev kimliği: " + task_id)
+        raise VisualProviderError("Runway Ã¼retimi zaman aÅŸÄ±mÄ±na uÄŸradÄ±. Runway gÃ¶rev kimliÄŸi: " + task_id)
 
     @staticmethod
     def download(url: str, target: Path, max_bytes: int = 300 * 1024 * 1024):
         parsed = urlparse(url)
         if parsed.scheme != "https":
-            raise VisualProviderError("Runway çıktı adresi güvenli HTTPS olmalıdır.")
+            raise VisualProviderError("Runway Ã§Ä±ktÄ± adresi gÃ¼venli HTTPS olmalÄ±dÄ±r.")
         with safe_stream_get(url, timeout=180) as response:
             response.raise_for_status()
             size = 0
@@ -108,10 +169,10 @@ class RunwayClient:
                         continue
                     size += len(chunk)
                     if size > max_bytes:
-                        raise VisualProviderError("Üretilen medya dosyası izin verilen boyutu aştı.")
+                        raise VisualProviderError("Ãœretilen medya dosyasÄ± izin verilen boyutu aÅŸtÄ±.")
                     stream.write(chunk)
         if not target.is_file() or target.stat().st_size < 1024:
-            raise VisualProviderError("Üretilen medya indirilemedi veya boş.")
+            raise VisualProviderError("Ãœretilen medya indirilemedi veya boÅŸ.")
         return target
 
     def generate_image(self, prompt: str, target: Path, ratio: str = "1080:1920") -> Path:
@@ -125,7 +186,7 @@ class RunwayClient:
     def animate_image(self, image: Path, prompt: str, target: Path, seconds: int = 5) -> Path:
         import base64
         if image.stat().st_size > 4 * 1024 * 1024:
-            raise VisualProviderError("Sahne görseli 4 MB üstünde; Runway görsel giriş sınırına yaklaştı.")
+            raise VisualProviderError("Sahne gÃ¶rseli 4 MB Ã¼stÃ¼nde; Runway gÃ¶rsel giriÅŸ sÄ±nÄ±rÄ±na yaklaÅŸtÄ±.")
         mime = "image/png" if image.suffix.lower() == ".png" else "image/jpeg"
         uri = f"data:{mime};base64," + base64.b64encode(image.read_bytes()).decode("ascii")
         task = self._create("image_to_video", {
@@ -149,7 +210,7 @@ class RunwayClient:
 
 def search_pexels_video(api_key: str, query: str, target: Path, orientation: str = "portrait") -> dict:
     if not api_key or len(api_key.strip()) < 12:
-        raise VisualProviderError("Pexels API anahtarı Ayarlar > AI Görsel Motorları bölümüne girilmelidir.")
+        raise VisualProviderError("Pexels API anahtarÄ± Ayarlar > AI GÃ¶rsel MotorlarÄ± bÃ¶lÃ¼mÃ¼ne girilmelidir.")
     response = requests.get(
         "https://api.pexels.com/v1/videos/search",
         headers={"Authorization": api_key.strip()},
@@ -160,7 +221,7 @@ def search_pexels_video(api_key: str, query: str, target: Path, orientation: str
         raise VisualProviderError(f"Pexels API ({response.status_code}): {response.text[:600]}")
     videos = response.json().get("videos", [])
     if not videos:
-        raise VisualProviderError(f"Pexels'ta '{query}' için uygun B-roll bulunamadı.")
+        raise VisualProviderError(f"Pexels'ta '{query}' iÃ§in uygun B-roll bulunamadÄ±.")
     videos.sort(key=lambda x: (x.get("width", 0) < x.get("height", 1), x.get("duration", 0)), reverse=True)
     for video in videos:
         files = sorted(video.get("video_files", []), key=lambda f: (f.get("width", 0) <= 1920, f.get("width", 0)), reverse=True)
@@ -176,7 +237,7 @@ def search_pexels_video(api_key: str, query: str, target: Path, orientation: str
                         for chunk in download.iter_content(1024 * 1024):
                             if not chunk: continue
                             size += len(chunk)
-                            if size > 250 * 1024 * 1024: raise VisualProviderError("Pexels klibi 250 MB sınırını aştı.")
+                            if size > 250 * 1024 * 1024: raise VisualProviderError("Pexels klibi 250 MB sÄ±nÄ±rÄ±nÄ± aÅŸtÄ±.")
                             stream.write(chunk)
                 if target.is_file() and target.stat().st_size > 1024:
                     return {"path": target, "source": "Pexels", "photographer": video.get("user", {}).get("name", ""),
@@ -184,4 +245,5 @@ def search_pexels_video(api_key: str, query: str, target: Path, orientation: str
             except Exception:
                 target.unlink(missing_ok=True)
                 continue
-    raise VisualProviderError("Pexels arama sonuçlarından video indirilemedi.")
+    raise VisualProviderError("Pexels arama sonuÃ§larÄ±ndan video indirilemedi.")
+

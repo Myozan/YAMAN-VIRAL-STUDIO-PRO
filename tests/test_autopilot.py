@@ -1,5 +1,8 @@
 from datetime import datetime, timedelta, timezone
+import subprocess
+import sys
 import sqlite3
+import json
 import pytest
 from app import autopilot
 
@@ -57,3 +60,26 @@ def test_delete_is_idempotent(db_path):
     item = autopilot.create_autopilot(db_path, BASE)
     assert autopilot.delete_autopilot(db_path, item["id"]) is True
     assert autopilot.delete_autopilot(db_path, item["id"]) is False
+
+
+def test_due_autopilot_is_claimed_by_only_one_process(db_path):
+    autopilot.init_autopilot(db_path)
+    item = autopilot.create_autopilot(db_path, BASE)
+    past = (datetime.now(timezone.utc) - timedelta(minutes=3)).isoformat()
+    with sqlite3.connect(db_path) as db:
+        db.execute("UPDATE autopilots SET next_run=? WHERE id=?", (past, item["id"]))
+
+    worker = "import json,sys; from pathlib import Path; from app.autopilot import claim_due; print(json.dumps([x['id'] for x in claim_due(Path(sys.argv[1]))]))"
+    processes = [
+        subprocess.Popen([sys.executable, "-c", worker, str(db_path)],
+                         stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        for _ in range(2)
+    ]
+    outputs = []
+    for process in processes:
+        stdout, stderr = process.communicate(timeout=30)
+        assert process.returncode == 0, stderr
+        outputs.extend(json.loads(stdout))
+    assert outputs.count(item["id"]) == 1
+    with sqlite3.connect(db_path) as db:
+        assert db.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
