@@ -1,9 +1,8 @@
 <!doctype html><html lang="tr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>YAMAN VIRAL STUDIO PRO</title><link rel="stylesheet" href="/assets/style.css?v=v140utf8fix4"></head>
+<title>YAMAN VIRAL STUDIO PRO</title><link rel="stylesheet" href="/assets/style.css?v=v141settingslocale"></head>
 <body><div class="layout">
 <aside><div class="brand"><div class="mark">Y</div><div><b>YAMAN</b><small>VIRAL STUDIO PRO</small></div></div>
 <div class="theme-control"><label for="themeSelect" data-i18n="appearance.label">G&#214;R&#220;N&#220;M TEMASI</label><select id="themeSelect" aria-label="Tema se&#231;"><option value="dark">Gece / Dark</option><option value="light">A&#231;&#305;k / Light</option><option value="ocean">Okyanus / Ocean</option></select></div>
-<div class="theme-control language-control"><label for="languageSelect" data-i18n="language.label">ARAY&#220;Z D&#304;L&#304;</label><select id="languageSelect" aria-label="Interface language"><option value="tr">T&#252;rk&#231;e</option><option value="en">English</option></select></div>
 <nav id="sidebarNav">
 <a class="active" href="#studio" data-page="studio" data-i18n="nav.studio">&#9672;&#12288;Studio</a>
 <a href="#content" data-page="content" data-i18n="nav.content">&#9635;&#12288;&#304;&#231;erik &#252;retimi</a>
@@ -75,6 +74,10 @@
 </section>
 <section class="page" id="page-settings">
 <header><div><div class="eyebrow">LOCAL CONFIGURATION</div><h1 data-i18n="settings.title">Ayarlar</h1><p>Yerel AI motoru ve transkripsiyon tercihlerini yapılandır.</p></div><div class="health">Local-first</div></header>
+<div class="panel language-settings-panel"><div class="panelhead"><div><h3 data-i18n="settings.languageTitle">Dil ve yerelleştirme</h3><p data-i18n="settings.languageDescription">Uygulama arayüzünün dilini seç. Tercihin bu tarayıcıda saklanır.</p></div><small>LANGUAGE</small></div>
+<label for="languageSelect" data-i18n="language.label">ARAYÜZ DİLİ</label>
+<select id="languageSelect" aria-label="Interface language"><option value="tr">&#127481;&#127479; Türkçe</option><option value="en">&#127468;&#127463; English</option><option value="de">&#127465;&#127466; Deutsch</option><option value="es">&#127466;&#127480; Español</option></select>
+<div class="notice" data-i18n="settings.languageNote">Dil tercihi kaydedildiğinde uygulamayı yeniden başlatman gerekmez.</div></div>
 <div class="panel"><div class="panelhead"><div><h3 data-i18n="settings.localAI">Yerel AI motoru</h3><p>Ollama servisi bilgisayarında çalışır; uzak AI servisi kullanılmaz.</p></div><small>OLLAMA</small></div>
 <label>Ollama API adresi</label><input value="http://127.0.0.1:11434" disabled>
 <label style="margin-top:18px">Model adı</label><input id="settingModel" value="qwen3:8b" placeholder="qwen3:8b">
@@ -86,4 +89,4 @@
 <button id="saveSettings" class="nav-cta">Ayarları kaydet</button><span id="settingsFeedback" class="inline-feedback"></span></div>
 <div class="panel"><div class="panelhead"><div><h3>Bağımlılıklar</h3><p>Uygulamanın temel araçlarının erişilebilirliği.</p></div><small>SYSTEM CHECK</small></div><div id="dependencyStatus" class="dependency-grid">Kontrol ediliyor…</div></div>
 </section>
-</main></div><script src="/assets/app.js?v=v140utf8fix4"></script></body></html>
+</main></div><script src="/assets/app.js?v=v141settingslocale"></script></body></html>

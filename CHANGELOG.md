@@ -1,5 +1,16 @@
 # Changelog / Sürüm Geçmişi
 
+## [1.4.1] - 2026-11-11
+
+### Added
+- Moved the application language selector into Settings → Language & localization.
+- Added Turkish, English, German and Spanish locale options with browser-persisted preference.
+- Rebuilt all four README language pages with a consistent professional layout, real desktop/mobile screenshots, feature map, workflow, architecture and roadmap visuals.
+
+### Improved
+- Expanded the README installation, security, OAuth and project-structure guidance.
+- Added clear language-setting instructions to each localized README.
+
 ## [1.4.0] - 2026-11-11
 
 ### Added

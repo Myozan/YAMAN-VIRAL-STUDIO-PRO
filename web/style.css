@@ -272,3 +272,7 @@ html[data-theme="ocean"] .pipeline>div,html[data-theme="ocean"] .agent-grid arti
  .system-monitor{display:grid!important;grid-template-columns:minmax(0,1fr)!important}
  .system-monitor>.metric-card{display:grid!important;grid-template-columns:96px minmax(0,1fr);grid-template-rows:auto auto}
 }
+
+/* v1.4.1 ? language preference lives in Settings */
+.language-settings-panel #languageSelect{width:100%;max-width:420px;min-height:46px;padding:12px 14px;font-size:14px}
+.language-settings-panel .notice{margin-top:14px}
