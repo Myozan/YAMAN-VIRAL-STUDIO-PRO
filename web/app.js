@@ -498,21 +498,7 @@ async function loadTaskHistory(){
  }catch(e){box.textContent=e.message;}
 }
 $("refreshTaskHistory")?.addEventListener("click",loadTaskHistory);
-function applyResponsiveMonitor(){
- const mobileUA=/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
- const screenWidth=Number(screen.width)||window.innerWidth||document.documentElement.clientWidth;
- const viewport=Math.min(Number(window.innerWidth)||screenWidth,Number(document.documentElement.clientWidth)||screenWidth,screenWidth);
- if(!mobileUA&&viewport>760)return;
- const layout=document.querySelector(".layout"),aside=document.querySelector("aside"),main=document.querySelector("main"),monitor=document.querySelector(".system-monitor");
- const width=Math.max(280,Math.min(viewport,screenWidth));
- [document.documentElement,document.body,layout,aside,main].filter(Boolean).forEach(el=>{el.style.minWidth="0";el.style.maxWidth=width+"px";el.style.width=width+"px";el.style.overflowX="hidden";});
- if(monitor){
-  monitor.style.display="grid";monitor.style.gridTemplateColumns="minmax(0,1fr)";monitor.style.width=Math.max(260,width-24)+"px";monitor.style.maxWidth="100%";monitor.style.minWidth="0";
-  monitor.querySelectorAll(".metric-card").forEach(card=>{card.style.minWidth="0";card.style.width="100%";card.style.maxWidth="100%";card.style.display="grid";card.style.gridTemplateColumns="96px minmax(0,1fr)";card.style.gridTemplateRows="auto auto";card.style.columnGap="14px";card.style.alignItems="center";card.style.textAlign="left";const gauge=card.querySelector(".metric-gauge");if(gauge){gauge.style.gridColumn="1";gauge.style.gridRow="1 / 3";gauge.style.width="88px";gauge.style.height="88px";}card.querySelectorAll(".metric-label,small").forEach(el=>{el.style.gridColumn="2";el.style.textAlign="left";el.style.whiteSpace="normal";el.style.overflowWrap="anywhere";});});
- }
-}
-window.addEventListener("resize",applyResponsiveMonitor);
-applyResponsiveMonitor();
+
 
 /* v1.5: section breadcrumb follows existing navigation */
 (function(){const labels={studio:"Studio",content:"İçerik üretimi",projects:"Projeler",media:"Video kütüphanesi",platforms:"Platform profilleri",settings:"Ayarlar"};function sync(){const a=document.querySelector("#sidebarNav a.active"),t=document.getElementById("currentSection");if(a&&t)t.textContent=labels[a.dataset.page]||"Studio"}document.querySelectorAll("#sidebarNav a[data-page]").forEach(a=>a.addEventListener("click",()=>requestAnimationFrame(sync)));document.querySelectorAll("[data-go]").forEach(a=>a.addEventListener("click",()=>setTimeout(sync,0)));sync()})();
