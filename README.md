@@ -6,9 +6,11 @@
 
 ### Yerel yapay zekâ ile video analiz, Shorts üretimi ve çok platformlu içerik iş akışı
 
+> **v1.5 Professional UI** · İkonlu gezinme, yenilenmiş marka alanı, GitHub kısayolları ve mobil çalışma alanı iyileştirmeleri.
+
 [🇹🇷 Türkçe](README.md) · [🇬🇧 English](README.en.md) · [🇩🇪 Deutsch](README.de.md) · [🇪🇸 Español](README.es.md)
 
-[![Version](https://img.shields.io/badge/version-1.4.1-6478ff?style=for-the-badge)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.5.0-6478ff?style=for-the-badge)](CHANGELOG.md)
 [![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/API-FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![Local AI](https://img.shields.io/badge/AI-Local--First-8B5CF6?style=for-the-badge)](#mimari)
@@ -27,6 +29,8 @@ YAMAN VIRAL STUDIO PRO; uzun videoları analiz eden, konuşmaları zaman damgal�
 Ollama, Faster-Whisper ve FFmpeg tabanlı iş akışı, içerik üretimini mümkün olduğunca kullanıcının kendi bilgisayarında tutar.
 
 ## 🖥️ Uygulamadan görüntüler
+
+Yeni arayüz; masaüstünde sabit ikonlu yan menü, üst bağlam çubuğu ve GitHub depo erişimi sunar. Küçük ekranlarda menü yatay kaydırılabilir ve içerik alanı tek sütuna geçer.
 
 | Masaüstü çalışma alanı | Mobil uyumlu görünüm |
 |:---:|:---:|
