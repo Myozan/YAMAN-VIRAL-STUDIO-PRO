@@ -1,8 +1,12 @@
 # YAMAN VIRAL STUDIO PRO
 
-Lokales KI-Videostudio für Videoanalyse, Shorts-Produktion und plattformübergreifende Workflows.
+Lokales **KI-Video-Repurposing-Studio** für Videoanalyse, Transkription und die Erstellung vertikaler Clips für YouTube Shorts, Instagram Reels und TikTok.
 
-**Professionelle Benutzeroberfläche v1.5:** Symbolnavigation, neues App-Branding und Favicon, GitHub-Verknüpfungen, Breadcrumb-Navigation, überarbeitete dunkle Oberfläche, Tastaturfokus und mobile Navigation.
+<p align="center"><img src="docs/assets/hero.svg" alt="YAMAN VIRAL STUDIO PRO" width="100%"></p>
+
+<p align="center"><a href="https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO/actions/workflows/ci.yml"><img src="https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO/actions/workflows/ci.yml/badge.svg?branch=import%2Fv1.2-source" alt="CI-Status"></a> <img src="https://img.shields.io/badge/AI-Local--First-7C5CFA" alt="Lokale KI"> <img src="https://img.shields.io/badge/PWA-installierbar-5B8DEF" alt="PWA"></p>
+
+**v1.5.2 · PWA und responsives UI.** Die Desktop- und Mobilansichten sind illustrative Designvorschauen, keine Live-Screenshots.
 
 ## Funktionen
 - Import geeigneter YouTube-Quellen oder lokaler Videos aus dem Windows-Downloads-Ordner.
@@ -16,7 +20,11 @@ Lokales KI-Videostudio für Videoanalyse, Shorts-Produktion und plattformübergr
 ## Screenshots
 | Desktop | Mobil |
 |---|---|
-| ![Desktop](docs/assets/dashboard-desktop.png) | ![Mobil](docs/assets/dashboard-mobile.png) |
+| ![Desktop](docs/assets/dashboard-desktop.svg) | ![Mobil](docs/assets/dashboard-mobile.svg) |
+
+## PWA-Installation
+
+Die Installation erfordert HTTPS oder localhost. Unter iOS: Safari → Teilen → Zum Home-Bildschirm. Offline wird nur die App-Oberfläche zwischengespeichert; KI, Videoverarbeitung und API-Funktionen benötigen weiterhin den lokalen Server.
 
 ## Windows-Installation
 Voraussetzungen: Windows 10/11, Python 3.12, FFmpeg und Ollama.
