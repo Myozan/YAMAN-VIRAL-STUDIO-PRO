@@ -1,4 +1,4 @@
-# Architecture
+docs: label expanded architecture as target-state design# Architecture
 
 ## High-level components
 
