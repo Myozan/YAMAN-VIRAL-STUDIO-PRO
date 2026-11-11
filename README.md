@@ -11,6 +11,8 @@
 [🇹🇷 Türkçe](README.md) · [🇬🇧 English](README.en.md) · [🇩🇪 Deutsch](README.de.md) · [🇪🇸 Español](README.es.md)
 
 [![Version](https://img.shields.io/badge/version-1.5.2-6478ff?style=for-the-badge)](CHANGELOG.md)
+[![CI](https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO/actions/workflows/ci.yml/badge.svg?branch=import%2Fv1.2-source)](https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO/actions/workflows/ci.yml)
+[![PWA](https://img.shields.io/badge/PWA-installable-5B8DEF?style=for-the-badge)](#ana-ekrana-y%C3%BCkleme-pwa)
 [![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/API-FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![Local AI](https://img.shields.io/badge/AI-Local--First-8B5CF6?style=for-the-badge)](#mimari)
@@ -24,11 +26,15 @@
 
 ## ✨ Genel bakış
 
+**Anahtar kelimeler:** AI video editor, local-first AI, video repurposing, YouTube Shorts generator, Instagram Reels, TikTok clips, Ollama, Faster-Whisper, FFmpeg, Python, FastAPI, offline-first video workflow.
+
 YAMAN VIRAL STUDIO PRO; uzun videoları analiz eden, konuşmaları zaman damgalı metne dönüştüren, güçlü anları kısa video kesitlerine ayıran ve YouTube Shorts, Instagram Reels ile TikTok için içerik hazırlayan yerel öncelikli bir AI stüdyosudur.
 
 Ollama, Faster-Whisper ve FFmpeg tabanlı iş akışı, içerik üretimini mümkün olduğunca kullanıcının kendi bilgisayarında tutar.
 
 ## 🖥️ Uygulamadan görüntüler
+
+[GitHub paylaşım görseli / Social preview taslağı](docs/assets/social-preview.svg) · [Masaüstü SVG](docs/assets/dashboard-desktop.svg) · [Mobil SVG](docs/assets/dashboard-mobile.svg)
 
 Yeni görsel seti, masaüstü ve mobil arayüzün responsive yerleşimini ürün önizlemesi olarak gösterir. Bu çizimler gerçek zamanlı uygulama ekran görüntüsü değildir; arayüzün bileşenlerini ve tasarım dilini temsil eder.
 
@@ -138,6 +144,13 @@ OAuth callback adresini ilgili geliştirici konsoluna birebir ekle. Her yayın i
 ## 🧭 Yol haritası
 
 <img src="docs/assets/roadmap.svg" alt="Ürün yol haritası" width="100%">
+
+## 🤝 Katkı ve güvenlik
+
+- [Katkı rehberi](CONTRIBUTING.md)
+- [Güvenlik açığı bildirme politikası](SECURITY.md)
+- [Hata bildirimi](https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO/issues/new?template=bug_report.yml)
+- [Özellik önerisi](https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO/issues/new?template=feature_request.yml)
 
 ## 📚 Teknik dokümantasyon
 
