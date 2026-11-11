@@ -261,7 +261,19 @@ function createMediaCard(item, compact=false){
     info.textContent=result.published?(en?"Published to platform.":"Platforma g\u00f6nderildi."):(result.note||"Upload processing");
    }catch(e){info.textContent=e.message;}finally{publish.disabled=false;publish.textContent=en?"Publish to platform":"Platformda yay\u0131nla";}
   });
-  actions.append(download,open);
+  const silence=document.createElement("button");silence.className="secondary";silence.textContent=en?"Remove silence":"Sessizlikleri temizle";
+  silence.title=en?"Create a separate copy with quiet sections removed":"Orijinali koruyarak sessiz bölümleri ayrı bir MP4'e kes";
+  silence.addEventListener("click",async()=>{
+   if(!confirm(en?"Create a new edited copy? The original will be kept.":"Sessizlikleri temizleyip orijinali koruyan yeni bir MP4 oluşturulsun mu?"))return;
+   silence.disabled=true;silence.textContent=en?"Processing…":"İşleniyor…";
+   try{
+    const response=await fetch("/api/auto-editor/silence-remove",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({file:item.file,margin_seconds:0.3,threshold:6})});
+    const data=await response.json();if(!response.ok)throw new Error(data.detail||"Auto-Editor failed");
+    info.textContent=(en?"Silence removed: ":"Sessizlik temizlendi: ")+data.filename+" · "+data.size_mb+" MB";
+    const resultLink=document.createElement("a");resultLink.className="secondary-link";resultLink.href=data.file;resultLink.download=data.filename;resultLink.textContent=en?"Download edited copy":"Düzenlenmiş videoyu indir";actions.append(resultLink);
+   }catch(error){info.textContent=error.message;}finally{silence.disabled=false;silence.textContent=en?"Remove silence":"Sessizlikleri temizle";}
+  });
+  actions.append(download,open,silence);
   if(["youtube","instagram","tiktok"].includes(item.platform))actions.append(publish);
   card.append(head,video,info,actions);return card;
 }
@@ -679,3 +691,22 @@ $("factoryVisualProvider")?.addEventListener("change",()=>{
  const music=$("factoryMusic"),provider=$("factoryVisualProvider").value;
  if(music){music.disabled=provider!=="runway";if(provider!=="runway")music.checked=false;}
 });
+
+
+// v1.7: local engine diagnostics and recovery controls.
+async function refreshLocalEngineStatus(){
+ const box=$("ollamaSettingStatus");if(!box)return;
+ try{
+  const [or,ar]=await Promise.all([fetch("/api/ollama/status",{cache:"no-store"}),fetch("/api/auto-editor/status",{cache:"no-store"})]);
+  const o=await or.json(),a=await ar.json();
+  box.textContent=(o.connected?"✓ Ollama bağlı":"⚠ Ollama bağlantısı yok")+" · Model: "+o.model+(o.model_available?" (hazır)":" (model listesinde yok)")+" · "+(a.available?"Auto-Editor hazır":"Auto-Editor kurulu değil");
+  const start=$("startOllama");if(start)start.disabled=!!o.connected;
+ }catch(e){box.textContent="Motor durumu okunamadı: "+e.message;}
+}
+$("checkOllama")?.addEventListener("click",refreshLocalEngineStatus);
+$("startOllama")?.addEventListener("click",async()=>{
+ const button=$("startOllama"),box=$("ollamaSettingStatus");button.disabled=true;
+ try{const r=await fetch("/api/ollama/start",{method:"POST"}),d=await r.json();if(!r.ok)throw new Error(d.detail||"Ollama başlatılamadı");box.textContent=d.message||"Ollama zaten çalışıyor.";setTimeout(refreshLocalEngineStatus,2500);}
+ catch(e){box.textContent=e.message;}finally{button.disabled=false;}
+});
+refreshLocalEngineStatus();

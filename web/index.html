@@ -141,7 +141,13 @@
 <div class="panel"><div class="panelhead"><div><h3 data-i18n="settings.localAI">Yerel AI motoru</h3><p>Ollama senaryo ve analiz için yerel çalışır. Runway ve Pexels seçilirse görsel/video üretimi çevrimiçi yapılır.</p></div><small>OLLAMA</small></div>
 <label>Ollama API adresi</label><input value="http://127.0.0.1:11434" disabled>
 <label style="margin-top:18px">Model adı</label><input id="settingModel" value="qwen3:8b" placeholder="qwen3:8b">
-<div class="notice" id="ollamaSettingStatus">Ollama bağlantı durumu kontrol ediliyor…</div></div>
+<div class="notice" id="ollamaSettingStatus">Ollama bağlantı durumu kontrol ediliyor…</div>
+<div class="actions" style="margin-top:12px"><button id="checkOllama" class="secondary">Bağlantıyı kontrol et</button><button id="startOllama" class="nav-cta">Ollama'yı başlat</button></div>
+<div class="notice">Ollama yanıt vermiyorsa uygulamayı başlatın. Model bilgisayarda kurulu değilse PowerShell'de <code>ollama pull qwen3:1.7b</code> komutunu çalıştırın.</div>
+</div>
+<div class="panel"><div class="panelhead"><div><h3>Akıllı sessizlik temizleme</h3><p>Video kütüphanesindeki her MP4 için sessiz bölümleri isteğe bağlı kaldırın. Orijinal dosya korunur.</p></div><small>AUTO-EDITOR</small></div>
+<div class="notice">Auto-Editor ayrı bir Windows aracı olarak kurulur. Resmî <a href="https://github.com/WyattBlue/auto-editor/releases" target="_blank" rel="noopener noreferrer">GitHub Releases</a> sayfasından auto-editor.exe dosyasını indirin, PATH'e ekleyin ve uygulamayı yeniden başlatın. Python pip kurulumu önerilmez.</div>
+</div>
 <div class="panel"><div class="panelhead"><div><h3 data-i18n="settings.whisper">Whisper transkripsiyon</h3><p>Model büyüdükçe doğruluk ve kaynak tüketimi artabilir.</p></div><small>WHISPER</small></div>
 <label>Transkripsiyon modeli</label><select id="settingWhisper"><option>tiny</option><option>base</option><option selected>small</option><option>medium</option><option>large-v3</option></select>
 <label style="margin-top:18px">İşlemci</label><select id="settingDevice"><option value="auto">Otomatik</option><option value="cpu">CPU</option><option value="cuda">NVIDIA CUDA</option></select>
@@ -149,4 +155,4 @@
 <button id="saveSettings" class="nav-cta">Ayarları kaydet</button><span id="settingsFeedback" class="inline-feedback"></span></div>
 <div class="panel"><div class="panelhead"><div><h3>Bağımlılıklar</h3><p>Uygulamanın temel araçlarının erişilebilirliği.</p></div><small>SYSTEM CHECK</small></div><div id="dependencyStatus" class="dependency-grid">Kontrol ediliyor…</div></div>
 </section>
-</main></div><script src="/assets/app.js?v=v160cinematic"></script></body></html>
+</main></div><script src="/assets/app.js?v=v170smartediting"></script></body></html>

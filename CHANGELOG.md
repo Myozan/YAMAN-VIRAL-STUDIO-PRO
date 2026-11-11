@@ -1,3 +1,20 @@
+## [1.7.0] - 2026-11-11
+
+### Added
+- Optional Auto-Editor silence removal from media-library cards. The original MP4 is preserved and a separate edited copy is created.
+- Ollama connection diagnostics, selected-model availability reporting and a Windows desktop-app start action in Settings.
+- Actionable Ollama connection, timeout and API error messages for analysis and script generation.
+
+### Improved
+- Windows Proactor client-disconnect handling now filters only the expected WinError 10054 callback while preserving unrelated asyncio errors.
+- README.md rewritten as valid UTF-8 Turkish documentation with corrected characters and updated installation guidance.
+- Settings continues to contain the appearance theme selector; the web asset cache version is refreshed.
+
+### Notes
+- Auto-Editor must be installed separately from its official Windows release binary and added to PATH. The CLI is no longer published on PyPI.
+- HTTP 206 Partial Content is a normal response for browser video range requests, not an application error.
+- Auto-Editor output is created beside the source with the suffix _SILENCE_CUT.mp4; source media is not overwritten.
+
 ## [1.6.0] - 2026-11-11
 
 ### Added

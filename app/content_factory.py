@@ -69,8 +69,15 @@ Creative direction: {creative}
 Return JSON only with keys: title, hook, script, scenes (exactly {shot_count} objects, each with narration, visual_direction, camera_motion, mood, shot_type), description, hashtags (array).
 Rules: every scene must describe a distinct coherent visual shot; maintain continuity of characters, wardrobe, setting and art direction; write rich image-generation prompts with subject, environment, lighting, lens, composition and camera motion; no text, subtitles, logos or watermarks inside generated imagery; do not imitate a living artist or existing film franchise; no invented facts, statistics, quotes or claims; narration is clean spoken text, without camera directions; match total narration to about {duration} seconds and use natural pauses.
 """
-    r=requests.post(f"{ollama_url.rstrip('/')}/api/generate",json={"model":model,"prompt":prompt,"stream":False,"format":"json","think":False,"options":{"num_predict":1300}},timeout=180)
-    r.raise_for_status()
+    try:
+        r=requests.post(f"{ollama_url.rstrip('/')}/api/generate",json={"model":model,"prompt":prompt,"stream":False,"format":"json","think":False,"options":{"num_predict":1300}},timeout=(4,180))
+        r.raise_for_status()
+    except requests.exceptions.ConnectionError as exc:
+        raise RuntimeError("Ollama servisine bağlanılamıyor. Ayarlar bölümünden Ollama'yı başlatıp bağlantıyı yeniden kontrol edin.") from exc
+    except requests.exceptions.Timeout as exc:
+        raise RuntimeError("Ollama yanıt süresi doldu. Daha küçük bir model veya daha kısa bir senaryo deneyin.") from exc
+    except requests.exceptions.HTTPError as exc:
+        raise RuntimeError(f"Ollama API hatası: {exc}") from exc
     import json
     data=json.loads(r.json().get("response","{}"))
     if not isinstance(data,dict) or not str(data.get("script","")).strip():

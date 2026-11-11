@@ -1,5 +1,5 @@
 from __future__ import annotations
-import ctypes, html, json, math, os, platform, re, secrets, hashlib, base64, shutil, sqlite3, subprocess, sys, time, uuid, threading
+import asyncio, ctypes, html, json, math, os, platform, re, secrets, hashlib, base64, shutil, sqlite3, subprocess, sys, time, uuid, threading
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlencode
@@ -80,7 +80,22 @@ if _PROFILE_FILE.exists():
                 PLATFORM_PROFILES[key].update({k: value[k] for k in ("width", "height", "max_seconds") if k in value})
     except Exception:
         pass
-app = FastAPI(title="YAMAN VIRAL STUDIO PRO", version="1.6.0")
+app = FastAPI(title="YAMAN VIRAL STUDIO PRO", version="1.7.0")
+
+def _windows_disconnect_exception_handler(loop, context):
+    """Ignore only expected Windows Proactor peer-reset events on client disconnect."""
+    exc = context.get("exception")
+    message = str(context.get("message", ""))
+    if (os.name == "nt" and isinstance(exc, ConnectionResetError)
+            and getattr(exc, "winerror", None) == 10054
+            and "_ProactorBasePipeTransport._call_connection_lost" in message):
+        return
+    loop.default_exception_handler(context)
+
+@app.on_event("startup")
+async def configure_asyncio_disconnect_handling():
+    asyncio.get_running_loop().set_exception_handler(_windows_disconnect_exception_handler)
+
 app.mount("/assets", StaticFiles(directory=BASE / "web"), name="assets")
 
 @app.get("/sw.js", include_in_schema=False)
@@ -410,13 +425,20 @@ def heuristic_score(text: str) -> tuple[int, list[str]]:
     return max(1, min(95, score)), reasons or ["Editoryal değerlendirme gerekli"]
 
 def llm_json(prompt: str, timeout: int = 180, num_predict: int = 512):
-    r = requests.post(
-        f"{OLLAMA_URL}/api/generate",
-        json={"model": OLLAMA_MODEL, "prompt": prompt, "stream": False, "format": "json", "think": False, "keep_alive": 0, "options": {"num_predict": num_predict}},
-        timeout=timeout
-    )
-    r.raise_for_status()
-    return json.loads(r.json().get("response", "{}"))
+    try:
+        r = requests.post(
+            f"{OLLAMA_URL}/api/generate",
+            json={"model": OLLAMA_MODEL, "prompt": prompt, "stream": False, "format": "json", "think": False, "keep_alive": "5m", "options": {"num_predict": num_predict}},
+            timeout=(4, timeout)
+        )
+        r.raise_for_status()
+        return json.loads(r.json().get("response", "{}"))
+    except requests.exceptions.ConnectionError as exc:
+        raise HTTPException(503, f"Ollama servisine bağlanılamıyor ({OLLAMA_URL}). Ayarlar bölümünden bağlantıyı kontrol edin veya Ollama'yı başlatın.") from exc
+    except requests.exceptions.Timeout as exc:
+        raise HTTPException(504, "Ollama yanıt süresi doldu. Model boyutunu veya işlem yükünü kontrol edin.") from exc
+    except requests.exceptions.HTTPError as exc:
+        raise HTTPException(502, f"Ollama API hatası: {exc}") from exc
 
 def rank_candidates(candidates: list[dict]) -> list[dict]:
     prompt = (
@@ -667,14 +689,93 @@ def system_metrics():
 def get_system_metrics():
     return system_metrics()
 
+def ollama_status():
+    try:
+        response = requests.get(f"{OLLAMA_URL}/api/tags", timeout=2)
+        response.raise_for_status()
+        models = [item.get("name", "") for item in response.json().get("models", [])]
+        return {"connected": True, "url": OLLAMA_URL, "model": OLLAMA_MODEL,
+                "model_available": any(name == OLLAMA_MODEL or name.startswith(OLLAMA_MODEL + ":") for name in models),
+                "models": models, "message": "Ollama bağlantısı hazır."}
+    except requests.RequestException:
+        return {"connected": False, "url": OLLAMA_URL, "model": OLLAMA_MODEL,
+                "model_available": False, "models": [],
+                "message": "Ollama çalışmıyor. Ollama uygulamasını Başlat menüsünden açın veya Başlat düğmesini kullanın."}
+
+@app.get("/api/ollama/status")
+def get_ollama_status():
+    return ollama_status()
+
+@app.post("/api/ollama/start")
+def start_ollama():
+    status = ollama_status()
+    if status["connected"]:
+        return {"started": False, **status}
+    launch_args = None
+    if os.name == "nt":
+        gui = Path(os.environ.get("LOCALAPPDATA", "")) / "Programs" / "Ollama" / "ollama app.exe"
+        if gui.is_file():
+            launch_args = [str(gui)]
+    cli = shutil.which("ollama")
+    if launch_args is None and cli:
+        launch_args = [cli, "serve"]
+    if launch_args is None:
+        raise HTTPException(503, "Ollama bulunamadı. https://ollama.com/download adresinden kurup tekrar deneyin.")
+    try:
+        subprocess.Popen(launch_args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                         stdin=subprocess.DEVNULL, close_fds=True)
+    except OSError as exc:
+        raise HTTPException(500, f"Ollama başlatılamadı: {exc}") from exc
+    return {"started": True, "message": "Ollama başlatma isteği gönderildi. Birkaç saniye sonra durumu yenileyin."}
+
 @app.get("/api/health")
 def health():
     ffmpeg = shutil.which("ffmpeg") is not None and shutil.which("ffprobe") is not None
-    ollama = False
-    try: ollama = requests.get(f"{OLLAMA_URL}/api/tags", timeout=2).ok
-    except Exception: pass
-    return {"ok": True, "ffmpeg": ffmpeg, "ollama": ollama, "model": OLLAMA_MODEL,
-            "whisper_model": WHISPER_MODEL, "platforms": list(PLATFORMS)}
+    ollama = ollama_status()
+    return {"ok": True, "ffmpeg": ffmpeg, "ollama": ollama["connected"], "ollama_status": ollama,
+            "auto_editor": bool(shutil.which("auto-editor") or shutil.which("auto-editor.exe")),
+            "model": OLLAMA_MODEL, "whisper_model": WHISPER_MODEL, "platforms": list(PLATFORMS)}
+
+@app.get("/api/auto-editor/status")
+def auto_editor_status():
+    binary = shutil.which("auto-editor") or shutil.which("auto-editor.exe")
+    return {"available": bool(binary), "binary": binary,
+            "install_hint": "Resmî Windows auto-editor.exe dosyasını Releases sayfasından indirin ve PATH'e ekleyin."}
+
+class AutoEditorRequest(BaseModel):
+    file: str = Field(min_length=1, max_length=1000)
+    margin_seconds: float = Field(default=0.3, ge=0.0, le=3.0)
+    threshold: int = Field(default=6, ge=1, le=30)
+
+@app.post("/api/auto-editor/silence-remove")
+def auto_editor_silence_remove(req: AutoEditorRequest):
+    binary = shutil.which("auto-editor") or shutil.which("auto-editor.exe")
+    if not binary:
+        raise HTTPException(503, "Auto-Editor kurulu değil. Resmî Windows sürümünü indirip PATH'e ekleyin.")
+    relative = req.file.replace("\\", "/").lstrip("/")
+    if relative.startswith("workspace/"):
+        relative = relative[len("workspace/"):]
+    source = (WORK / relative).resolve()
+    try:
+        source.relative_to(WORK.resolve())
+    except ValueError:
+        raise HTTPException(400, "Dosya yalnızca yerel workspace içinden seçilebilir.")
+    if not source.is_file() or source.suffix.lower() != ".mp4":
+        raise HTTPException(404, "İşlenecek MP4 dosyası bulunamadı.")
+    output = source.with_name(source.stem + "_SILENCE_CUT.mp4")
+    if output.exists():
+        raise HTTPException(409, "Sessizlik temizlenmiş çıktı zaten var. Önce mevcut çıktıyı yeniden adlandırın.")
+    args = [binary, str(source), "-o", str(output), "--margin", f"{req.margin_seconds:g}sec",
+            "--edit", f"audio:threshold={req.threshold}%"]
+    try:
+        result = subprocess.run(args, capture_output=True, text=True, timeout=1800, cwd=str(source.parent))
+    except subprocess.TimeoutExpired as exc:
+        raise HTTPException(504, "Auto-Editor işlemi 30 dakika sonunda zaman aşımına uğradı.") from exc
+    if result.returncode != 0 or not output.is_file() or output.stat().st_size == 0:
+        detail = (result.stderr or result.stdout or "Auto-Editor çıktı üretmedi.")[-1800:]
+        raise HTTPException(500, f"Auto-Editor işlemi başarısız: {detail}")
+    return {"processed": True, "file": f"/workspace/{output.relative_to(WORK).as_posix()}",
+            "filename": output.name, "size_mb": round(output.stat().st_size / 1048576, 2)}
 
 OAUTH_PROVIDERS = {
     "youtube":{"client_id_env":"YAMAN_GOOGLE_CLIENT_ID","client_secret_env":"YAMAN_GOOGLE_CLIENT_SECRET"},
