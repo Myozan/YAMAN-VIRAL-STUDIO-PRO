@@ -1,20 +1,21 @@
 # Quality Engineering & Testing Strategy — v1.8.0
 
-This document distinguishes automated coverage that is implemented and executed from future release-assurance work. Passing tests are evidence for tested paths only, not a security certification.
+This document separates executed automated coverage from remaining release assurance. Passing tests are evidence for tested paths only, not a security certification.
 
-## 1. QA 3.2 current baseline
+## 1. QA 3.3 current baseline
 
-The suite collects **50 test cases**: **48 passed and 2 skipped** in the current Windows/Python 3.12 run. The two skips are symlink tests because the connected Windows account does not have permission to create symlinks.
+The suite collects **59 test cases**. Latest Windows/Python 3.12 run: **57 passed, 2 skipped**. The two skips are workspace symlink tests; the connected Windows account cannot create symlinks.
 
 | Suite | Coverage | Test cases |
 |---|---|---:|
-| Autopilot | SQLite initialization, create/read, invalid timezone, due/manual claims, run history, processed-file deduplication, deletion | 6 |
-| Learning engine | Engagement/retention calculations, minimum sample threshold, platform isolation | 3 |
-| FastAPI integration | Health contract, request validation, task/job contracts, cancellation, restart recovery, publish confirmation, OAuth state | 9 |
-| Security regression | YouTube URL validation, workspace traversal/symlink containment, OAuth vault encryption and wrong-key behavior, SSRF/DNS/redirect validation | 32 |
-| **Total collected** | | **50** |
+| Autopilot | SQLite initialization, create/read, timezone validation, due/manual claims, run history and deduplication | 6 |
+| Learning engine | Engagement/retention, sample threshold, platform isolation | 3 |
+| FastAPI integration | Health, request validation, task contracts, cancellation, restart recovery, publishing and OAuth state | 9 |
+| Security regression | URL validation, path containment, OAuth vault and SSRF/redirect cases | 32 |
+| QA 3.3 reliability | Agent retry eligibility and source validation, concurrent task journaling, app lifespan, synthetic FFmpeg/FFprobe and corrupt media | 9 |
+| **Total** | | **59** |
 
-Latest local run: `48 passed, 2 skipped, 4 warnings`. Four warnings are existing FastAPI `on_event` deprecations. No live OAuth, paid provider or external publishing call is made by these tests.
+No live OAuth, paid provider or external publishing call is made by the tests.
 
 ## 2. Run locally
 
@@ -29,65 +30,61 @@ node --check web/sw.js
 python -c "import json; json.load(open('web/manifest.webmanifest', encoding='utf-8'))"
 ```
 
-`requirements-dev.txt` contains test-only dependencies. Application runtime dependencies remain in `requirements.txt`.
+## 3. QA 3.3 reliability changes
 
-## 3. QA 3.2 security changes
+- FastAPI startup and shutdown are now managed through an application lifespan context rather than deprecated `on_event` hooks.
+- The Autopilot scheduler is started with the application and signalled to stop during shutdown. Its 20-second wait is interruptible and the thread is joined with a bounded timeout.
+- Task state snapshots and SQLite event writes are serialized with a process-local reentrant lock to prevent concurrent in-process updates from overwriting each other.
+- Agent retry is limited to failed, interrupted or cancelled agent tasks. Running, queued and completed tasks are rejected; retry still requires the source project and clip to be available.
+- A media probe helper checks file existence/size, ffprobe validity, finite positive duration and presence of a video stream. Rendered platform clips are probed after FFmpeg exits successfully.
 
-- YouTube ingestion accepts only canonical HTTPS URLs on the supported YouTube host allowlist. Userinfo, non-standard ports, HTTP, localhost/IP literals and lookalike hosts are rejected.
-- Runway and Pexels media-download URLs are checked for HTTPS, standard port, absent URL credentials, localhost/internal suffixes, and DNS answers that are not globally routable.
-- Remote media downloads disable automatic redirects and validate every redirect destination before following it; redirect count is bounded.
-- Auto-Editor paths are resolved and required to remain inside the workspace, including symlink resolution.
-- Saved-job recovery rejects job folders that resolve outside the workspace.
-- OAuth vault tests verify encrypted-at-rest token bytes, successful round-trip, and fail-closed behavior with a wrong or malformed Fernet key.
+## 4. QA 3.3 executed tests
 
-## 4. QA 3.1 API regression coverage retained
+- Concurrent writes to one task produce a complete event journal and pass SQLite `PRAGMA integrity_check`.
+- Agent retry rejects running tasks, missing source projects and missing clips; a valid failed task queues a new retry task.
+- FastAPI lifespan starts the scheduler and stops it on application shutdown.
+- A synthetic test-pattern video with audio is rendered by the installed FFmpeg binary and validated with FFprobe.
+- Audio-only and corrupt media are rejected by the video-output validator.
 
-- `GET /api/health` returns the expected health contract.
-- Invalid analysis request values are rejected with HTTP 422.
+## 5. QA 3.2 security changes
+
+- YouTube ingestion accepts canonical HTTPS URLs on the supported host allowlist only.
+- Runway/Pexels downloads reject non-HTTPS, localhost/internal names, credentials, non-standard ports and non-public DNS answers.
+- Redirects are manually followed with destination revalidation and a bounded redirect count.
+- Auto-Editor and saved-job restoration enforce workspace path containment, including resolved symlink targets.
+- OAuth vault tests verify encrypted-at-rest tokens, round-trip decryption and fail-closed behavior for wrong/malformed keys.
+
+## 6. QA 3.1 API regression coverage retained
+
+- Health contract and Pydantic request validation.
 - Unknown task, job and task-event resources return HTTP 404.
-- Task cancellation persists state and is idempotent.
-- Task event history records cancellation.
-- In-flight tasks are marked interrupted when the task store is reinitialized after a simulated restart.
+- Task cancellation persists state, records events and remains idempotent.
+- In-flight tasks are marked interrupted after simulated task-store restart.
 - Publishing without explicit confirmation is rejected before OAuth token lookup.
-- OAuth state is consumed once; a replayed callback is rejected.
-- Unsupported publishing providers and invalid OAuth callback state are rejected.
+- Unsupported providers and invalid OAuth state are rejected; OAuth state replay is rejected.
 
-## 5. Defect found and fixed during QA 3.1
-
-The OAuth callback regression test exposed a first-run failure: the `oauth_states` table was created only when OAuth authorization was initiated. A callback with an unknown state before any OAuth start therefore raised SQLite OperationalError instead of returning the intended HTTP 400. The table is now initialized with the task store, so invalid callbacks are rejected cleanly. A replay test also verifies that a state is consumed once.
-
-## 6. Remaining coverage priorities
+## 7. Remaining coverage priorities
 
 **P0**
-- Agent retry behavior, task concurrency and duplicate execution stress.
-- SQLite multi-connection concurrency and integrity checks.
-- Synthetic FFmpeg render with ffprobe output validation.
-- Windows symlink tests on a CI runner configured with symlink privileges.
+- Cross-process task locking and duplicate retry idempotency.
+- Multi-process SQLite contention and Autopilot double-claim stress.
+- Windows symlink tests on a runner with symlink privileges.
 - DNS rebinding-resistant transport that pins the validated destination IP.
+- Full OAuth key rotation and vault backup/restore lifecycle.
 
 **P1**
 - Ollama timeout, connection failure and malformed JSON.
-- Agent fallback status and deterministic QA outcomes.
-- Mobile browser navigation and PWA flows.
-- External provider quota and error handling.
-- Full OAuth key rotation and backup/restore lifecycle.
+- Agent fallback and deterministic quality outcomes.
+- Browser automation and mobile PWA flows.
+- Provider quota/error handling and release backup/restore drills.
 
-## 7. CI and test design rules
+## 8. CI and release gates
 
-- CI installs application and test dependencies, then runs the same pytest suite.
-- No real paid API, live OAuth account or production credential is used in tests.
-- Mock external providers and use synthetic or redistributable media.
-- Use temporary directories and isolated databases.
-- Keep tests deterministic and repeatable.
-- Do not silently skip required release checks.
-
-## 8. Release gates
-
-A release candidate requires passing CI and P0 tests, Windows 10/11 + Python 3.12 smoke checks, a rights-cleared media render validated by ffprobe, a verified backup/restore drill, and a clean release archive with no secrets or private media.
+CI must install application and development dependencies, run the full pytest suite, compile Python, validate JavaScript and parse the PWA manifest. A release candidate additionally requires Windows 10/11 smoke checks, rights-cleared media render validation, verified backup/restore and a clean release archive without secrets or private media.
 
 ## 9. Current limitations
 
-The current local run is not a security certification. Symlink tests were skipped because symlink creation is not permitted in the connected Windows environment. DNS is checked before each request and redirect, but the HTTP client performs its own DNS resolution; DNS rebinding is therefore a remaining hardening item. Real FFmpeg output, browser automation, concurrency stress and full OAuth key rotation are not yet claimed as passing. The application remains local-use only and must not be exposed directly to a LAN or the public internet.
+The current local run is not a security certification. Two symlink tests were skipped because this Windows account cannot create symlinks. Task locking is process-local; cross-process coordination remains future work. DNS checks are performed before requests and redirects, but the HTTP client resolves the hostname again; DNS rebinding remains a hardening item. v1.8.0 remains local-use only and must not be exposed directly to a LAN or the public internet.
 
 ## Related documentation
 

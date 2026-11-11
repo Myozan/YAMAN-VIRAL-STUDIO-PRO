@@ -1,6 +1,7 @@
 from __future__ import annotations
 import asyncio, ctypes, html, json, math, os, platform, re, secrets, hashlib, base64, shutil, sqlite3, subprocess, sys, time, uuid, threading
 from pathlib import Path
+from contextlib import asynccontextmanager
 from typing import Any
 from urllib.parse import urlencode
 from datetime import datetime, timezone
@@ -82,7 +83,25 @@ if _PROFILE_FILE.exists():
                 PLATFORM_PROFILES[key].update({k: value[k] for k in ("width", "height", "max_seconds") if k in value})
     except Exception:
         pass
-app = FastAPI(title="YAMAN VIRAL STUDIO PRO", version="1.8.0")
+_scheduler_stop = threading.Event()
+_scheduler_thread = None
+
+@asynccontextmanager
+async def app_lifespan(application):
+    """Own process-level background services for the FastAPI application."""
+    asyncio.get_running_loop().set_exception_handler(_windows_disconnect_exception_handler)
+    _scheduler_stop.clear()
+    start_autopilot_scheduler()
+    try:
+        yield
+    finally:
+        _scheduler_stop.set()
+        thread = _scheduler_thread
+        if thread and thread.is_alive():
+            thread.join(timeout=2)
+
+
+app = FastAPI(title="YAMAN VIRAL STUDIO PRO", version="1.8.0", lifespan=app_lifespan)
 
 def _windows_disconnect_exception_handler(loop, context):
     """Ignore only expected Windows Proactor peer-reset events on client disconnect."""
@@ -93,10 +112,6 @@ def _windows_disconnect_exception_handler(loop, context):
             and "_ProactorBasePipeTransport._call_connection_lost" in message):
         return
     loop.default_exception_handler(context)
-
-@app.on_event("startup")
-async def configure_asyncio_disconnect_handling():
-    asyncio.get_running_loop().set_exception_handler(_windows_disconnect_exception_handler)
 
 app.mount("/assets", StaticFiles(directory=BASE / "web"), name="assets")
 app.include_router(update_router)
@@ -112,6 +127,7 @@ def pwa_service_worker():
 app.mount("/workspace", StaticFiles(directory=WORK), name="workspace")
 jobs: dict[str, dict[str, Any]] = {}
 task_states: dict[str, dict[str, Any]] = {}
+_task_state_lock = threading.RLock()
 TASK_DB = WORK / "orchestration.sqlite3"
 _cancelled_tasks: set[str] = set()
 _cpu_sample = None
@@ -362,15 +378,32 @@ def download_video(url: str, folder: Path, progress_callback=None) -> Path:
             return candidates[0]
     raise RuntimeError("Video dosyası indirilemedi.")
 
-def probe_duration(path: Path) -> float:
-    p = subprocess.run(
-        ["ffprobe", "-v", "error", "-show_entries", "format=duration",
-         "-of", "default=noprint_wrappers=1:nokey=1", str(path)],
-        capture_output=True, text=True
+def probe_media_info(path: Path) -> dict:
+    """Inspect a media file and reject corrupt, empty or streamless outputs."""
+    if not path.is_file() or path.stat().st_size < 1024:
+        raise RuntimeError("Media output is missing or too small to be valid.")
+    probe = subprocess.run(
+        ["ffprobe", "-v", "error", "-show_entries", "format=duration:stream=codec_type,width,height",
+         "-of", "json", str(path)],
+        capture_output=True, text=True, timeout=30
     )
-    if p.returncode:
-        raise RuntimeError("Video bilgisi okunamadı: " + p.stderr[-1000:])
-    return float(p.stdout.strip())
+    if probe.returncode:
+        raise RuntimeError("Media output could not be probed: " + probe.stderr[-1000:])
+    try:
+        data = json.loads(probe.stdout)
+        duration = float(data.get("format", {}).get("duration", 0))
+    except (ValueError, TypeError, json.JSONDecodeError) as exc:
+        raise RuntimeError("Media output has invalid duration metadata.") from exc
+    streams = data.get("streams", [])
+    if not math.isfinite(duration) or duration <= 0:
+        raise RuntimeError("Media output duration must be a finite positive number.")
+    if not any(item.get("codec_type") == "video" for item in streams):
+        raise RuntimeError("Media output contains no video stream.")
+    return {"duration": duration, "streams": streams, "size_bytes": path.stat().st_size}
+
+
+def probe_duration(path: Path) -> float:
+    return float(probe_media_info(path)["duration"])
 
 def transcribe(path: Path, language: str, progress_callback=None, duration: float = 0):
     model = get_whisper()
@@ -622,6 +655,7 @@ def render_variant(job: dict, clip: dict, platform: str, captions: bool, face_tr
         "-vf", vf, "-c:v", "libx264", "-preset", "veryfast", "-crf", "20",
         "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "160k", "-movflags", "+faststart", str(out)
     ])
+    probe_media_info(out)
     return out
 
 def fallback_metadata(clip: dict, platform: str):
@@ -1221,22 +1255,25 @@ def update_settings(req: SettingsRequest):
     return {"saved": True, "settings": req.model_dump()}
 
 def set_task(task_id: str, percent: int, stage: str, status: str = "running", **extra):
-    state = task_states.setdefault(task_id,{})
-    now = datetime.now(timezone.utc).isoformat()
-    created = state.get("created_at",now)
-    state.update({"task_id":task_id,"percent":max(0,min(100,int(percent))),"stage":stage,
-                  "status":status,"created_at":created,"updated_at":now,**extra})
-    payload=json.dumps(state,ensure_ascii=False,default=str)
-    with sqlite3.connect(TASK_DB,timeout=10) as db:
-        db.execute("""INSERT INTO tasks(task_id,created_at,updated_at,status,percent,stage,payload_json)
-            VALUES(?,?,?,?,?,?,?) ON CONFLICT(task_id) DO UPDATE SET updated_at=excluded.updated_at,
-            status=excluded.status,percent=excluded.percent,stage=excluded.stage,payload_json=excluded.payload_json""",
-            (task_id,created,now,status,state["percent"],stage,payload))
-        event_type=status if status in ("completed","failed","cancelled","interrupted") else "progress"
-        db.execute("INSERT INTO task_events(task_id,event_type,created_at,payload_json) VALUES(?,?,?,?)",
-            (task_id,event_type,now,payload))
-        db.commit()
-    return dict(state)
+    """Serialize in-process task snapshots and their SQLite journal writes."""
+    with _task_state_lock:
+        state = task_states.setdefault(task_id, {})
+        now = datetime.now(timezone.utc).isoformat()
+        created = state.get("created_at", now)
+        state.update({"task_id": task_id, "percent": max(0, min(100, int(percent))),
+                      "stage": stage, "status": status, "created_at": created,
+                      "updated_at": now, **extra})
+        payload = json.dumps(state, ensure_ascii=False, default=str)
+        with sqlite3.connect(TASK_DB, timeout=15) as db:
+            db.execute("""INSERT INTO tasks(task_id,created_at,updated_at,status,percent,stage,payload_json)
+                VALUES(?,?,?,?,?,?,?) ON CONFLICT(task_id) DO UPDATE SET updated_at=excluded.updated_at,
+                status=excluded.status,percent=excluded.percent,stage=excluded.stage,payload_json=excluded.payload_json""",
+                (task_id, created, now, status, state["percent"], stage, payload))
+            event_type = status if status in ("completed", "failed", "cancelled", "interrupted") else "progress"
+            db.execute("INSERT INTO task_events(task_id,event_type,created_at,payload_json) VALUES(?,?,?,?)",
+                (task_id, event_type, now, payload))
+            db.commit()
+        return dict(state)
 
 def task_is_cancelled(task_id: str) -> bool:
     if task_id in _cancelled_tasks:
@@ -1843,11 +1880,12 @@ def cancel_task(task_id: str):
 
 @app.post("/api/tasks/{task_id}/retry")
 def retry_task(task_id: str,background_tasks: BackgroundTasks):
-    with sqlite3.connect(TASK_DB) as db:
-        row=db.execute("SELECT payload_json FROM tasks WHERE task_id=?",(task_id,)).fetchone()
+    with sqlite3.connect(TASK_DB, timeout=10) as db:
+        row=db.execute("SELECT payload_json,status FROM tasks WHERE task_id=?",(task_id,)).fetchone()
     if not row:raise HTTPException(404,"Task not found")
     old=json.loads(row[0]);data=old.get("request")
     if old.get("task_type")!="agents" or not data:raise HTTPException(400,"This task type cannot be retried automatically")
+    if row[1] not in ("failed","interrupted","cancelled"):raise HTTPException(409,"Only failed, interrupted or cancelled agent tasks can be retried")
     req=TeamRequest(**data);job=jobs.get(req.job_id)
     if not job:raise HTTPException(409,"Reopen the source project before retrying")
     clip=next((c for c in job["clips"] if c["id"]==req.clip_id),None)
@@ -2327,18 +2365,26 @@ def run_autopilot_cycle(item: dict):
                                    task_id if task_id in jobs else None, [], None)
 
 def _autopilot_scheduler():
-    while True:
+    while not _scheduler_stop.is_set():
         try:
             for item in autopilot_store.claim_due(TASK_DB):
+                if _scheduler_stop.is_set():
+                    break
                 run_autopilot_cycle(item)
         except Exception:
             pass
-        time.sleep(20)
+        _scheduler_stop.wait(20)
 
-@app.on_event("startup")
+
 def start_autopilot_scheduler():
-    if not any(t.name == "yaman-autopilot-scheduler" for t in threading.enumerate()):
-        threading.Thread(target=_autopilot_scheduler, name="yaman-autopilot-scheduler", daemon=True).start()
+    global _scheduler_thread
+    if _scheduler_thread and _scheduler_thread.is_alive():
+        return
+    _scheduler_thread = threading.Thread(
+        target=_autopilot_scheduler, name="yaman-autopilot-scheduler", daemon=True
+    )
+    _scheduler_thread.start()
+
 
 def run_agents_task(task_id: str, req: TeamRequest, job: dict, clip: dict, platforms: list[str]):
     """Run the specialist team, journal each step and persist its report."""
