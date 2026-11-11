@@ -1,4 +1,4 @@
-# Security, Privacy & Deployment Safety
+﻿# Security, Privacy & Deployment Safety
 
 **Security posture: local-use only for v1.8.0.** YAMAN VIRAL STUDIO PRO is local-first, but local-first is not synonymous with offline, authenticated or production-secure.
 
@@ -8,7 +8,7 @@ The Windows launcher binds the application to `127.0.0.1:8765`. Preserve loopbac
 
 The current application does not provide a general authentication/session and role-based authorization layer covering every sensitive API route. The `/workspace` directory is mounted as static content. A reverse proxy, firewall rule or HTTPS certificate does not compensate for missing application-level authorization.
 
-<badge color="danger">Not production-hardened for shared or public access</badge>
+**Deployment status: not production-hardened for shared or public access.**
 
 ## 2. Verified controls in v1.8.0
 
@@ -79,6 +79,7 @@ Only import, transform and publish media for which the operator has the required
 
 ## Related documentation
 
-- [Security Policy](../../SECURITY.md)
-- [Operations Runbook](../OPERATIONS-RUNBOOK.md)
-- [Testing Strategy](../TESTING-STRATEGY.md)
+- [Security Policy](https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO/blob/import/v1.8.0-premium-ai-creator-studio/SECURITY.md)
+- [Operations Runbook](https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO/blob/import/v1.8.0-premium-ai-creator-studio/docs/OPERATIONS-RUNBOOK.md)
+- [Testing Strategy](https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO/blob/import/v1.8.0-premium-ai-creator-studio/docs/TESTING-STRATEGY.md)
+
