@@ -80,6 +80,15 @@ if _PROFILE_FILE.exists():
         pass
 app = FastAPI(title="YAMAN VIRAL STUDIO PRO", version="1.4.0")
 app.mount("/assets", StaticFiles(directory=BASE / "web"), name="assets")
+
+@app.get("/sw.js", include_in_schema=False)
+def pwa_service_worker():
+    """Serve the root-scoped service worker with the required scope header."""
+    return FileResponse(
+        BASE / "web" / "sw.js",
+        media_type="application/javascript",
+        headers={"Service-Worker-Allowed": "/", "Cache-Control": "no-cache"},
+    )
 app.mount("/workspace", StaticFiles(directory=WORK), name="workspace")
 jobs: dict[str, dict[str, Any]] = {}
 task_states: dict[str, dict[str, Any]] = {}
