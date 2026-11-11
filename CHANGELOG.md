@@ -1,3 +1,15 @@
+## [1.8.0] - 2026-11-11
+
+### Added
+- Premium AI Creator Studio visual system with refined violet/blue accents, layered surfaces, a glass-effect top bar and responsive layout.
+- Collapsible desktop sidebar with persistent preference, icon-only mode, hover tooltips and grouped navigation.
+- One-click theme cycling from the top bar while preserving the Settings theme selector (Dark, Light and Ocean).
+- Theme-aware surfaces, form controls, metrics, media cards, progress states and accessible focus indicators.
+
+### Improved
+- Updated PWA asset cache version and static asset query strings to v1.8.0.
+- Preserved existing video, AI, Autopilot, media-library, Ollama and settings workflows.
+
 ## [1.7.0] - 2026-11-11
 
 ### Added
@@ -93,7 +105,7 @@
 - Mobile layout alignment for studio panels, summary controls, navigation, system metrics and editing options.
 - PWA cache version bumped to v1.5.6.
 
- / S├╝r├╝m Ge├ğmi┼şi
+ / SÔö£ÔòØrÔö£ÔòØm GeÔö£─şmiÔö╝┼şi
 
 
 ## [1.5.5] - 2026-11-11
@@ -135,7 +147,7 @@
 ## [1.4.1] - 2026-11-11
 
 ### Added
-- Moved the application language selector into Settings ÔåÆ Language & localization.
+- Moved the application language selector into Settings ├ö├Ñ├å Language & localization.
 - Added Turkish, English, German and Spanish locale options with browser-persisted preference.
 - Rebuilt all four README language pages with a consistent professional layout, real desktop/mobile screenshots, feature map, workflow, architecture and roadmap visuals.
 
@@ -146,38 +158,38 @@
 ## [1.4.0] - 2026-11-11
 
 ### Added
-- SQLite tabanl─▒ kal─▒c─▒ g├Ârev ve olay g├╝nl├╝─ş├╝.
-- Ajan g├Ârevlerini iptal etme, ba┼şar─▒s─▒z/kesintiye u─şram─▒┼ş g├Ârevleri yeniden deneme ve uygulama yeniden ba┼şlad─▒─ş─▒nda g├Ârev durumunu kurtarma.
-- Yerel AI ajan ├ğa─şr─▒lar─▒nda s─▒n─▒rl─▒ yeniden deneme politikas─▒.
-- YouTube, TikTok ve Instagram i├ğin resm├« OAuth ba─şlant─▒ ak─▒┼şlar─▒.
-- OAuth istemci kimlik bilgileri ve kullan─▒c─▒ tokenlar─▒ Fernet ile ┼şifrelenerek yerel kasada saklan─▒r.
-- YouTube Data API ile kullan─▒c─▒ onayl─▒ resumable MP4 y├╝kleme.
-- TikTok Content Posting API ile kullan─▒c─▒ onayl─▒ Direct Post dosya y├╝kleme ve AI-generated etiket tercihi.
-- Instagram Graph API ile Reels container ve yay─▒nlama ak─▒┼ş─▒; profesyonel hesap/Page ba─şlant─▒s─▒ ke┼şfi.
-- Platform Profilleri ekran─▒na geli┼ştirici Client ID/Secret kayd─▒, ba─şlant─▒ durumu, ba─şlan/kes kontrolleri eklendi.
-- Medya k├╝t├╝phanesine kullan─▒c─▒ onayl─▒ platform yay─▒nlama eylemi eklendi.
-- T├╝rk├ğe/─░ngilizce aray├╝z dil se├ğici eklendi.
-- README belgeleri dil ba┼ş─▒na ayr─▒ dosyalara ayr─▒ld─▒: README.md, README.en.md, README.de.md, README.es.md.
+- SQLite tabanlÔöÇÔûÆ kalÔöÇÔûÆcÔöÇÔûÆ gÔö£├érev ve olay gÔö£ÔòØnlÔö£ÔòØÔöÇ┼şÔö£ÔòØ.
+- Ajan gÔö£├érevlerini iptal etme, baÔö╝┼şarÔöÇÔûÆsÔöÇÔûÆz/kesintiye uÔöÇ┼şramÔöÇÔûÆÔö╝┼ş gÔö£├érevleri yeniden deneme ve uygulama yeniden baÔö╝┼şladÔöÇÔûÆÔöÇ┼şÔöÇÔûÆnda gÔö£├érev durumunu kurtarma.
+- Yerel AI ajan Ôö£─şaÔöÇ┼şrÔöÇÔûÆlarÔöÇÔûÆnda sÔöÇÔûÆnÔöÇÔûÆrlÔöÇÔûÆ yeniden deneme politikasÔöÇÔûÆ.
+- YouTube, TikTok ve Instagram iÔö£─şin resmÔö£┬½ OAuth baÔöÇ┼şlantÔöÇÔûÆ akÔöÇÔûÆÔö╝┼şlarÔöÇÔûÆ.
+- OAuth istemci kimlik bilgileri ve kullanÔöÇÔûÆcÔöÇÔûÆ tokenlarÔöÇÔûÆ Fernet ile Ôö╝┼şifrelenerek yerel kasada saklanÔöÇÔûÆr.
+- YouTube Data API ile kullanÔöÇÔûÆcÔöÇÔûÆ onaylÔöÇÔûÆ resumable MP4 yÔö£ÔòØkleme.
+- TikTok Content Posting API ile kullanÔöÇÔûÆcÔöÇÔûÆ onaylÔöÇÔûÆ Direct Post dosya yÔö£ÔòØkleme ve AI-generated etiket tercihi.
+- Instagram Graph API ile Reels container ve yayÔöÇÔûÆnlama akÔöÇÔûÆÔö╝┼şÔöÇÔûÆ; profesyonel hesap/Page baÔöÇ┼şlantÔöÇÔûÆsÔöÇÔûÆ keÔö╝┼şfi.
+- Platform Profilleri ekranÔöÇÔûÆna geliÔö╝┼ştirici Client ID/Secret kaydÔöÇÔûÆ, baÔöÇ┼şlantÔöÇÔûÆ durumu, baÔöÇ┼şlan/kes kontrolleri eklendi.
+- Medya kÔö£ÔòØtÔö£ÔòØphanesine kullanÔöÇÔûÆcÔöÇÔûÆ onaylÔöÇÔûÆ platform yayÔöÇÔûÆnlama eylemi eklendi.
+- TÔö£ÔòØrkÔö£─şe/ÔöÇÔûængilizce arayÔö£ÔòØz dil seÔö£─şici eklendi.
+- README belgeleri dil baÔö╝┼şÔöÇÔûÆna ayrÔöÇÔûÆ dosyalara ayrÔöÇÔûÆldÔöÇÔûÆ: README.md, README.en.md, README.de.md, README.es.md.
 
 ### Changed
-- CPU kart─▒nda yaln─▒zca i┼şlemci modeli ve i┼şlemci kullan─▒m─▒ g├Âsterilir.
-- CPU s─▒cakl─▒─ş─▒, ├ğekirdek/thread, saat h─▒z─▒ ve GPU s─▒cakl─▒─ş─▒ aray├╝zden ve telemetri yan─▒t─▒ndan kald─▒r─▒ld─▒.
-- T├╝rk├ğe gezinme men├╝s├╝ ve g├Âr├╝n├╝r metinler UTF-8/HTML entity tabanl─▒ olarak yeniden d├╝zenlendi.
-- S├╝r├╝m 1.4.0 olarak g├╝ncellendi.
+- CPU kartÔöÇÔûÆnda yalnÔöÇÔûÆzca iÔö╝┼şlemci modeli ve iÔö╝┼şlemci kullanÔöÇÔûÆmÔöÇÔûÆ gÔö£├ésterilir.
+- CPU sÔöÇÔûÆcaklÔöÇÔûÆÔöÇ┼şÔöÇÔûÆ, Ôö£─şekirdek/thread, saat hÔöÇÔûÆzÔöÇÔûÆ ve GPU sÔöÇÔûÆcaklÔöÇÔûÆÔöÇ┼şÔöÇÔûÆ arayÔö£ÔòØzden ve telemetri yanÔöÇÔûÆtÔöÇÔûÆndan kaldÔöÇÔûÆrÔöÇÔûÆldÔöÇÔûÆ.
+- TÔö£ÔòØrkÔö£─şe gezinme menÔö£ÔòØsÔö£ÔòØ ve gÔö£├érÔö£ÔòØnÔö£ÔòØr metinler UTF-8/HTML entity tabanlÔöÇÔûÆ olarak yeniden dÔö£ÔòØzenlendi.
+- SÔö£ÔòØrÔö£ÔòØm 1.4.0 olarak gÔö£ÔòØncellendi.
 
 ### OAuth limitations and requirements
-- Ger├ğek hesap ba─şlant─▒s─▒ i├ğin platform geli┼ştirici uygulamas─▒, Client ID/Secret, do─şru callback adresi ve platform taraf─▒ndan onaylanm─▒┼ş kapsamlar gerekir.
-- TikTok'un denetlenmemi┼ş istemcileri yaln─▒zca ├Âzel g├Ânderi yay─▒nlayabilir.
-- Instagram Reels, Meta'n─▒n eri┼şebildi─şi genel HTTPS medya URL'si gerektirir; localhost dosyalar─▒ kullan─▒lamaz.
-- Her yay─▒n iste─şi kullan─▒c─▒ onay─▒ gerektirir; arka planda sessiz yay─▒n yap─▒lmaz.
+- GerÔö£─şek hesap baÔöÇ┼şlantÔöÇÔûÆsÔöÇÔûÆ iÔö£─şin platform geliÔö╝┼ştirici uygulamasÔöÇÔûÆ, Client ID/Secret, doÔöÇ┼şru callback adresi ve platform tarafÔöÇÔûÆndan onaylanmÔöÇÔûÆÔö╝┼ş kapsamlar gerekir.
+- TikTok'un denetlenmemiÔö╝┼ş istemcileri yalnÔöÇÔûÆzca Ôö£├ézel gÔö£├énderi yayÔöÇÔûÆnlayabilir.
+- Instagram Reels, Meta'nÔöÇÔûÆn eriÔö╝┼şebildiÔöÇ┼şi genel HTTPS medya URL'si gerektirir; localhost dosyalarÔöÇÔûÆ kullanÔöÇÔûÆlamaz.
+- Her yayÔöÇÔûÆn isteÔöÇ┼şi kullanÔöÇÔûÆcÔöÇÔûÆ onayÔöÇÔûÆ gerektirir; arka planda sessiz yayÔöÇÔûÆn yapÔöÇÔûÆlmaz.
 
 ## [1.3.0] - 2026-11-11
-- D├Ârt uzman ajan eklendi; toplam ajan say─▒s─▒ 12'ye ├ğ─▒kar─▒ld─▒.
-- Mobil d├╝zen, platform profilleri ve k─▒sa video kesit se├ğimi iyile┼ştirildi.
-- Videodan ak─▒ll─▒ ├Âzet MP4 ├╝retimi ve rapor kartlar─▒ eklendi.
+- DÔö£├ért uzman ajan eklendi; toplam ajan sayÔöÇÔûÆsÔöÇÔûÆ 12'ye Ôö£─şÔöÇÔûÆkarÔöÇÔûÆldÔöÇÔûÆ.
+- Mobil dÔö£ÔòØzen, platform profilleri ve kÔöÇÔûÆsa video kesit seÔö£─şimi iyileÔö╝┼ştirildi.
+- Videodan akÔöÇÔûÆllÔöÇÔûÆ Ôö£├ézet MP4 Ôö£ÔòØretimi ve rapor kartlarÔöÇÔûÆ eklendi.
 
 ## [1.2.1] - 2026-11-10
-- Studio sayfas─▒ onar─▒ld─▒; yerel video tarama, transkripsiyon ve sistem g├Âstergeleri geli┼ştirildi.
+- Studio sayfasÔöÇÔûÆ onarÔöÇÔûÆldÔöÇÔûÆ; yerel video tarama, transkripsiyon ve sistem gÔö£├éstergeleri geliÔö╝┼ştirildi.
 
 ## [1.5.3] - Story-flow video format
 

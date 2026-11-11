@@ -6,7 +6,7 @@ Estudio local de **reutilización de vídeo con IA** para analizar vídeos, tran
 
 <p align="center"><a href="https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO/actions/workflows/ci.yml"><img src="https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO/actions/workflows/ci.yml/badge.svg?branch=import%2Fv1.2-source" alt="Estado de CI"></a> <img src="https://img.shields.io/badge/AI-Local--First-7C5CFA" alt="IA local"> <img src="https://img.shields.io/badge/PWA-Instalable-5B8DEF" alt="PWA"></p>
 
-**v1.5.2 · PWA e interfaz adaptable.** Las vistas de escritorio y móvil son ilustraciones de diseño, no capturas en directo de la aplicación.
+**v1.8.0 · Premium AI Creator Studio.** Acentos violeta y azul, barra lateral plegable con iconos, tooltips y cambio rápido entre temas oscuro, océano y claro.
 
 ## Funciones principales
 - Importación de fuentes de YouTube autorizadas o vídeos locales de Windows.
@@ -16,6 +16,7 @@ Estudio local de **reutilización de vídeo con IA** para analizar vídeos, tran
 - Agentes especializados y registro persistente de tareas.
 - Configuración de modelos locales de Ollama y Whisper.
 - Supervisión de GPU, CPU, RAM y VRAM.
+- Tres temas visuales y panel premium adaptable a escritorio y móvil.
 
 ## Capturas
 | Escritorio | Móvil |

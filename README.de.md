@@ -6,7 +6,7 @@ Lokales **KI-Video-Repurposing-Studio** für Videoanalyse, Transkription und die
 
 <p align="center"><a href="https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO/actions/workflows/ci.yml"><img src="https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO/actions/workflows/ci.yml/badge.svg?branch=import%2Fv1.2-source" alt="CI-Status"></a> <img src="https://img.shields.io/badge/AI-Local--First-7C5CFA" alt="Lokale KI"> <img src="https://img.shields.io/badge/PWA-installierbar-5B8DEF" alt="PWA"></p>
 
-**v1.5.2 · PWA und responsives UI.** Die Desktop- und Mobilansichten sind illustrative Designvorschauen, keine Live-Screenshots.
+**v1.8.0 · Premium AI Creator Studio.** Mit violett-blauen Akzenten, einklappbarer Symbolnavigation, Tooltips und schnellem Wechsel zwischen Dunkel-, Ozean- und hellem Design.
 
 ## Funktionen
 - Import geeigneter YouTube-Quellen oder lokaler Videos aus dem Windows-Downloads-Ordner.
@@ -16,6 +16,7 @@ Lokales **KI-Video-Repurposing-Studio** für Videoanalyse, Transkription und die
 - KI-Agenten und dauerhaft gespeicherter Aufgabenverlauf.
 - Konfiguration von Ollama- und Whisper-Modellen.
 - Überwachung von GPU, CPU, RAM und VRAM.
+- Drei anpassbare Farbschemata und responsives Premium-Dashboard.
 
 ## Screenshots
 | Desktop | Mobil |

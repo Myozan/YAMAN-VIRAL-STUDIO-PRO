@@ -80,7 +80,7 @@ if _PROFILE_FILE.exists():
                 PLATFORM_PROFILES[key].update({k: value[k] for k in ("width", "height", "max_seconds") if k in value})
     except Exception:
         pass
-app = FastAPI(title="YAMAN VIRAL STUDIO PRO", version="1.7.0")
+app = FastAPI(title="YAMAN VIRAL STUDIO PRO", version="1.8.0")
 
 def _windows_disconnect_exception_handler(loop, context):
     """Ignore only expected Windows Proactor peer-reset events on client disconnect."""

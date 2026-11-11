@@ -6,7 +6,7 @@
 
 <p align="center">
 
-[![Version](https://img.shields.io/badge/version-1.6.0-6478ff)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.8.0-8b78f6)](CHANGELOG.md)
 [![CI](https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO/actions/workflows/ci.yml/badge.svg?branch=import%2Fv1.2-source)](https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/Python-3.12-3776AB)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/API-FastAPI-009688)](https://fastapi.tiangolo.com/)
@@ -82,6 +82,7 @@ When local AI output is invalid, transcript-based salience scoring selects momen
 - User-approved publishing preparation for YouTube, TikTok and Instagram.
 - GPU, CPU, RAM and VRAM telemetry.
 - Responsive desktop/mobile web UI and installable PWA.
+- v1.8.0 premium AI Creator Studio theme with violet/blue accents, collapsible icon sidebar, hover tooltips and one-click Dark/Ocean/Light theme switching.
 - Turkish, English, German and Spanish interface.
 
 ## Cinematic trailer and AI B-roll studio

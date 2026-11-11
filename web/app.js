@@ -9,7 +9,7 @@ const UI_TEXT={
   "metric.gpu":"GPU KULLANIMI","metric.cpu":"\u0130\u015eLEMC\u0130 KULLANIMI","metric.ram":"BELLEK","metric.vram":"GPU BELLE\u011e\u0130"
  },
  en:{
-  "nav.studio":"\u25c8\u3000Studio","nav.content":"\u25a3\u3000Content","nav.projects":"\u25f7\u3000Projects","nav.media":"\u25b6\u3000Media library","nav.platforms":"\u25a4\u3000Platform profiles","nav.settings":"\u2699\u3000Settings",
+  "nav.studio":"Studio","nav.content":"Content","nav.projects":"Projects","nav.media":"Media library","nav.platforms":"Platform profiles","nav.settings":"Settings",
   "appearance.label":"APPEARANCE","language.label":"INTERFACE LANGUAGE","local.name":"LOCAL AI ENGINE","local.info":"Your data is processed on this computer",
   "studio.title":"Create more from every video.","studio.subtitle":"Analyze long videos, find the strongest moments and prepare vertical content for every platform.","studio.newProject":"New video project","studio.youtubeUrl":"YouTube video URL","studio.analyze":"Analyze","studio.downloads":"Downloaded videos","studio.scan":"Scan Downloads folder","studio.clipCount":"Number of Shorts","studio.speechLanguage":"Speech language",
   "projects.title":"Projects","media.title":"Video library","platforms.title":"Platform profiles","settings.title":"Settings","settings.localAI":"Local AI engine","settings.whisper":"Whisper transcription","settings.languageTitle":"Language & localization","settings.languageDescription":"Choose the application interface language. Your preference is saved in this browser.","settings.languageNote":"Your language preference is applied immediately; no restart is required.",
@@ -17,7 +17,7 @@ const UI_TEXT={
   "metric.gpu":"GPU USAGE","metric.cpu":"CPU USAGE","metric.ram":"MEMORY","metric.vram":"GPU MEMORY"
  },
  de:{
-  "nav.studio":"\u25c8\u3000Studio","nav.content":"\u25a3\u3000Inhalte","nav.projects":"\u25f7\u3000Projekte","nav.media":"\u25b6\u3000Mediathek","nav.platforms":"\u25a4\u3000Plattformprofile","nav.settings":"\u2699\u3000Einstellungen",
+  "nav.studio":"Studio","nav.content":"Inhalte","nav.projects":"Projekte","nav.media":"Mediathek","nav.platforms":"Plattformprofile","nav.settings":"Einstellungen",
   "appearance.label":"DARSTELLUNG","language.label":"ANWENDUNGSSPRACHE","local.name":"LOKALE KI-ENGINE","local.info":"Deine Daten werden auf diesem Computer verarbeitet",
   "studio.title":"Mehr aus jedem Video machen.","studio.subtitle":"Lange Videos analysieren, starke Momente finden und vertikale Inhalte vorbereiten.","studio.newProject":"Neues Videoprojekt","studio.youtubeUrl":"YouTube-Video-URL","studio.analyze":"Analysieren","studio.downloads":"Heruntergeladene Videos","studio.scan":"Downloads-Ordner durchsuchen","studio.clipCount":"Anzahl der Shorts","studio.speechLanguage":"Gesprochene Sprache",
   "projects.title":"Projekte","media.title":"Mediathek","platforms.title":"Plattformprofile","settings.title":"Einstellungen","settings.localAI":"Lokale KI-Engine","settings.whisper":"Whisper-Transkription","settings.languageTitle":"Sprache & Lokalisierung","settings.languageDescription":"W\u00e4hle die Sprache der Anwendungsoberfl\u00e4che. Deine Auswahl wird in diesem Browser gespeichert.","settings.languageNote":"Die Sprachwahl wird sofort \u00fcbernommen; ein Neustart ist nicht erforderlich.",
@@ -25,7 +25,7 @@ const UI_TEXT={
   "metric.gpu":"GPU-AUSLASTUNG","metric.cpu":"CPU-AUSLASTUNG","metric.ram":"ARBEITSSPEICHER","metric.vram":"GPU-SPEICHER"
  },
  es:{
-  "nav.studio":"\u25c8\u3000Studio","nav.content":"\u25a3\u3000Contenido","nav.projects":"\u25f7\u3000Proyectos","nav.media":"\u25b6\u3000Biblioteca multimedia","nav.platforms":"\u25a4\u3000Perfiles de plataforma","nav.settings":"\u2699\u3000Ajustes",
+  "nav.studio":"Studio","nav.content":"Contenido","nav.projects":"Proyectos","nav.media":"Biblioteca multimedia","nav.platforms":"Perfiles de plataforma","nav.settings":"Ajustes",
   "appearance.label":"APARIENCIA","language.label":"IDIOMA DE LA APLICACI\u00d3N","local.name":"MOTOR DE IA LOCAL","local.info":"Tus datos se procesan en este equipo",
   "studio.title":"Crea m\u00e1s con cada v\u00eddeo.","studio.subtitle":"Analiza v\u00eddeos largos, encuentra los mejores momentos y prepara contenido vertical.","studio.newProject":"Nuevo proyecto de v\u00eddeo","studio.youtubeUrl":"URL del v\u00eddeo de YouTube","studio.analyze":"Analizar","studio.downloads":"V\u00eddeos descargados","studio.scan":"Buscar en la carpeta Descargas","studio.clipCount":"N\u00famero de Shorts","studio.speechLanguage":"Idioma hablado",
   "projects.title":"Proyectos","media.title":"Biblioteca de v\u00eddeos","platforms.title":"Perfiles de plataforma","settings.title":"Ajustes","settings.localAI":"Motor de IA local","settings.whisper":"Transcripci\u00f3n Whisper","settings.languageTitle":"Idioma y localizaci\u00f3n","settings.languageDescription":"Elige el idioma de la interfaz. Tu preferencia se guarda en este navegador.","settings.languageNote":"El idioma se aplica al instante; no es necesario reiniciar la aplicaci\u00f3n.",
@@ -33,7 +33,7 @@ const UI_TEXT={
   "metric.gpu":"USO DE GPU","metric.cpu":"USO DE CPU","metric.ram":"MEMORIA","metric.vram":"MEMORIA DE GPU"
  }};
 const LOCALE_SELECTORS={
- "nav.studio":'#sidebarNav [data-page="studio"]',"nav.content":'#sidebarNav [data-page="content"]',"nav.projects":'#sidebarNav [data-page="projects"]',"nav.media":'#sidebarNav [data-page="media"]',"nav.platforms":'#sidebarNav [data-page="platforms"]',"nav.settings":'#sidebarNav [data-page="settings"]',
+ "nav.studio":'#sidebarNav [data-page="studio"] .nav-label',"nav.content":'#sidebarNav [data-page="content"] .nav-label',"nav.projects":'#sidebarNav [data-page="projects"] .nav-label',"nav.media":'#sidebarNav [data-page="media"] .nav-label',"nav.platforms":'#sidebarNav [data-page="platforms"] .nav-label',"nav.settings":'#sidebarNav [data-page="settings"] .nav-label',
  "appearance.label":'label[for="themeSelect"]',"language.label":'label[for="languageSelect"]',"settings.languageTitle":'#page-settings .language-settings-panel h3',"settings.languageDescription":'#page-settings .language-settings-panel .panelhead p',"settings.languageNote":'#page-settings .language-settings-panel .notice',"local.name":'.local b',"local.info":'.local small',
  "studio.title":'#page-studio header h1',"studio.subtitle":'#page-studio header p',"studio.newProject":'#page-studio .panelhead h3',"studio.youtubeUrl":'#page-studio label[data-i18n="studio.youtubeUrl"]',"studio.analyze":'#analyze span',"studio.downloads":'#page-studio h3[data-i18n="studio.downloads"]',"studio.scan":'#scanDownloads',"studio.clipCount":'label[data-i18n="studio.clipCount"]',"studio.speechLanguage":'label[data-i18n="studio.speechLanguage"]',
  "projects.title":'#page-projects header h1',"media.title":'#page-media header h1',"platforms.title":'#page-platforms header h1',"settings.title":'#page-settings header h1',"settings.localAI":'#page-settings h3[data-i18n="settings.localAI"]',"settings.whisper":'#page-settings h3[data-i18n="settings.whisper"]',
@@ -710,3 +710,16 @@ $("startOllama")?.addEventListener("click",async()=>{
  catch(e){box.textContent=e.message;}finally{button.disabled=false;}
 });
 refreshLocalEngineStatus();
+
+
+
+/* v1.8.0 quick theme switch; theme selection remains available in Settings. */
+document.getElementById("themeCycle")?.addEventListener("click",()=>{
+ const order=["dark","ocean","light"],current=document.documentElement.dataset.theme||"dark";
+ const next=order[(order.indexOf(current)+1)%order.length];
+ applyTheme(next);
+ const labels={dark:"Gece",ocean:"Okyanus",light:"Açık"};
+ const button=document.getElementById("themeCycle");
+ button.title="Tema: "+labels[next]+" · Değiştirmek için tıkla";
+ button.setAttribute("aria-label",button.title);
+});

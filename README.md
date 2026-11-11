@@ -6,9 +6,9 @@
 
 ### Yerel yapay zekâ destekli video analiz, Shorts üretimi ve çok formatlı içerik stüdyosu
 
-**v1.7.0 · Local-first AI · Windows · PWA**
+**v1.8.0 · Premium AI Creator Studio · Local-first AI · Windows · PWA**
 
-[![Version](https://img.shields.io/badge/version-1.7.0-6478ff?style=for-the-badge)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.8.0-8b78f6?style=for-the-badge)](CHANGELOG.md)
 [![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/API-FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![License](https://img.shields.io/badge/License-MIT-2ea44f?style=for-the-badge)](LICENSE)
@@ -38,6 +38,11 @@ Ollama, Faster-Whisper ve FFmpeg tabanlı temel iş akışı bilgisayarınızda 
 - Ayarlar içinden Ollama bağlantı kontrolü ve başlatma.
 - Windows video aktarımında istemci bağlantısı kesilmelerinin kontrollü yönetimi.
 - Türkçe, İngilizce, Almanca ve İspanyolca arayüz; üç görünüm teması.
+- v1.8.0 Premium AI Creator Studio: daraltılabilir ikon menüsü, tooltip navigasyonu, mor-mavi tasarım dili ve üst çubuktan hızlı tema değiştirme.
+
+## v1.8.0 — Premium AI Creator Studio
+
+Arayüz; profesyonel mor-mavi vurgu paleti, derin katmanlı paneller, cam efektli üst çubuk, yenilenmiş kartlar ve daha net tipografiyle güncellendi. Masaüstünde sol menü daraltılarak ikon moduna alınabilir; tercih tarayıcıda saklanır ve ikonların üzerine gelindiğinde araç ipuçları görünür. Üst çubuktaki tema düğmesi Gece, Okyanus ve Açık temalar arasında geçiş yapar. Ayarlar bölümündeki tema seçici korunmuştur. Video işleme, Ollama, Autopilot, medya kütüphanesi ve mevcut üretim akışları değiştirilmemiştir.
 
 ## v1.7.0 — Akıllı kurgu ve yerel motor güvenilirliği
 
