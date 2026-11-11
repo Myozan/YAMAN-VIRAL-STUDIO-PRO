@@ -27,6 +27,22 @@ erDiagram
     TEXT stage
     TEXT payload_json
   }
+  TASK_QUEUE {
+    TEXT task_id PK
+    TEXT task_type
+    TEXT payload_json
+    TEXT status
+    INTEGER priority
+    INTEGER attempts
+    INTEGER max_attempts
+    TEXT available_at
+    TEXT owner_id
+    TEXT lease_expires_at
+    TEXT last_error
+    TEXT idempotency_key
+    TEXT created_at
+    TEXT updated_at
+  }
   TASK_EVENTS {
     INTEGER id PK
     TEXT task_id FK_LOGICAL
@@ -74,6 +90,7 @@ erDiagram
     REAL created_at
   }
   TASKS ||--o{ TASK_EVENTS : "logical task_id"
+  TASKS ||--o| TASK_QUEUE : "same task_id"
   AUTOPILOTS ||--o{ AUTOPILOT_RUNS : "logical autopilot_id"
   TASKS o|--o{ AUTOPILOT_RUNS : "optional task_id reference"
 ```
@@ -114,8 +131,13 @@ The learning engine groups observations by platform. Its adjustment helper retur
 
 ```mermaid
 flowchart TD
-  IN[Analyze request] --> TASK[Insert tasks row]
-  TASK --> EVT[Append task_events]
+  IN[Analyze request] --> TX[Atomic SQLite transaction]
+  TX --> TASK[Insert tasks row]
+  TX --> QUEUE[Insert task_queue payload]
+  TX --> EVT[Append task_events]
+  QUEUE --> CLAIM[Worker claims lease]
+  CLAIM --> EXEC[Run media handler]
+  EXEC --> TASK
   TASK --> WORK[Create job folder]
   WORK --> JSON[Write job.json snapshot]
   JSON --> RENDER[Render clip / summary]
@@ -129,6 +151,7 @@ flowchart TD
 ## 6. Consistency and backup
 
 - Stop the application before copying both SQLite files using a simple file copy.
+- The orchestration database includes `task_queue`; back it up together with `tasks`, `task_events`, task worker registry and the workspace files so pending work remains recoverable.
 - Prefer SQLite's online backup API or a controlled snapshot if a live backup mechanism is introduced.
 - Back up the workspace, local settings and encryption key as one coordinated set.
 - Encrypt backups and restrict access: workspace may contain personal media, tokens and generated outputs.

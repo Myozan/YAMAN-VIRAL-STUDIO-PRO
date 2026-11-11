@@ -26,15 +26,15 @@ A healthy API does not imply all optional providers are configured. Third-party 
 
 - Stop the application using its terminal window.
 - Avoid terminating during a render or database write.
-- Each worker registers a heartbeat every 10 seconds. A task is marked interrupted only after its owning worker lease expires (45 seconds) or that worker shuts down; starting another worker does not interrupt active work. A background reaper checks stale leases every 10 seconds.
-- Inspect task history after a crash and confirm partial outputs before retrying. The current FastAPI `BackgroundTasks` queue is process-local: recovered tasks are marked interrupted, not automatically replayed on another worker.
-- Retry interrupted work only after confirming that any partial output is safe to replace.
+- Each process registers a worker heartbeat every 10 seconds. Core media tasks also renew a task-specific 90-second execution lease every 15 seconds.
+- Analysis (remote/local), render, summary and agent tasks are stored in the durable SQLite queue and claimed by the process worker poller. If a worker disappears, another same-host worker requeues the task after its execution lease expires; worker-crash retry delay grows exponentially and is capped at five minutes, with three attempts by default. Application-level task failures remain failed for explicit review/retry.
+- Queue execution is at-least-once. A crash after an output is written but before completion is acknowledged can repeat the handler. Inspect partial outputs and confirm overwrite safety before manual intervention.
+- Autopilot and other non-core background workflows still use their existing in-process scheduling path; they are not part of the durable queue yet.
 
 ## 4. Multi-worker operating boundary
 
-- Multiple Uvicorn workers may share the same local `workspace/orchestration.sqlite3` database on one host. SQLite WAL requires a local filesystem; do not place the database on a network share.
-- Task state, cancellation and saved job metadata are shared through SQLite/filesystem. Actual background execution remains tied to the worker that accepted the request.
-- Multi-host execution is not supported by this SQLite/BackgroundTasks setup. It requires a shared PostgreSQL database and a durable task broker/worker system.
+- Multiple Uvicorn workers may share the same local `workspace/orchestration.sqlite3` database on one host. Task state, queue payloads, leases, cancellation and saved job metadata are shared through SQLite/filesystem; core media tasks can be reclaimed by another worker process after lease expiry.
+- SQLite WAL requires a local filesystem; do not place the database on a network share. Multi-host execution is not supported and requires PostgreSQL plus a durable distributed broker/worker system.
 
 ## 5. Backup
 
@@ -65,7 +65,8 @@ Stop the application before a plain file-copy backup of SQLite. Encrypt the back
 | FFmpeg render fails | Missing codec, bad source or disk full | Run FFprobe, verify free space and FFmpeg install |
 | OAuth callback rejected | State mismatch/expiry or redirect URI mismatch | Restart OAuth flow and verify exact redirect URI |
 | Provider upload rejected | Missing scope, app review, quota or account eligibility | Inspect sanitized provider response and app permissions |
-| Task interrupted | App restarted or process exited | Inspect partial files and retry if safe |
+| Task remains running after worker crash | Queue lease has not expired yet | Allow the 90-second execution lease to expire; inspect queue/task history and partial outputs |
+| Task failed after repeated worker crashes | Maximum queue attempts exhausted | Inspect the last error and partial outputs, then create a fresh task after resolving the cause |
 | Encrypted vault cannot decrypt | Key mismatch or missing key | Restore matching key/vault backup; do not overwrite originals |
 
 ## 8. Incident data handling

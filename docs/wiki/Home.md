@@ -17,6 +17,7 @@ YAMAN VIRAL STUDIO PRO, Windows üzerinde çalışan yerel öncelikli bir AI vid
 - [Database ERD](Database-ERD)
 - [Workflow Sequence Diagrams](Workflow-Sequences)
 - [Testing Strategy](Testing-Strategy)
+- [Durable Task Queue](Durable-Task-Queue)
 - [Operations Runbook](Operations-Runbook)
 - [Architecture](Architecture)
 - [API Reference](API-Reference)

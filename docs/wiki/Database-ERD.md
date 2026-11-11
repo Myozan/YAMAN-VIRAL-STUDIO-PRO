@@ -1,6 +1,20 @@
-# Database ERD
+# Database ERD — v1.8.0
 
-The current v1.8.0 runtime uses local SQLite and filesystem-backed job snapshots. Relationships shown below are logical; the inspected tables do not declare SQL foreign-key constraints.
+This document records the SQLite structures found in the current source code. The diagram shows logical references; the inspected schema does not declare SQL foreign-key constraints for these relationships.
+
+## 1. Database topology
+
+```mermaid
+flowchart LR
+  APP[FastAPI application]
+  APP --> O[(workspace/orchestration.sqlite3)]
+  APP --> L[(workspace/viral_learning.sqlite3)]
+  APP --> J[workspace/job_id/job.json]
+  APP --> V[Encrypted vault files]
+  APP --> S[settings.local.json]
+```
+
+## 2. Orchestration ERD
 
 ```mermaid
 erDiagram
@@ -12,6 +26,22 @@ erDiagram
     INTEGER percent
     TEXT stage
     TEXT payload_json
+  }
+  TASK_QUEUE {
+    TEXT task_id PK
+    TEXT task_type
+    TEXT payload_json
+    TEXT status
+    INTEGER priority
+    INTEGER attempts
+    INTEGER max_attempts
+    TEXT available_at
+    TEXT owner_id
+    TEXT lease_expires_at
+    TEXT last_error
+    TEXT idempotency_key
+    TEXT created_at
+    TEXT updated_at
   }
   TASK_EVENTS {
     INTEGER id PK
@@ -34,8 +64,12 @@ erDiagram
     TEXT timezone
     INTEGER enabled
     TEXT next_run
+    TEXT last_run
     TEXT last_status
+    TEXT last_message
     TEXT processed_json
+    TEXT created_at
+    TEXT updated_at
   }
   AUTOPILOT_RUNS {
     TEXT id PK
@@ -55,11 +89,13 @@ erDiagram
     TEXT redirect_uri
     REAL created_at
   }
-  TASKS ||--o{ TASK_EVENTS : task_id
-  AUTOPILOTS ||--o{ AUTOPILOT_RUNS : autopilot_id
+  TASKS ||--o{ TASK_EVENTS : "logical task_id"
+  TASKS ||--o| TASK_QUEUE : "same task_id"
+  AUTOPILOTS ||--o{ AUTOPILOT_RUNS : "logical autopilot_id"
+  TASKS o|--o{ AUTOPILOT_RUNS : "optional task_id reference"
 ```
 
-## Separate learning database
+## 3. Learning database ERD
 
 ```mermaid
 erDiagram
@@ -77,11 +113,51 @@ erDiagram
   }
 ```
 
-- `orchestration.sqlite3`: tasks, task_events, autopilots, autopilot_runs and oauth_states.
-- `viral_learning.sqlite3`: performance observations.
-- `workspace/{job_id}/job.json`: transcript, clip candidates and job metadata.
-- Encrypted vault files store OAuth and optional provider credentials.
+The learning engine groups observations by platform. Its adjustment helper returns zero until a platform has at least three observations. It is a simple heuristic, not a trained predictive model.
 
-The learning engine's adjustment helper returns zero until at least three samples exist for a platform. It is a lightweight heuristic, not a trained model.
+## 4. Filesystem-backed records
 
-Full schema, storage lifecycle and backup notes: [Database ERD source](https://github.com/Myozan/YAMAN-VIRAL-STUDIO-PRO/blob/import/v1.8.0-premium-ai-creator-studio/docs/DATABASE-ERD.md).
+| Path | Contents | Relational? |
+|---|---|---|
+| `workspace/{job_id}/job.json` | Job metadata, transcript segments, clips, source video path | No |
+| `workspace/{job_id}/` | Source and generated media | No |
+| `workspace/oauth_tokens.enc` | Encrypted OAuth token data | No |
+| `workspace/oauth_apps.enc` | Encrypted OAuth app credentials | No |
+| `workspace/visual_providers.enc` | Encrypted visual provider keys | No |
+| `settings.local.json` | Local Ollama/Whisper settings | No |
+| `.oauth.key` | Fernet key file (default path) | No |
+
+## 5. Data lifecycle
+
+```mermaid
+flowchart TD
+  IN[Analyze request] --> TX[Atomic SQLite transaction]
+  TX --> TASK[Insert tasks row]
+  TX --> QUEUE[Insert task_queue payload]
+  TX --> EVT[Append task_events]
+  QUEUE --> CLAIM[Worker claims lease]
+  CLAIM --> EXEC[Run media handler]
+  EXEC --> TASK
+  TASK --> WORK[Create job folder]
+  WORK --> JSON[Write job.json snapshot]
+  JSON --> RENDER[Render clip / summary]
+  RENDER --> ASSET[Write MP4 and subtitle assets]
+  PERF[Performance API input] --> LEARN[Insert performance row]
+  AUTO[Autopilot plan] --> AP[(autopilots)]
+  AP --> RUN[(autopilot_runs)]
+  RUN -. optional logical link .-> TASK
+```
+
+## 6. Consistency and backup
+
+- Stop the application before copying both SQLite files using a simple file copy.
+- The orchestration database includes `task_queue`; back it up together with `tasks`, `task_events`, task worker registry and the workspace files so pending work remains recoverable.
+- Prefer SQLite's online backup API or a controlled snapshot if a live backup mechanism is introduced.
+- Back up the workspace, local settings and encryption key as one coordinated set.
+- Encrypt backups and restrict access: workspace may contain personal media, tokens and generated outputs.
+- Restore into an isolated location first; verify database integrity, job files, media paths and vault decryption.
+- Never commit SQLite databases, private media, vaults or key files to Git.
+
+## 7. Migration notes
+
+Before migrating to PostgreSQL, define explicit foreign keys, indexes, transaction boundaries, migration versioning and ownership columns. Do not infer that JSON payload columns or filesystem paths can be migrated safely without a data migration plan.

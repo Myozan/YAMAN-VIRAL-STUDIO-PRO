@@ -172,8 +172,7 @@ def test_retry_claim_and_retry_task_row_commit_together(api, monkeypatch):
     }
     main.set_task("qa36-retry-source", 100, "Failed", "failed", task_type="agents",
                   request={"job_id": "qa36-retry-job", "clip_id": 4, "platforms": ["youtube"]})
-    scheduled = []
-    monkeypatch.setattr(main, "run_agents_task", lambda *args: scheduled.append(args))
+    monkeypatch.setattr(main, "run_agents_task", lambda *args: None)
     response = api.post("/api/tasks/qa36-retry-source/retry")
     assert response.status_code == 200
     retry_id = response.json()["task_id"]
@@ -181,10 +180,13 @@ def test_retry_claim_and_retry_task_row_commit_together(api, monkeypatch):
         claim = db.execute("SELECT retry_task_id FROM task_retry_claims WHERE source_task_id=?",
                            ("qa36-retry-source",)).fetchone()
         task = db.execute("SELECT status,payload_json FROM tasks WHERE task_id=?", (retry_id,)).fetchone()
+        queued = db.execute("SELECT task_type,payload_json FROM task_queue WHERE task_id=?", (retry_id,)).fetchone()
     assert claim == (retry_id,)
-    assert task[0] == "queued"
+    assert task[0] in {"queued", "running", "failed", "completed"}
     assert json.loads(task[1])["retry_of"] == "qa36-retry-source"
-    assert len(scheduled) == 1
+    assert queued is not None
+    assert queued[0] == "agents"
+    assert json.loads(queued[1])["request"]["job_id"] == "qa36-retry-job"
 
 
 def test_public_transport_preserves_provider_308_upload_status(monkeypatch):

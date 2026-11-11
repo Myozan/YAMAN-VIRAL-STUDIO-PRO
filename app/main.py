@@ -23,6 +23,7 @@ from app import autopilot as autopilot_store
 from app import content_factory, visual_factory
 from app import updater as update_manager
 from app.secure_http import request_public_https
+from app import task_queue
 from app.update_api import router as update_router
 
 # Windows CUDA runtime DLLs are shipped inside this project's isolated venv.
@@ -93,16 +94,19 @@ async def app_lifespan(application):
     asyncio.get_running_loop().set_exception_handler(_windows_disconnect_exception_handler)
     register_task_worker()
     recover_orphaned_tasks()
+    task_queue.recover_expired(TASK_DB)
     _worker_heartbeat_stop.clear()
     global _worker_heartbeat_thread
     _worker_heartbeat_thread = threading.Thread(target=_task_worker_heartbeat_loop, name="yaman-task-worker-heartbeat", daemon=True)
     _worker_heartbeat_thread.start()
+    start_durable_task_worker()
     _scheduler_stop.clear()
     start_autopilot_scheduler()
     try:
         yield
     finally:
         _scheduler_stop.set()
+        stop_durable_task_worker()
         thread = _scheduler_thread
         if thread and thread.is_alive():
             thread.join(timeout=2)
@@ -145,6 +149,10 @@ WORKER_ID = f"{platform.node()}:{os.getpid()}:{uuid.uuid4().hex[:12]}"
 WORKER_STALE_SECONDS = 45
 _worker_heartbeat_stop = threading.Event()
 _worker_heartbeat_thread = None
+_queue_worker_stop = threading.Event()
+_queue_worker_thread = None
+QUEUE_LEASE_SECONDS = 90
+QUEUE_POLL_SECONDS = 0.5
 _cancelled_tasks: set[str] = set()  # Compatibility cache only; SQLite is authoritative.
 _cpu_sample = None
 
@@ -170,6 +178,7 @@ def init_task_store():
         db.execute("CREATE TABLE IF NOT EXISTS task_workers (worker_id TEXT PRIMARY KEY, pid INTEGER NOT NULL, hostname TEXT NOT NULL, started_at TEXT NOT NULL, heartbeat_at TEXT NOT NULL)")
         db.execute("CREATE TABLE IF NOT EXISTS oauth_states (state TEXT PRIMARY KEY, platform TEXT NOT NULL, verifier TEXT NOT NULL, redirect_uri TEXT NOT NULL, created_at REAL NOT NULL)")
         db.execute("CREATE TABLE IF NOT EXISTS task_retry_claims (source_task_id TEXT PRIMARY KEY, retry_task_id TEXT NOT NULL UNIQUE, created_at TEXT NOT NULL)")
+        task_queue.init_schema(db)
         db.commit()
 
 
@@ -215,7 +224,10 @@ def recover_orphaned_tasks():
             WHERE status IN ('queued','running') AND
             (worker_id IS NULL OR NOT EXISTS (
                 SELECT 1 FROM task_workers w WHERE w.worker_id=t.worker_id AND w.heartbeat_at>=?
-            ))""", (cutoff,)).fetchall()
+            ))
+            AND NOT EXISTS (
+                SELECT 1 FROM task_queue q WHERE q.task_id=t.task_id AND q.status IN ('queued','running')
+            )""", (cutoff,)).fetchall()
         _interrupt_task_rows(db, rows, "Owning worker heartbeat expired")
         db.commit()
     return len(rows)
@@ -1468,22 +1480,37 @@ def set_task(task_id: str, percent: int, stage: str, status: str = "running", **
     """Merge task state under a SQLite write lock so every worker sees one authority."""
     now = datetime.now(timezone.utc).isoformat()
     terminal = {"completed", "failed", "cancelled", "interrupted"}
+    allow_reopen = bool(extra.pop("_allow_reopen", False))
     with _task_state_lock:
         with _task_db_connect() as db:
             db.execute("BEGIN IMMEDIATE")
             row = db.execute("SELECT created_at,status,payload_json,worker_id FROM tasks WHERE task_id=?",
                              (task_id,)).fetchone()
-            state = json.loads(row[2] or "{}") if row else {}
-            if row and row[1] in terminal and status != row[1]:
+            queue_row = db.execute("SELECT status,owner_id FROM task_queue WHERE task_id=?",
+                                   (task_id,)).fetchone()
+            if queue_row and not (queue_row[0] == "running" and queue_row[1] == WORKER_ID) \
+                    and not (status == "cancelled" and queue_row[0] == "cancelled"):
+                state = json.loads(row[2] or "{}") if row else {}
                 db.commit()
                 task_states[task_id] = state
                 return dict(state)
+            if row and row[1] in terminal and status != row[1]:
+                if not (allow_reopen and row[1] == "interrupted" and status == "running"):
+                    state = json.loads(row[2] or "{}")
+                    db.commit()
+                    task_states[task_id] = state
+                    return dict(state)
+            state = json.loads(row[2] or "{}") if row else {}
+            if row and row[1] == "interrupted" and allow_reopen:
+                state.pop("error", None)
+            if row and row[1] == "queued" and status == "running" and int(extra.get("queue_attempt", 1)) > 1:
+                state.pop("error", None)
             created = row[0] if row else now
             state.update({"task_id": task_id, "percent": max(0, min(100, int(percent))),
                           "stage": stage, "status": status, "created_at": created,
                           "updated_at": now, **extra})
             payload = json.dumps(state, ensure_ascii=False, default=str)
-            owner = row[3] if row and status in terminal else WORKER_ID
+            owner = (row[3] if row else WORKER_ID) if status in terminal else (None if status == "queued" else WORKER_ID)
             db.execute("""INSERT INTO tasks(task_id,created_at,updated_at,status,percent,stage,payload_json,worker_id)
                 VALUES(?,?,?,?,?,?,?,?) ON CONFLICT(task_id) DO UPDATE SET updated_at=excluded.updated_at,
                 status=excluded.status,percent=excluded.percent,stage=excluded.stage,payload_json=excluded.payload_json,
@@ -1497,10 +1524,201 @@ def set_task(task_id: str, percent: int, stage: str, status: str = "running", **
         return dict(state)
 
 
+def enqueue_durable_task(task_id: str, task_type: str, payload: dict, stage: str, **state_extra):
+    """Atomically persist the public task state and its executable queue payload."""
+    now = datetime.now(timezone.utc).isoformat()
+    state = {"task_id": task_id, "percent": 1, "stage": stage, "status": "queued",
+             "created_at": now, "updated_at": now, "task_type": task_type, **state_extra}
+    serialized = json.dumps(state, ensure_ascii=False, default=str)
+    with _task_db_connect() as db:
+        db.execute("BEGIN IMMEDIATE")
+        task_queue.enqueue_in_transaction(db, task_type, payload, task_id=task_id)
+        db.execute("""INSERT INTO tasks(task_id,created_at,updated_at,status,percent,stage,payload_json,worker_id)
+            VALUES(?,?,?,?,?,?,?,NULL)""",
+            (task_id, now, now, "queued", 1, stage, serialized))
+        db.execute("INSERT INTO task_events(task_id,event_type,created_at,payload_json) VALUES(?,?,?,?)",
+                   (task_id, "queued", now, serialized))
+        db.commit()
+    task_states[task_id] = state
+    return dict(state)
+
+
+def _dispatch_durable_task(task_id: str, task_type: str, payload: dict):
+    """Reconstruct a task from its durable payload and the saved workspace project."""
+    if task_type == "analyze":
+        req = AnalyzeRequest(**payload["request"])
+        folder = Path(payload["folder"]).resolve()
+        if folder.parent != WORK.resolve():
+            raise RuntimeError("Queued analysis folder is outside workspace")
+        source_value = payload.get("source_video")
+        source = Path(source_value).resolve() if source_value else None
+        if source and source.parent != folder:
+            raise RuntimeError("Queued source video is outside task folder")
+        run_analyze_task(task_id, req, folder, source)
+        return
+    if task_type in {"render", "summary", "agents"}:
+        request_data = payload["request"]
+        job_id = request_data["job_id"]
+        job = get_job_state(job_id)
+        if not job:
+            raise RuntimeError("Saved project is missing; reopen or restore the source job")
+        if task_type == "render":
+            req = RenderRequest(**request_data)
+            clip = next((item for item in job["clips"] if item["id"] == req.clip_id), None)
+            if not clip:
+                raise RuntimeError("Queued render clip no longer exists")
+            run_render_task(task_id, req, job, clip, list(payload["platforms"]))
+            return
+        if task_type == "summary":
+            run_summary_task(task_id, job_id, job, int(request_data["target_seconds"]),
+                             request_data.get("format", "smart"), request_data.get("transition", "fade"),
+                             bool(request_data.get("captions", True)),
+                             bool(request_data.get("chapter_titles", True)))
+            return
+        req = TeamRequest(**request_data)
+        clip = next((item for item in job["clips"] if item["id"] == req.clip_id), None)
+        if not clip:
+            raise RuntimeError("Queued agent clip no longer exists")
+        run_agents_task(task_id, req, job, clip, list(req.platforms))
+        return
+    raise RuntimeError(f"Unsupported durable task type: {task_type}")
+
+
+def _execute_durable_task(task: dict):
+    task_id = task["task_id"]
+    owner_id = task["owner_id"]
+    heartbeat_stop = threading.Event()
+
+    def lease_heartbeat():
+        while not heartbeat_stop.wait(15):
+            if _queue_worker_stop.is_set():
+                return
+            try:
+                if not task_queue.heartbeat(TASK_DB, task_id, owner_id, lease_seconds=QUEUE_LEASE_SECONDS):
+                    return
+            except sqlite3.Error:
+                continue
+
+    heartbeat_thread = threading.Thread(target=lease_heartbeat, name=f"queue-lease-{task_id}", daemon=True)
+    heartbeat_thread.start()
+    try:
+        started = set_task(task_id, 1, "Task claimed by durable worker", "running",
+                           _allow_reopen=True, queue_attempt=task["attempts"], queue_owner=owner_id)
+        if started.get("status") == "cancelled":
+            task_queue.cancel(TASK_DB, task_id)
+            return
+        _dispatch_durable_task(task_id, task["task_type"], task["payload"])
+        state = get_task_state(task_id)
+        if state.get("status") not in {"completed", "failed", "cancelled"}:
+            set_task(task_id, 100, "Task handler returned without a terminal state", "failed",
+                     error="Task handler returned without a terminal state")
+            state = get_task_state(task_id)
+        error = state.get("error") if state.get("status") == "failed" else None
+        task_queue.complete(TASK_DB, task_id, owner_id, error=str(error) if error else None)
+    except Exception as exc:
+        if not task_is_cancelled(task_id):
+            set_task(task_id, 100, "Task execution failed", "failed", error=str(exc)[:1000])
+            task_queue.complete(TASK_DB, task_id, owner_id, error=str(exc))
+        else:
+            task_queue.cancel(TASK_DB, task_id)
+    finally:
+        heartbeat_stop.set()
+        heartbeat_thread.join(timeout=2)
+
+
+def get_task_state(task_id: str) -> dict:
+    with _task_db_connect() as db:
+        row = db.execute("SELECT payload_json FROM tasks WHERE task_id=?", (task_id,)).fetchone()
+    return json.loads(row[0]) if row else {}
+
+
+def _sync_requeued_queue_tasks():
+    """Expose expired-lease recovery as queued in the public task/event history."""
+    now = datetime.now(timezone.utc).isoformat()
+    with _task_db_connect() as db:
+        db.execute("BEGIN IMMEDIATE")
+        rows = db.execute("""SELECT q.task_id,q.last_error,t.payload_json FROM task_queue q
+            JOIN tasks t ON t.task_id=q.task_id
+            WHERE q.status='queued' AND q.last_error IS NOT NULL
+              AND t.status IN ('running','interrupted')""").fetchall()
+        for task_id, error, raw in rows:
+            state = json.loads(raw or "{}")
+            state.update({"status": "queued", "stage": "Worker lease expired; queued for retry",
+                          "error": error, "updated_at": now})
+            serialized = json.dumps(state, ensure_ascii=False, default=str)
+            db.execute("UPDATE tasks SET status='queued',updated_at=?,stage=?,payload_json=?,worker_id=NULL WHERE task_id=?",
+                       (now, state["stage"], serialized, task_id))
+            db.execute("INSERT INTO task_events(task_id,event_type,created_at,payload_json) VALUES(?,?,?,?)",
+                       (task_id, "queued", now, serialized))
+            task_states[task_id] = state
+        db.commit()
+    return len(rows)
+
+
+def _sync_exhausted_queue_tasks():
+    """Mirror queue exhaustion into the public task/event history."""
+    now = datetime.now(timezone.utc).isoformat()
+    with _task_db_connect() as db:
+        db.execute("BEGIN IMMEDIATE")
+        rows = db.execute("""SELECT q.task_id,q.last_error,t.payload_json
+            FROM task_queue q JOIN tasks t ON t.task_id=q.task_id
+            WHERE q.status='failed' AND t.status NOT IN ('failed','completed','cancelled')""").fetchall()
+        for task_id, error, raw in rows:
+            state = json.loads(raw or "{}")
+            state.update({"status": "failed", "stage": "Worker attempts exhausted",
+                          "error": error or "Maximum worker attempts reached", "updated_at": now})
+            serialized = json.dumps(state, ensure_ascii=False, default=str)
+            db.execute("UPDATE tasks SET status='failed',updated_at=?,stage=?,payload_json=?,worker_id=NULL WHERE task_id=?",
+                       (now, state["stage"], serialized, task_id))
+            db.execute("INSERT INTO task_events(task_id,event_type,created_at,payload_json) VALUES(?,?,?,?)",
+                       (task_id, "failed", now, serialized))
+            task_states[task_id] = state
+        db.commit()
+    return len(rows)
+
+
+def _durable_queue_worker_loop():
+    while not _queue_worker_stop.is_set():
+        try:
+            task_queue.recover_expired(TASK_DB)
+            _sync_requeued_queue_tasks()
+            _sync_exhausted_queue_tasks()
+            claimed = task_queue.claim(TASK_DB, WORKER_ID, lease_seconds=QUEUE_LEASE_SECONDS)
+            if claimed:
+                _execute_durable_task(claimed)
+                continue
+        except sqlite3.Error:
+            pass
+        _queue_worker_stop.wait(QUEUE_POLL_SECONDS)
+
+
+def start_durable_task_worker():
+    global _queue_worker_thread
+    if _queue_worker_thread and _queue_worker_thread.is_alive():
+        return
+    _queue_worker_stop.clear()
+    _queue_worker_thread = threading.Thread(
+        target=_durable_queue_worker_loop, name="yaman-durable-task-worker", daemon=True
+    )
+    _queue_worker_thread.start()
+
+
+def stop_durable_task_worker():
+    _queue_worker_stop.set()
+    thread = _queue_worker_thread
+    if thread and thread.is_alive():
+        thread.join(timeout=5)
+
+
 def task_is_cancelled(task_id: str) -> bool:
     with sqlite3.connect(TASK_DB, timeout=20) as db:
         row = db.execute("SELECT status FROM tasks WHERE task_id=?", (task_id,)).fetchone()
     return bool(row and row[0] == "cancelled")
+
+
+def check_task_cancelled(task_id: str):
+    if task_is_cancelled(task_id):
+        raise RuntimeError("Task cancelled by user")
 
 
 def run_analyze_task(task_id: str, req: AnalyzeRequest, folder: Path, source_video: Path | None = None):
@@ -1515,12 +1733,15 @@ def run_analyze_task(task_id: str, req: AnalyzeRequest, folder: Path, source_vid
         else:
             video = source_video
             set_task(task_id, 22, "İndirilen video içe aktarıldı")
+        check_task_cancelled(task_id)
         set_task(task_id, 24, "Video bilgileri okunuyor")
         duration = probe_duration(video)
         set_task(task_id, 30, "Whisper modeli hazırlanıyor")
         set_task(task_id, 36, "Konuşma çözümleniyor · Whisper")
+        check_task_cancelled(task_id)
         segments, language = transcribe(video, req.language,
             lambda value, label: set_task(task_id, value, label), duration)
+        check_task_cancelled(task_id)
         set_task(task_id, 70, "Konuşma analizi tamamlandı · Shorts adayları seçiliyor")
         candidates = make_candidates(segments, duration, req.clips, req.min_seconds, req.max_seconds)
         set_task(task_id, 82, "AI editör adayları değerlendiriyor")
@@ -1534,6 +1755,7 @@ def run_analyze_task(task_id: str, req: AnalyzeRequest, folder: Path, source_vid
             if recognized < 2:
                 raise RuntimeError("Whisper bu videoda yeterli konu\u015fma alg\u0131layamad\u0131. Ses d\u00fczeyini, konu\u015fma dilini veya video kayna\u011f\u0131n\u0131 kontrol edin.")
             raise RuntimeError("Konu\u015fma bulundu ancak kesit olu\u015fturulamad\u0131. Daha k\u0131sa klip s\u00fcresi se\u00e7erek yeniden deneyin.")
+        check_task_cancelled(task_id)
         jobs[task_id] = {"folder": str(folder), "video": str(video), "duration": duration,
                          "language": language, "segments": segments, "clips": candidates}
         save_job(task_id, jobs[task_id])
@@ -1934,12 +2156,15 @@ def render_summary_video(job: dict, summary: dict, task_id: str) -> Path:
 def run_summary_task(task_id: str, job_id: str, job: dict, target_seconds: int, format: str = "smart",
                      transition: str = "fade", captions: bool = True, chapter_titles: bool = True):
     try:
+        check_task_cancelled(task_id)
         set_task(task_id, 5, f"{ {'documentary': 'Belgesel anlatimi', 'education': 'Egitim videosu', 'product': 'Urun tanitimi', 'story': 'Hikaye akisi'}.get(format, 'Video ozeti')} hazirlaniyor - Yerel AI")
         summary = build_summary_moments(job, target_seconds, format)
         summary.update({"transition": transition, "captions": captions, "chapter_titles": chapter_titles})
         set_task(task_id, 38, f"{ {'documentary': 'Belgesel bolumleri', 'education': 'Egitim bolumleri', 'product': 'Urun tanitim bolumleri', 'story': 'Hikaye bolumleri'}.get(format, 'Onemli anlar')} siralandi - Video hazirlaniyor",
                  summary=summary, total_moments=len(summary["moments"]))
+        check_task_cancelled(task_id)
         output = render_summary_video(job, summary, task_id)
+        check_task_cancelled(task_id)
         summary["output"] = {"file": f"/workspace/{job_id}/{output.name}", "filename": output.name,
                              "size_mb": round(output.stat().st_size/(1024*1024),2),
                              "duration_seconds": round(sum(float(x["end"])-float(x["start"]) for x in summary["moments"]),1)}
@@ -1954,10 +2179,12 @@ def run_render_task(task_id: str, req: RenderRequest, job: dict, clip: dict, pla
         outputs = []
         total = len(platforms)
         for index, platform in enumerate(platforms):
+            check_task_cancelled(task_id)
             label = PLATFORMS[platform]["label"]
             start_percent = 5 + int(index / total * 90)
             set_task(task_id, start_percent, f"{label} · Dikey kadraj ve altyazı hazırlanıyor")
             path = render_variant(job, clip, platform, req.captions, face_tracking=False)
+            check_task_cancelled(task_id)
             if not path.is_file() or path.stat().st_size <= 0:
                 raise RuntimeError(f"{label} çıktısı oluşturulamadı veya boş dosya döndü.")
             outputs.append({"platform": platform, "label": label,
@@ -1977,8 +2204,8 @@ def analyze(req: AnalyzeRequest, background_tasks: BackgroundTasks):
     task_id = uuid.uuid4().hex[:10]
     folder = WORK / task_id
     folder.mkdir(parents=True, exist_ok=True)
-    set_task(task_id, 1, "Analiz kuyruğa alındı")
-    background_tasks.add_task(run_analyze_task, task_id, req, folder)
+    enqueue_durable_task(task_id, "analyze", {"request": req.model_dump(), "folder": str(folder)},
+                         "Analiz kuyru?a al?nd?")
     return {"task_id": task_id, "status": "queued"}
 
 @app.get("/api/local/videos")
@@ -2020,8 +2247,8 @@ def analyze_local(req: LocalAnalyzeRequest, background_tasks: BackgroundTasks):
         raise
     req_data = AnalyzeRequest(url=None, clips=req.clips, min_seconds=req.min_seconds,
                               max_seconds=req.max_seconds, language=req.language)
-    set_task(task_id, 1, "İndirilen video analiz kuyruğuna alındı")
-    background_tasks.add_task(run_analyze_task, task_id, req_data, folder, local_copy)
+    enqueue_durable_task(task_id, "analyze", {"request": req_data.model_dump(), "folder": str(folder),
+                         "source_video": str(local_copy)}, "Yerel video analiz kuyru?una al?nd?")
     return {"task_id": task_id, "status": "queued", "filename": source.name}
 
 @app.get("/api/summary/{job_id}")
@@ -2039,15 +2266,13 @@ def get_saved_summary(job_id: str):
 def generate_summary(req: SummaryRequest, background_tasks: BackgroundTasks):
     job = get_job_state(req.job_id)
     if not job:
-        raise HTTPException(404, "Proje bulunamad\u0131. \u00d6nce videoyu analiz et.")
+        raise HTTPException(404, "Project not found. Analyze the video first.")
     if not job.get("segments"):
-        raise HTTPException(400, "\u00d6zet i\u00e7in transkript bulunamad\u0131.")
+        raise HTTPException(400, "Transcript not found for summary.")
     task_id = uuid.uuid4().hex[:10]
-    set_task(task_id, 1, "\u00d6zet video g\u00f6revi kuyru\u011fa al\u0131nd\u0131")
-    background_tasks.add_task(run_summary_task, task_id, req.job_id, job, req.target_seconds, req.format,
-                              req.transition, req.captions, req.chapter_titles)
+    enqueue_durable_task(task_id, "summary", {"request": req.model_dump()},
+                         "Summary video task queued", job_id=req.job_id)
     return {"task_id": task_id, "status": "queued", "job_id": req.job_id}
-
 
 @app.post("/api/render")
 def render(req: RenderRequest, background_tasks: BackgroundTasks):
@@ -2059,8 +2284,8 @@ def render(req: RenderRequest, background_tasks: BackgroundTasks):
     if not platforms or any(p not in PLATFORMS for p in platforms):
         raise HTTPException(400, "Geçersiz platform seçimi.")
     task_id = uuid.uuid4().hex[:10]
-    set_task(task_id, 1, "Render kuyruğa alındı", outputs=[])
-    background_tasks.add_task(run_render_task, task_id, req, job, clip, platforms)
+    enqueue_durable_task(task_id, "render", {"request": req.model_dump(), "platforms": platforms},
+                         "Render kuyru?a al?nd?", outputs=[], job_id=req.job_id, clip_id=req.clip_id)
     return {"task_id": task_id, "status": "queued"}
 
 @app.get("/api/tasks/history")
@@ -2091,7 +2316,9 @@ def cancel_task(task_id: str):
         row=db.execute("SELECT payload_json,status FROM tasks WHERE task_id=?",(task_id,)).fetchone()
     if not row:raise HTTPException(404,"Task not found")
     if row[1] in ("completed","failed","cancelled","interrupted"):return {"cancelled":False,"status":row[1]}
-    _cancelled_tasks.add(task_id);state=json.loads(row[0])
+    _cancelled_tasks.add(task_id)
+    task_queue.cancel(TASK_DB, task_id)
+    state=json.loads(row[0])
     extra={k:v for k,v in state.items() if k not in ("task_id","percent","stage","status","created_at","updated_at")}
     updated = set_task(task_id,state.get("percent",0),"Cancelled by user","cancelled",**extra)
     return {"cancelled": updated.get("status") == "cancelled", "status": updated.get("status")}
@@ -2135,12 +2362,12 @@ def retry_task(task_id: str,background_tasks: BackgroundTasks):
         db.execute("INSERT INTO task_retry_claims(source_task_id,retry_task_id,created_at) VALUES(?,?,?)",
                    (task_id,new_id,now))
         db.execute("INSERT INTO tasks(task_id,created_at,updated_at,status,percent,stage,payload_json,worker_id) VALUES(?,?,?,?,?,?,?,?)",
-                   (new_id,now,now,"queued",1,retry_state["stage"],retry_payload,WORKER_ID))
+                   (new_id,now,now,"queued",1,retry_state["stage"],retry_payload,None))
         db.execute("INSERT INTO task_events(task_id,event_type,created_at,payload_json) VALUES(?,?,?,?)",
                    (new_id,"queued",now,retry_payload))
+        task_queue.enqueue_in_transaction(db, "agents", {"request": data}, task_id=new_id)
         db.commit()
     task_states[new_id]=retry_state
-    background_tasks.add_task(run_agents_task,new_id,req,job,clip,list(req.platforms))
     return {"task_id":new_id,"status":"queued","retry_of":task_id}
 
 @app.post("/api/metadata")
@@ -2675,17 +2902,18 @@ def run_agents_task(task_id: str, req: TeamRequest, job: dict, clip: dict, platf
 def agents_run(req: TeamRequest, background_tasks: BackgroundTasks):
     job = get_job_state(req.job_id)
     if not job:
-        raise HTTPException(404, "\u0130\u015f bulunamad\u0131.")
+        raise HTTPException(404, "Project not found.")
     clip = next((c for c in job["clips"] if c["id"] == req.clip_id), None)
     if not clip:
-        raise HTTPException(404, "Klip bulunamad\u0131.")
+        raise HTTPException(404, "Clip not found.")
     platforms = list(dict.fromkeys(req.platforms))
     if not platforms or any(p not in PLATFORMS for p in platforms):
-        raise HTTPException(400, "Ge\u00e7ersiz platform.")
+        raise HTTPException(400, "Invalid platform.")
     task_id = uuid.uuid4().hex[:10]
-    set_task(task_id,1,"Ajan ekibi kuyru\u011fa al\u0131nd\u0131",outputs=[],task_type="agents",
-        request={"job_id":req.job_id,"clip_id":req.clip_id,"platforms":platforms})
-    background_tasks.add_task(run_agents_task, task_id, req, job, clip, platforms)
+    request_data = req.model_dump()
+    enqueue_durable_task(task_id, "agents", {"request": request_data},
+                         "Agent team queued", outputs=[], request=request_data,
+                         job_id=req.job_id, clip_id=req.clip_id)
     return {"task_id": task_id, "status": "queued", "job_id": req.job_id, "clip_id": req.clip_id}
 
 @app.get("/api/agents/report/{job_id}/{clip_id}")

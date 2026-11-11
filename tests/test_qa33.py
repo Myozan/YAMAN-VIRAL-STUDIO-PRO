@@ -81,25 +81,31 @@ def test_agent_retry_queues_only_a_failed_task(api, monkeypatch):
         "agent-failed-valid", 100, "Agent failed", "failed", task_type="agents",
         request={"job_id": "job-retry", "clip_id": 3, "platforms": ["youtube"]},
     )
-    scheduled = []
-    monkeypatch.setattr(main, "run_agents_task", lambda *args: scheduled.append(args))
+    monkeypatch.setattr(main, "run_agents_task", lambda *args: None)
     response = api.post("/api/tasks/agent-failed-valid/retry")
 
     assert response.status_code == 200
     body = response.json()
     assert body["status"] == "queued"
     assert body["retry_of"] == "agent-failed-valid"
-    assert len(scheduled) == 1
-    assert scheduled[0][0] == body["task_id"]
+    with sqlite3.connect(main.TASK_DB) as db:
+        queued = db.execute("SELECT task_type,payload_json FROM task_queue WHERE task_id=?",
+                            (body["task_id"],)).fetchone()
+    assert queued is not None and queued[0] == "agents"
+    assert json.loads(queued[1])["request"]["job_id"] == "job-retry"
 
 
 def test_fastapi_lifespan_starts_and_stops_scheduler():
     with TestClient(main.app):
         assert main._scheduler_thread is not None
         assert main._scheduler_thread.is_alive()
+        assert main._queue_worker_thread is not None
+        assert main._queue_worker_thread.is_alive()
         assert not main._scheduler_stop.is_set()
 
     assert main._scheduler_stop.is_set()
+    assert main._queue_worker_stop.is_set()
+    assert not main._queue_worker_thread.is_alive()
     assert not main._scheduler_thread.is_alive()
 
 
@@ -169,15 +175,18 @@ def test_agent_retry_is_idempotently_reserved(api, monkeypatch):
         "agent-failed-once", 100, "Agent failed", "failed", task_type="agents",
         request={"job_id": "job-retry-once", "clip_id": 8, "platforms": ["youtube"]},
     )
-    scheduled = []
-    monkeypatch.setattr(main, "run_agents_task", lambda *args: scheduled.append(args))
+    monkeypatch.setattr(main, "run_agents_task", lambda *args: None)
 
     first = api.post("/api/tasks/agent-failed-once/retry")
     second = api.post("/api/tasks/agent-failed-once/retry")
 
     assert first.status_code == 200
     assert second.status_code == 409
-    assert len(scheduled) == 1
+    with sqlite3.connect(main.TASK_DB) as db:
+        queued = db.execute("SELECT task_type,payload_json FROM task_queue WHERE task_id=?",
+                            (first.json()["task_id"],)).fetchone()
+    assert queued is not None and queued[0] == "agents"
+    assert json.loads(queued[1])["request"]["job_id"] == "job-retry-once"
     with sqlite3.connect(main.TASK_DB) as db:
         claim = db.execute(
             "SELECT retry_task_id FROM task_retry_claims WHERE source_task_id=?",

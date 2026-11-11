@@ -10,7 +10,8 @@ flowchart TB
   F --> UI[Static Web UI / PWA]
   F --> API[REST endpoints]
   API --> ORCH[In-process orchestration]
-  ORCH --> TASKS[BackgroundTasks + task state]
+  ORCH --> TASKS[SQLite durable task queue]
+  TASKS --> WORKER[Per-process queue worker + lease heartbeat]
   ORCH --> CONTENT[Content Factory]
   ORCH --> AGENTS[Specialist Agent Team]
   ORCH --> MEDIA[Media Pipeline]
@@ -38,7 +39,7 @@ flowchart TB
 |---|---|---|
 | Web UI | `web/index.html`, `web/app.js`, `web/style.css` | Creator workspace, job/task status, media and settings UI |
 | HTTP API | FastAPI in `app/main.py` | Validation, endpoints, orchestration entry points |
-| Task orchestration | FastAPI BackgroundTasks + SQLite task store + worker heartbeat leases | In-process execution; cross-worker task state, event history, cancel/retry and stale-worker recovery |
+| Task orchestration | `app/task_queue.py` + SQLite task/event store + per-process worker poller | Durable enqueue/claim, task leases, crash recovery and at-least-once execution for analysis, render, summary and agent tasks; Autopilot remains on its existing scheduler |
 | Public HTTPS transport | `app/secure_http.py` | DNS/IP validation and pinning, TLS hostname verification, proxy isolation and controlled redirects for requests-based third-party APIs |
 | Local LLM | Ollama HTTP API | Script and content analysis, AI agent outputs |
 | Speech-to-text | Faster-Whisper | Timestamped transcript segments |
@@ -58,19 +59,21 @@ sequenceDiagram
   participant UI as Web UI
   participant API as FastAPI
   participant DB as SQLite
-  participant Worker as In-process background task
+  participant Queue as SQLite durable queue
+  participant Worker as Same-host queue worker
   participant AI as Ollama / Whisper
   participant Media as FFmpeg
   Creator->>UI: Submit analysis or render
   UI->>API: POST /api/analyze or /api/render
   API->>API: Validate Pydantic request
-  API->>DB: Create task + initial event
+  API->>DB: Atomically create task, event and queue payload
   API-->>UI: Return task_id
-  API->>Worker: Schedule BackgroundTasks
+  Worker->>Queue: Claim task + acquire lease
   Worker->>AI: Transcribe / analyze when needed
   AI-->>Worker: Transcript / structured result
   Worker->>Media: Render output when requested
   Media-->>Worker: MP4 output
+  Worker->>Queue: Renew lease while executing
   Worker->>DB: Update status and append events
   UI->>API: GET /api/tasks/{task_id}
   API-->>UI: Current task state
@@ -90,14 +93,16 @@ stateDiagram-v2
   running --> completed
   running --> failed
   running --> cancelled
-  running --> interrupted: process restart
-  interrupted --> queued: retry
+  running --> queued: execution lease expires; attempts remain
+  running --> failed: maximum attempts exhausted
+  running --> interrupted: owning process shutdown marker
+  interrupted --> running: replacement worker reclaims queue task
   failed --> queued: retry
   completed --> [*]
   cancelled --> [*]
 ```
 
-Task state reads and writes use SQLite as the cross-worker authority. Each process registers a worker ID and refreshes its heartbeat every 10 seconds. Tasks are marked interrupted only when their owner lease expires (45 seconds) or the owning worker shuts down; another worker starting does not interrupt live tasks. Saved jobs can be rehydrated from validated `job.json` snapshots. Task execution still uses process-local FastAPI BackgroundTasks; a lost task is recovered as interrupted, not automatically replayed. Cancellation is cooperative and depends on checkpoints in the relevant workflow.
+Task state reads and writes use SQLite as the cross-worker authority. Each process registers a worker ID and refreshes its process heartbeat every 10 seconds. Core media tasks (remote/local analysis, render, summary and agent work) are atomically enqueued with their task/event record and claimed by a per-process queue worker. Each execution claim receives a 90-second lease renewed every 15 seconds. Expired leases are requeued with bounded exponential delay and a maximum of three attempts by default; a replacement worker rehydrates the request from JSON and saved job metadata from validated `job.json` snapshots. Queue execution is at-least-once, so handlers and output paths must tolerate a repeated attempt after a crash. Task progress writes are checked against the current queue owner so a stale worker cannot overwrite the replacement worker's state. Autopilot and other non-core workflows still use their existing in-process scheduling path. Cancellation is reflected in SQLite and lease ownership is revoked. Analysis, summary and render handlers check cancellation at safe stage boundaries; an already-running FFmpeg/Whisper native operation may finish its current operation before the next checkpoint.
 
 ## 5. Agent execution topology
 
@@ -124,8 +129,8 @@ Agent outputs are advisory data. They must never be treated as shell commands, t
 
 ## 6. Storage boundaries
 
-- `workspace/orchestration.sqlite3`: tasks (including worker ownership), task_events, task_workers heartbeat registry, autopilots, autopilot_runs, oauth_states and retry claims.
-- SQLite WAL supports multiple Uvicorn workers on one host when the database remains on a local filesystem; it is not a multi-host database/queue.
+- `workspace/orchestration.sqlite3`: tasks, task_events, task_workers heartbeat registry, `task_queue` (JSON payload, priority, attempts, owner and execution lease), autopilots, autopilot_runs, oauth_states and retry claims.
+- SQLite WAL supports multiple Uvicorn workers on one host when the database remains on a local filesystem; it is not a multi-host database/queue. Multi-host execution requires PostgreSQL and a durable distributed broker/worker system.
 - `workspace/viral_learning.sqlite3`: performance observations.
 - `workspace/<job_id>/job.json`: completed analysis job snapshot.
 - `workspace`: media, generated files and encrypted provider/OAuth vault files.
