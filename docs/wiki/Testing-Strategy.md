@@ -2,7 +2,7 @@
 
 This document separates executed automated coverage from remaining release assurance. Passing tests are evidence for tested paths only, not a security certification.
 
-## 1. QA 3.7 current baseline
+## 1. QA 3.7 historical baseline
 
 The suite collects **100 test cases**. Latest full Windows/Python 3.12 run: **98 passed, 2 skipped**. The two skips are workspace symlink tests; the connected Windows account cannot create symlinks.
 
@@ -44,7 +44,7 @@ python -c "import json; json.load(open('web/manifest.webmanifest', encoding='utf
 - Remote/local analysis, render, summary and agent-team requests now persist JSON task payloads and queue rows in the same SQLite transaction as the public task record and initial event. Agent retry claims, task records, events and queue payloads are also committed together.
 - Workers reconstruct Pydantic request models and rehydrate saved project data from validated workspace `job.json` snapshots. They no longer depend on the accepting process's in-memory job dictionary.
 - Expired worker leases are requeued with bounded exponential delay and three attempts by default. Exhausted tasks are synchronized to failed in the public task/event history. Cancelled tasks lose their lease and cannot be completed by the former owner.
-- Queue recovery is deliberately at-least-once: a crash after writing an output but before acknowledging completion may cause a repeat attempt. Autopilot and other non-core background flows remain on their existing scheduling path.
+- Queue recovery is deliberately at-least-once: a crash after writing an output but before acknowledging completion may cause a repeat attempt. At the QA 3.7 baseline, Autopilot still used its old scheduling path; QA 3.8 later moves manual and scheduled Autopilot runs into the durable queue.
 - Same-host SQLite WAL only; multi-host queue execution remains out of scope and requires PostgreSQL plus a durable distributed broker.
 
 ## 4. QA 3.7 executed tests
@@ -161,3 +161,17 @@ The current local run is not a security certification. Two symlink tests were sk
 - [Security & Privacy](wiki/Security.md)
 - [Engineering Architecture](ENGINEERING-ARCHITECTURE.md)
 - [Operations Runbook](OPERATIONS-RUNBOOK.md)
+
+
+## 11. QA 3.8 queue operations and Autopilot durability
+
+- Full Windows/Python 3.12 regression run: **126 passed, 2 skipped (128 total)**. The two skips are Windows symlink privilege cases.
+- Added a real two-Uvicorn-process failover test. The first process is terminated while holding a queue task; the second process reclaims and completes it after a shortened test lease. Production default lease remains 90 seconds.
+- Global active-task concurrency is enforced transactionally by SQLite. Default is one active task across all same-host Uvicorn workers; configure with `YAMAN_QUEUE_MAX_CONCURRENT`.
+- Manual and scheduled Autopilot runs now share the durable queue. Due schedule advancement, public task/event journal insertion and queue insertion are atomic. The scheduler thread only enqueues; workers perform content generation.
+- Autopilot duplicate active runs are rejected, legacy process-local running states are reconciled during upgrade, and run history is idempotent by durable task ID.
+- Stale worker progress writes are rejected after lease expiry or ownership transfer. Active leases continue to renew during graceful shutdown until the current handler exits.
+- Added `GET /api/queue/health` and `GET /api/queue/tasks`, plus a responsive Autopilot queue monitor. The monitor exposes worker heartbeats, queue counts, global concurrency and recent task metadata; agent tasks retain the existing safe retry action.
+- Added a synthetic FFmpeg fixture test that renders twice to the same output path and validates the resulting MP4 with FFprobe.
+- Added consistent SQLite online backup staging and restore verification. The test uses a local disposable destination; physical NAS share rehearsal remains an environment-specific release check.
+- Static validation passed: Python compileall, Node syntax for app/service worker, PWA manifest JSON and Git whitespace checks.

@@ -111,11 +111,26 @@ def get(database: str | Path, task_id: str) -> dict[str, Any] | None:
     return result
 
 
-def claim(database: str | Path, worker_id: str, *, lease_seconds: int = DEFAULT_LEASE_SECONDS) -> dict[str, Any] | None:
+def claim(
+    database: str | Path,
+    worker_id: str,
+    *,
+    lease_seconds: int = DEFAULT_LEASE_SECONDS,
+    max_running: int = 1,
+) -> dict[str, Any] | None:
+    if int(max_running) < 1:
+        raise ValueError("max_running must be at least 1")
     now = utcnow()
     lease = stamp(now + timedelta(seconds=max(10, int(lease_seconds))))
     with connect(database) as db:
         db.execute("BEGIN IMMEDIATE")
+        active = db.execute(
+            "SELECT COUNT(*) FROM task_queue WHERE status='running' AND lease_expires_at>=?",
+            (stamp(now),),
+        ).fetchone()[0]
+        if int(active) >= int(max_running):
+            db.commit()
+            return None
         row = db.execute(
             """SELECT task_id FROM task_queue
                WHERE status='queued' AND available_at<=? AND attempts<max_attempts
@@ -235,7 +250,12 @@ def enqueue_in_transaction(
 
 
 
-def snapshot(database: str | Path, *, stale_after_seconds: int = 45) -> dict[str, Any]:
+def snapshot(
+    database: str | Path,
+    *,
+    stale_after_seconds: int = 45,
+    max_concurrent: int = 1,
+) -> dict[str, Any]:
     """Return an operational queue snapshot without exposing task payloads."""
     now = utcnow()
     cutoff = stamp(now - timedelta(seconds=max(1, int(stale_after_seconds))))
@@ -272,8 +292,31 @@ def snapshot(database: str | Path, *, stale_after_seconds: int = 45) -> dict[str
         "workers": worker_items,
         "worker_count": len(worker_items),
         "stale_worker_count": stale_workers,
+        "max_concurrent": max(1, int(max_concurrent)),
         "oldest_queued_at": oldest,
         "next_available_at": next_retry,
         "captured_at": stamp(now),
         "storage": "sqlite-wal-local-filesystem",
     }
+
+
+def list_recent(database: str | Path, *, limit: int = 50, status: str | None = None) -> list[dict[str, Any]]:
+    """List operational task metadata only; never return serialized payloads."""
+    limit = max(1, min(100, int(limit)))
+    allowed = {"queued", "running", "completed", "failed", "cancelled"}
+    if status is not None and status not in allowed:
+        raise ValueError("Invalid queue status")
+    query = """SELECT task_id,task_type,status,priority,attempts,max_attempts,
+               available_at,owner_id,lease_expires_at,created_at,updated_at
+               FROM task_queue"""
+    params: list[Any] = []
+    if status:
+        query += " WHERE status=?"
+        params.append(status)
+    query += " ORDER BY created_at DESC LIMIT ?"
+    params.append(limit)
+    with connect(database) as db:
+        rows = db.execute(query, params).fetchall()
+    keys = ("task_id", "task_type", "status", "priority", "attempts", "max_attempts",
+            "available_at", "owner_id", "lease_expires_at", "created_at", "updated_at")
+    return [dict(zip(keys, row)) for row in rows]

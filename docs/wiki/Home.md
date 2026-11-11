@@ -18,6 +18,7 @@ YAMAN VIRAL STUDIO PRO, Windows üzerinde çalışan yerel öncelikli bir AI vid
 - [Workflow Sequence Diagrams](Workflow-Sequences)
 - [Testing Strategy](Testing-Strategy)
 - [Durable Task Queue](Durable-Task-Queue)
+- [QA 3.8 Queue Operations & NAS Backup](QA-3.8-Queue-Operations)
 - [Operations Runbook](Operations-Runbook)
 - [Architecture](Architecture)
 - [API Reference](API-Reference)

@@ -1,6 +1,6 @@
 # Autopilot Guide
 
-Autopilot, yerel SQLite veritabanında saklanan içerik üretim planlarını zamanlamaya ve uygun zamanda çalıştırmaya yarar. Kaynak kodundaki uygulama; plan adı, niş, dil, klip sayısı, klip süreleri, platformlar, sıklık, saat ve saat dilimi alanlarını tutar.
+Autopilot, yerel SQLite veritabanında saklanan içerik üretim planlarını zamanlamaya ve uygun zamanda çalıştırmaya yarar. Plan adı, niş, dil, klip sayısı, klip süreleri, platformlar, sıklık, saat ve saat dilimi alanları saklanır.
 
 ## Scheduling model
 
@@ -11,7 +11,20 @@ Autopilot, yerel SQLite veritabanında saklanan içerik üretim planlarını zam
 - Next run: bir sonraki planlanan çalışma zamanı.
 - Runs: her çalıştırma için durum, mesaj ve çıktı referansları saklanır.
 
-Haftalık zamanlama uygulamada Pazartesi günü temel alınır. Bu nedenle haftalık seçeneğin gün seçici sunduğu varsayılmamalıdır.
+Haftalık zamanlama Pazartesi günü temel alınır. Haftalık seçenek ayrı bir gün seçici sunmaz.
+
+## Durable execution
+
+- Manual runs and scheduled runs are inserted into the same SQLite durable task queue.
+- The schedule poller only claims due schedules; it does not perform content generation in its local thread.
+- Advancing a due schedule, reserving the Autopilot plan and inserting the queue/public task journal happen in one SQLite transaction.
+- Multiple Uvicorn processes share the same database and cannot enqueue the same due occurrence twice.
+- Manual and scheduled runs share an active-run guard; a queued or running plan cannot be started again, edited or deleted.
+- Upgrade reconciliation marks orphaned legacy process-local runs as failed instead of leaving a plan stuck in `running`; active durable queue runs are preserved.
+- Queue workers own the execution lease. Stale workers cannot overwrite progress or mark the plan failed after another worker has reclaimed the task.
+- The durable task ID is reused for run history, making completion replay idempotent.
+- Queue execution is at-least-once. A process crash can repeat unfinished work; deterministic task folders and render output names are used where possible.
+- The Autopilot page includes queue counts, worker heartbeats, global concurrency and recent task metadata.
 
 ## API operations
 
@@ -19,7 +32,9 @@ Haftalık zamanlama uygulamada Pazartesi günü temel alınır. Bu nedenle hafta
 - POST /api/autopilot — plan oluştur
 - PATCH /api/autopilot/{id} — planı güncelle
 - DELETE /api/autopilot/{id} — planı sil
-- POST /api/autopilot/{id}/run — hemen çalıştır
+- POST /api/autopilot/{id}/run — kalıcı kuyruğa manuel çalıştırma ekle
+- GET /api/queue/health — worker ve kuyruk sağlığı
+- GET /api/queue/tasks?limit=50 — son görevlerin güvenli metadata listesi
 
 ## Example plan
 
@@ -39,7 +54,7 @@ Haftalık zamanlama uygulamada Pazartesi günü temel alınır. Bu nedenle hafta
 
 ## Operational behavior
 
-Autopilot planları içerik üretim akışını tetikler; bu, sosyal platformlarda otomatik ve koşulsuz yayın yapılacağı anlamına gelmez. Platforma yayınlama, ayrı OAuth bağlantısı, izinler, hesap uygunluğu ve açık kullanıcı onayı gerektirir.
+Autopilot planları içerik üretim akışını tetikler; sosyal platformlarda otomatik ve koşulsuz yayın yapılmaz. Platforma yayınlama, ayrı OAuth bağlantısı, izinler, hesap uygunluğu ve açık kullanıcı onayı gerektirir. Zamanlanmış üretim için uygulama ve en az bir queue worker süreci açık olmalıdır.
 
 ## Safety checklist
 
@@ -48,3 +63,4 @@ Autopilot planları içerik üretim akışını tetikler; bu, sosyal platformlar
 - Üretilen dosyaları ve maliyetli dış servis kullanımını gözden geçirin.
 - Yayın öncesi video, başlık, açıklama ve platformu onaylayın.
 - Otomatik tekrarların disk alanı tüketimini takip edin.
+- Worker çökmesi sonrası aynı task ID ile yeniden denemeyi ve çıktı dosyalarının bütünlüğünü kontrol edin.

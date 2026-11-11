@@ -58,13 +58,15 @@ Yerel analiz için `url` yerine `filename` alanını kullanan `/api/analyze/loca
 
 | Method | Endpoint | Purpose |
 |---|---|---|
+| GET | /api/queue/health | Kalıcı kuyruk sayıları, worker heartbeat ve global concurrency |
+| GET | /api/queue/tasks?limit=50&status=queued | Son görevlerin payload içermeyen metadata listesi |
 | GET | /api/tasks/history | Son görevlerin geçmişi |
 | GET | /api/tasks/{task_id} | Görev durumu ve ilerleme |
 | GET | /api/tasks/{task_id}/events | Görev olay geçmişi |
 | POST | /api/tasks/{task_id}/cancel | Çalışan görevi iptal etmeyi dener |
 | POST | /api/tasks/{task_id}/retry | Yeniden denenebilir görevi tekrar başlatır |
 
-Görev durumları arasında queued, running, completed, failed, cancelled ve interrupted bulunur. Uygulama yeniden başlatıldığında yarım kalan queued/running işler interrupted olarak işaretlenir.
+Görev durumları arasında queued, running, completed, failed, cancelled ve interrupted bulunur. Kalıcı kuyruk görevleri worker lease süresi dolduğunda aynı-host worker tarafından yeniden alınabilir. `/api/queue/tasks` özel payload içeriğini döndürmez.
 
 ## Content creation
 
@@ -109,7 +111,7 @@ Alanlar: niche, topic, region, language, duration, voice, captions, auto_trend, 
 | POST | /api/autopilot | Yeni plan oluşturur |
 | PATCH | /api/autopilot/{autopilot_id} | Planı günceller |
 | DELETE | /api/autopilot/{autopilot_id} | Planı siler |
-| POST | /api/autopilot/{autopilot_id}/run | Planı hemen çalıştırır |
+| POST | /api/autopilot/{autopilot_id}/run | Planı kalıcı kuyruğa ekler; çift çalıştırma 409 döndürür |
 
 ## Platform and OAuth
 

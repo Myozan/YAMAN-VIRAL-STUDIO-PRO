@@ -1061,3 +1061,35 @@ html[data-theme="ocean"] .pipeline>div,html[data-theme="ocean"] .agent-grid arti
  .system-monitor .gauge-center strong{font-size:14px!important}
  .system-monitor .gauge-center small{font-size:7px!important}
 }
+
+
+/* QA 3.8 durable queue operations panel */
+.queue-stat-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin:0 0 16px}
+.queue-stat-grid>div{min-width:0;padding:13px 14px;border:1px solid var(--line);border-radius:11px;background:rgba(128,150,180,.045)}
+.queue-stat-grid small{display:block;color:var(--muted);font-size:9px;font-weight:800;letter-spacing:1px}
+.queue-stat-grid strong{display:block;margin-top:8px;color:var(--text);font:700 22px "Space Grotesk",Inter,sans-serif;overflow-wrap:anywhere}
+.queue-worker-list,.queue-task-list{display:grid;gap:8px;margin-top:13px}
+.queue-worker-row,.queue-task-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 13px;border:1px solid var(--line);border-radius:10px;background:rgba(3,10,18,.22);min-width:0}
+.queue-worker-row>div,.queue-task-row>div{display:grid;gap:4px;min-width:0}
+.queue-worker-row b,.queue-task-row b{font-size:11px;color:var(--text)}
+.queue-worker-row small,.queue-task-row small{font-size:9px;color:var(--muted);overflow-wrap:anywhere}
+.queue-worker-row em{font-style:normal;font-size:9px;font-weight:800;white-space:nowrap}
+.queue-health-dot{width:8px;height:8px;border-radius:50%;flex:0 0 8px;background:#d6a84b}
+.queue-health-dot.healthy{background:#53d5a0;box-shadow:0 0 10px #53d5a055}
+.queue-health-dot.stale{background:#e17d78}
+.queue-worker-row{justify-content:flex-start}
+.queue-worker-row em{margin-left:auto}
+.queue-worker-row em.healthy{color:#53d5a0}
+.queue-worker-row em.stale{color:#e17d78}
+.queue-task-heading{display:flex;justify-content:space-between;align-items:center;padding:5px 2px}
+.queue-task-heading b{font-size:11px}
+.queue-task-heading small{font-size:9px;color:var(--muted)}
+.queue-task-status{padding:5px 8px;border:1px solid var(--line);border-radius:20px;font-size:9px;font-weight:800;white-space:nowrap;color:var(--muted)}
+.queue-task-status.running{color:#70a7ff;border-color:#70a7ff55}
+.queue-task-status.queued{color:#d6b45e;border-color:#d6b45e55}
+.queue-task-status.completed{color:#53d5a0;border-color:#53d5a055}
+.queue-task-status.failed,.queue-task-status.cancelled{color:#e17d78;border-color:#e17d7855}
+@media(max-width:1050px){.queue-stat-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:560px){.queue-stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.queue-monitor-panel{padding:15px}.queue-worker-row,.queue-task-row{padding:10px}.queue-worker-row small,.queue-task-row small{font-size:8px}}
+
+.queue-retry-button{padding:7px 10px;font-size:9px;white-space:nowrap}

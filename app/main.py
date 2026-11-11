@@ -146,13 +146,20 @@ task_states: dict[str, dict[str, Any]] = {}
 _task_state_lock = threading.RLock()
 TASK_DB = WORK / "orchestration.sqlite3"
 WORKER_ID = f"{platform.node()}:{os.getpid()}:{uuid.uuid4().hex[:12]}"
-WORKER_STALE_SECONDS = 45
+WORKER_STALE_SECONDS = max(2, int(os.getenv("YAMAN_WORKER_STALE_SECONDS", "45")))
+WORKER_HEARTBEAT_SECONDS = max(
+    1.0, min(float(os.getenv("YAMAN_WORKER_HEARTBEAT_SECONDS", "10")), WORKER_STALE_SECONDS / 2)
+)
+QUEUE_LEASE_SECONDS = max(10, int(os.getenv("YAMAN_QUEUE_LEASE_SECONDS", "90")))
+QUEUE_HEARTBEAT_SECONDS = max(
+    1.0, min(float(os.getenv("YAMAN_QUEUE_HEARTBEAT_SECONDS", "15")), QUEUE_LEASE_SECONDS / 3)
+)
+QUEUE_POLL_SECONDS = max(0.1, float(os.getenv("YAMAN_QUEUE_POLL_SECONDS", "0.5")))
+QUEUE_MAX_CONCURRENT = max(1, int(os.getenv("YAMAN_QUEUE_MAX_CONCURRENT", "1")))
 _worker_heartbeat_stop = threading.Event()
 _worker_heartbeat_thread = None
 _queue_worker_stop = threading.Event()
 _queue_worker_thread = None
-QUEUE_LEASE_SECONDS = 90
-QUEUE_POLL_SECONDS = 0.5
 _cancelled_tasks: set[str] = set()  # Compatibility cache only; SQLite is authoritative.
 _cpu_sample = None
 
@@ -184,8 +191,10 @@ def init_task_store():
 
 def register_task_worker():
     now = datetime.now(timezone.utc).isoformat()
+    cutoff = datetime.fromtimestamp(time.time() - WORKER_STALE_SECONDS, timezone.utc).isoformat()
     with _task_db_connect() as db:
         db.execute("BEGIN IMMEDIATE")
+        db.execute("DELETE FROM task_workers WHERE heartbeat_at<? AND worker_id<>?", (cutoff, WORKER_ID))
         db.execute("INSERT INTO task_workers(worker_id,pid,hostname,started_at,heartbeat_at) VALUES(?,?,?,?,?) "
                    "ON CONFLICT(worker_id) DO UPDATE SET heartbeat_at=excluded.heartbeat_at",
                    (WORKER_ID, os.getpid(), platform.node(), now, now))
@@ -194,8 +203,17 @@ def register_task_worker():
 
 def heartbeat_task_worker():
     now = datetime.now(timezone.utc).isoformat()
+    cutoff = datetime.fromtimestamp(time.time() - WORKER_STALE_SECONDS, timezone.utc).isoformat()
     with _task_db_connect() as db:
-        db.execute("UPDATE task_workers SET heartbeat_at=? WHERE worker_id=?", (now, WORKER_ID))
+        db.execute("BEGIN IMMEDIATE")
+        db.execute(
+            """INSERT INTO task_workers(worker_id,pid,hostname,started_at,heartbeat_at)
+               VALUES(?,?,?,?,?) ON CONFLICT(worker_id) DO UPDATE SET
+               pid=excluded.pid,hostname=excluded.hostname,heartbeat_at=excluded.heartbeat_at""",
+            (WORKER_ID, os.getpid(), platform.node(), now, now),
+        )
+        db.execute("DELETE FROM task_workers WHERE heartbeat_at<? AND worker_id<>?", (cutoff, WORKER_ID))
+        db.commit()
 
 
 def _interrupt_task_rows(db, rows, reason: str):
@@ -244,7 +262,7 @@ def unregister_task_worker():
 
 
 def _task_worker_heartbeat_loop():
-    while not _worker_heartbeat_stop.wait(10):
+    while not _worker_heartbeat_stop.wait(WORKER_HEARTBEAT_SECONDS):
         try:
             heartbeat_task_worker()
             recover_orphaned_tasks()
@@ -925,9 +943,23 @@ def health():
 def durable_queue_health():
     """Expose queue depth and worker heartbeats for the local operations dashboard."""
     try:
-        return task_queue.snapshot(TASK_DB, stale_after_seconds=WORKER_STALE_SECONDS)
+        return task_queue.snapshot(TASK_DB, stale_after_seconds=WORKER_STALE_SECONDS,
+                                       max_concurrent=QUEUE_MAX_CONCURRENT)
     except sqlite3.Error as exc:
         raise HTTPException(503, f"Görev kuyruğu durumu okunamadı: {exc}") from exc
+
+
+@app.get("/api/queue/tasks")
+def durable_queue_tasks(limit: int = 50, status: str | None = None):
+    """List recent queue metadata without returning task payloads."""
+    if not 1 <= limit <= 100:
+        raise HTTPException(422, "limit 1 ile 100 arasında olmalı.")
+    try:
+        return {"tasks": task_queue.list_recent(TASK_DB, limit=limit, status=status)}
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
+    except sqlite3.Error as exc:
+        raise HTTPException(503, f"Görev kuyruğu okunamadı: {exc}") from exc
 
 @app.get("/api/auto-editor/status")
 def auto_editor_status():
@@ -1495,9 +1527,12 @@ def set_task(task_id: str, percent: int, stage: str, status: str = "running", **
             db.execute("BEGIN IMMEDIATE")
             row = db.execute("SELECT created_at,status,payload_json,worker_id FROM tasks WHERE task_id=?",
                              (task_id,)).fetchone()
-            queue_row = db.execute("SELECT status,owner_id FROM task_queue WHERE task_id=?",
+            queue_row = db.execute("SELECT status,owner_id,lease_expires_at FROM task_queue WHERE task_id=?",
                                    (task_id,)).fetchone()
-            if queue_row and not (queue_row[0] == "running" and queue_row[1] == WORKER_ID) \
+            owns_live_lease = bool(queue_row and queue_row[0] == "running"
+                                   and queue_row[1] == WORKER_ID
+                                   and (queue_row[2] or "") >= now)
+            if queue_row and not owns_live_lease \
                     and not (status == "cancelled" and queue_row[0] == "cancelled"):
                 state = json.loads(row[2] or "{}") if row else {}
                 db.commit()
@@ -1565,6 +1600,13 @@ def _dispatch_durable_task(task_id: str, task_type: str, payload: dict):
             raise RuntimeError("Queued source video is outside task folder")
         run_analyze_task(task_id, req, folder, source)
         return
+    if task_type == "autopilot":
+        autopilot_id = payload.get("autopilot_id")
+        item = autopilot_store.get_autopilot(TASK_DB, autopilot_id) if autopilot_id else None
+        if not item:
+            raise RuntimeError("Autopilot schedule no longer exists")
+        run_autopilot_cycle(item, task_id=task_id)
+        return
     if task_type in {"render", "summary", "agents"}:
         request_data = payload["request"]
         job_id = request_data["job_id"]
@@ -1599,10 +1641,9 @@ def _execute_durable_task(task: dict):
     heartbeat_stop = threading.Event()
 
     def lease_heartbeat():
-        while not heartbeat_stop.wait(15):
-            if _queue_worker_stop.is_set():
-                return
+        while not heartbeat_stop.wait(QUEUE_HEARTBEAT_SECONDS):
             try:
+                # Keep the active task lease alive during graceful shutdown until its handler exits.
                 if not task_queue.heartbeat(TASK_DB, task_id, owner_id, lease_seconds=QUEUE_LEASE_SECONDS):
                     return
             except sqlite3.Error:
@@ -1657,6 +1698,9 @@ def _sync_requeued_queue_tasks():
             serialized = json.dumps(state, ensure_ascii=False, default=str)
             db.execute("UPDATE tasks SET status='queued',updated_at=?,stage=?,payload_json=?,worker_id=NULL WHERE task_id=?",
                        (now, state["stage"], serialized, task_id))
+            if state.get("autopilot_id"):
+                db.execute("UPDATE autopilots SET last_status='queued',last_message='Worker lease expired; retry queued',updated_at=? WHERE id=?",
+                           (now, state["autopilot_id"]))
             db.execute("INSERT INTO task_events(task_id,event_type,created_at,payload_json) VALUES(?,?,?,?)",
                        (task_id, "queued", now, serialized))
             task_states[task_id] = state
@@ -1679,6 +1723,9 @@ def _sync_exhausted_queue_tasks():
             serialized = json.dumps(state, ensure_ascii=False, default=str)
             db.execute("UPDATE tasks SET status='failed',updated_at=?,stage=?,payload_json=?,worker_id=NULL WHERE task_id=?",
                        (now, state["stage"], serialized, task_id))
+            if state.get("autopilot_id"):
+                db.execute("UPDATE autopilots SET last_status='failed',last_message=?,updated_at=? WHERE id=?",
+                           (state["error"], now, state["autopilot_id"]))
             db.execute("INSERT INTO task_events(task_id,event_type,created_at,payload_json) VALUES(?,?,?,?)",
                        (task_id, "failed", now, serialized))
             task_states[task_id] = state
@@ -1692,7 +1739,8 @@ def _durable_queue_worker_loop():
             task_queue.recover_expired(TASK_DB)
             _sync_requeued_queue_tasks()
             _sync_exhausted_queue_tasks()
-            claimed = task_queue.claim(TASK_DB, WORKER_ID, lease_seconds=QUEUE_LEASE_SECONDS)
+            claimed = task_queue.claim(TASK_DB, WORKER_ID, lease_seconds=QUEUE_LEASE_SECONDS,
+                                       max_running=QUEUE_MAX_CONCURRENT)
             if claimed:
                 _execute_durable_task(claimed)
                 continue
@@ -1725,12 +1773,23 @@ def task_is_cancelled(task_id: str) -> bool:
     return bool(row and row[0] == "cancelled")
 
 
+def task_ownership_lost(task_id: str) -> bool:
+    queued = task_queue.get(TASK_DB, task_id)
+    return bool(queued and (
+        queued.get("status") != "running"
+        or queued.get("owner_id") != WORKER_ID
+        or (queued.get("lease_expires_at") or "") < task_queue.stamp()
+    ))
+
+
 def check_task_cancelled(task_id: str):
     if task_is_cancelled(task_id):
         raise RuntimeError("Task cancelled by user")
+    if task_ownership_lost(task_id):
+        raise RuntimeError("Task lease lost; this worker no longer owns execution")
 
 
-def run_analyze_task(task_id: str, req: AnalyzeRequest, folder: Path, source_video: Path | None = None):
+def run_analyze_task(task_id: str, req: AnalyzeRequest, folder: Path, source_video: Path | None = None, *, complete_task: bool = True):
     try:
         set_task(task_id, 3, "Araçlar kontrol ediliyor")
         require_binary("ffmpeg"); require_binary("ffprobe")
@@ -1771,10 +1830,19 @@ def run_analyze_task(task_id: str, req: AnalyzeRequest, folder: Path, source_vid
         result = {"job_id": task_id, "duration": duration, "language": language, "clips": candidates,
                   "transcript": segments,
                   "ai_mode": "local Ollama (fallback: heuristic)", "platforms": list(PLATFORMS)}
-        set_task(task_id, 100, "Analiz tamamlandı · Shorts listesi hazır", "completed", result=result)
+        if complete_task:
+            set_task(task_id, 100, "Analiz tamamlandı · Shorts listesi hazır", "completed", result=result)
+        else:
+            set_task(task_id, 82, "Video analizi tamamlandı · Autopilot düzenlemeye geçiyor", result=result)
     except Exception as exc:
-        shutil.rmtree(folder, ignore_errors=True)
-        set_task(task_id, 100, "İşlem başarısız", "failed", error=str(exc))
+        if task_is_cancelled(task_id):
+            set_task(task_id, task_states.get(task_id, {}).get("percent", 0), "İşlem iptal edildi", "cancelled", error="Cancelled by user")
+        elif task_ownership_lost(task_id):
+            # A replacement worker may already be using this task folder; never remove it.
+            return
+        else:
+            shutil.rmtree(folder, ignore_errors=True)
+            set_task(task_id, 100, "İşlem başarısız", "failed", error=str(exc))
 
 
 
@@ -2722,62 +2790,91 @@ def patch_autopilot(autopilot_id: str, req: AutopilotRequest):
     if not platforms or any(p not in PLATFORMS for p in platforms):
         raise HTTPException(422, "Geçersiz platform seçimi.")
     try: item = autopilot_store.update_autopilot(TASK_DB, autopilot_id, {**req.model_dump(), "platforms": platforms})
-    except ValueError as exc: raise HTTPException(422, str(exc))
+    except ValueError as exc: raise HTTPException(409, str(exc))
     if not item: raise HTTPException(404, "Autopilot bulunamadı.")
     return {"autopilot": item}
 
 @app.delete("/api/autopilot/{autopilot_id}")
 def remove_autopilot(autopilot_id: str):
-    if not autopilot_store.delete_autopilot(TASK_DB, autopilot_id):
+    current = autopilot_store.get_autopilot(TASK_DB, autopilot_id)
+    if not current:
         raise HTTPException(404, "Autopilot bulunamadı.")
+    if not autopilot_store.delete_autopilot(TASK_DB, autopilot_id):
+        raise HTTPException(409, "Kuyrukta veya çalışan Autopilot silinemez.")
     return {"deleted": True}
 
 @app.post("/api/autopilot/{autopilot_id}/run")
-def run_autopilot_now(autopilot_id: str, background_tasks: BackgroundTasks):
-    item = autopilot_store.get_autopilot(TASK_DB, autopilot_id)
-    if not item: raise HTTPException(404, "Autopilot bulunamadı.")
-    claim = autopilot_store.claim_manual(TASK_DB, autopilot_id)
-    if claim == "running": raise HTTPException(409, "Bu Autopilot zaten çalışıyor.")
-    if claim == "missing": raise HTTPException(404, "Autopilot bulunamadı.")
-    background_tasks.add_task(run_autopilot_cycle, item)
-    return {"queued": True, "message": "Autopilot çalıştırma kuyruğa alındı."}
+def run_autopilot_now(autopilot_id: str):
+    result = autopilot_store.enqueue_manual_run(TASK_DB, autopilot_id)
+    if result["status"] == "missing":
+        raise HTTPException(404, "Autopilot bulunamadı.")
+    if result["status"] in {"already_queued", "running"}:
+        raise HTTPException(409, "Bu Autopilot zaten kuyrukta veya çalışıyor.")
+    return {"queued": True, "task_id": result["task_id"],
+            "message": "Autopilot kalıcı görev kuyruğuna alındı."}
 
-def run_autopilot_cycle(item: dict):
+
+def run_autopilot_cycle(item: dict, task_id: str | None = None):
     """Watch Downloads, analyze the newest unseen source, render top clips, and leave them for approval."""
     source = None
-    task_id = uuid.uuid4().hex[:10]
+    task_id = task_id or uuid.uuid4().hex[:10]
     outputs = []
     notes = []
     try:
+        previous_run = autopilot_store.get_run_by_task(TASK_DB, task_id)
+        if previous_run and previous_run["status"] == "review":
+            set_task(task_id, 100, "Autopilot tamamlandı · önceki çıktı güvenli biçimde doğrulandı",
+                     "completed", autopilot_status="review",
+                     outputs=previous_run["outputs"], message=previous_run["message"])
+            return
+        check_task_cancelled(task_id)
+        autopilot_store.mark_running(TASK_DB, item["id"])
+        set_task(task_id, 2, "Autopilot çalışıyor · içerik ve kaynak hazırlanıyor",
+                 task_type="autopilot", autopilot_id=item["id"])
+        check_task_cancelled(task_id)
         # Every scheduled cycle first discovers a timely topic and creates a ready-to-narrate script.
         content_folder = WORK / "autopilot-content" / task_id
         content_folder.mkdir(parents=True, exist_ok=True)
         chosen_topic = item["niche"] + " için güncel gelişmeler"
+        check_task_cancelled(task_id)
         try:
             trends = content_factory.research_trends(item["niche"], "TR", 12)
+            check_task_cancelled(task_id)
             if trends.get("topics"):
                 chosen_topic = trends["topics"][0]["title"]
                 (content_folder / "trends.json").write_text(json.dumps(trends, ensure_ascii=False, indent=2), encoding="utf-8")
                 outputs.append({"type":"trend_research","title":chosen_topic,"url":f"/workspace/autopilot-content/{task_id}/trends.json"})
         except Exception as trend_error:
+            if task_is_cancelled(task_id) or task_ownership_lost(task_id):
+                raise
             notes.append("Trend araştırması: " + str(trend_error)[:140])
         script_language = "en" if item.get("language") == "en" else "tr"
+        check_task_cancelled(task_id)
         try:
             script = content_factory.generate_script(OLLAMA_URL, OLLAMA_MODEL, item["niche"], chosen_topic, script_language, 60)
+            check_task_cancelled(task_id)
             (content_folder / "script.md").write_text("# " + script.get("title", chosen_topic) + "\n\n" + script["script"] + "\n", encoding="utf-8")
             outputs.append({"type":"script","title":script.get("title",chosen_topic),"url":f"/workspace/autopilot-content/{task_id}/script.md"})
             voice = "en-US-AriaNeural" if script_language == "en" else "tr-TR-EmelNeural"
             try:
                 audio = content_factory.create_voiceover(script["script"], voice, content_folder / "narration.mp3")
+                check_task_cancelled(task_id)
                 outputs.append({"type":"voiceover","title":voice,"url":f"/workspace/autopilot-content/{task_id}/narration.mp3","bytes":audio.stat().st_size})
             except Exception as voice_error:
+                if task_is_cancelled(task_id) or task_ownership_lost(task_id):
+                    raise
                 notes.append("AI seslendirme: " + str(voice_error)[:140])
         except Exception as script_error:
+            if task_is_cancelled(task_id) or task_ownership_lost(task_id):
+                raise
             notes.append("Senaryo üretimi: " + str(script_error)[:160])
         if not DOWNLOADS_DIR.is_dir():
             if outputs:
+                check_task_cancelled(task_id)
                 message = "Trend araştırması ve içerik taslağı hazır. " + " | ".join(notes) + " Kaynak video bekleniyor."
                 autopilot_store.finish_run(TASK_DB, item["id"], "review", message, task_id, None, outputs)
+                set_task(task_id, 100, "Autopilot tamamlandı · kaynak video bekleniyor", "completed",
+                         autopilot_status="review", outputs=outputs, message=message)
                 return
             raise RuntimeError("İndirilenler klasörü bulunamadı ve içerik üretimi tamamlanamadı.")
         seen = set(item.get("processed_files", []))
@@ -2789,8 +2886,11 @@ def run_autopilot_cycle(item: dict):
             except OSError: continue
         if not candidates:
             if outputs:
+                check_task_cancelled(task_id)
                 message = "Trend konusu, senaryo ve mevcut seslendirme çıktıları hazır. Yeni kaynak video bekleniyor. " + " | ".join(notes)
                 autopilot_store.finish_run(TASK_DB, item["id"], "review", message, task_id, None, outputs)
+                set_task(task_id, 100, "Autopilot tamamlandı · kaynak video bekleniyor", "completed",
+                         autopilot_status="review", outputs=outputs, message=message)
                 return
             raise RuntimeError("İşlenecek yeni video yok. İndirilenler klasörüne yeni bir video ekleyin. " + " | ".join(notes))
         source = max(candidates, key=lambda p: p.stat().st_mtime)
@@ -2802,9 +2902,11 @@ def run_autopilot_cycle(item: dict):
                              max_seconds=item["max_seconds"], language=item["language"])
         set_task(task_id, 1, "Autopilot · kaynak analiz ediliyor", task_type="autopilot",
                  autopilot_id=item["id"], source_file=source.name)
-        run_analyze_task(task_id, req, folder, local_copy)
+        check_task_cancelled(task_id)
+        run_analyze_task(task_id, req, folder, local_copy, complete_task=False)
+        check_task_cancelled(task_id)
         state = task_states.get(task_id, {})
-        if state.get("status") != "completed":
+        if state.get("status") not in {"completed", "running"} or not state.get("result"):
             raise RuntimeError(state.get("error", "Video analizi tamamlanamadı."))
         job = jobs.get(task_id)
         if not job: raise RuntimeError("Analiz projesi oluşturulamadı.")
@@ -2829,35 +2931,52 @@ def run_autopilot_cycle(item: dict):
                     candidate["title"] = str(scored.get("title", candidate.get("title", "")))[:160]
             save_job(task_id, job)
         except Exception:
+            if task_is_cancelled(task_id) or task_ownership_lost(task_id):
+                raise
             pass
         selected = sorted(job["clips"], key=lambda c: c.get("score", 0), reverse=True)[:3]
         rendered = list(outputs)
         for clip in selected:
+            check_task_cancelled(task_id)
             render_id = uuid.uuid4().hex[:10]
             render_req = RenderRequest(job_id=task_id, clip_id=clip["id"], platforms=item["platforms"], captions=True)
             set_task(render_id, 1, "Autopilot · platform çıktıları hazırlanıyor",
                      task_type="autopilot_render", autopilot_id=item["id"], source_file=source.name, outputs=[])
             run_render_task(render_id, render_req, job, clip, item["platforms"])
+            check_task_cancelled(task_id)
             render_state = task_states.get(render_id, {})
             if render_state.get("status") != "completed":
                 raise RuntimeError(render_state.get("error", "Platform render işlemi başarısız."))
             rendered.extend(render_state.get("outputs", []))
+        check_task_cancelled(task_id)
         message = f"{source.name}: {len(selected)} kesit hazır. Trend, senaryo ve seslendirme çıktıları da üretildi. Yayın öncesi onay bekliyor. " + " | ".join(notes)
         autopilot_store.finish_run(TASK_DB, item["id"], "review", message, task_id, task_id, rendered, source.name)
+        set_task(task_id, 100, "Autopilot tamamlandı · yayın öncesi onay bekliyor", "completed",
+                 autopilot_status="review", outputs=rendered, message=message)
     except Exception as exc:
-        autopilot_store.finish_run(TASK_DB, item["id"], "failed", str(exc), task_id,
-                                   task_id if task_id in jobs else None, [], None)
+        queue_state = task_queue.get(TASK_DB, task_id)
+        if queue_state and queue_state.get("status") != "cancelled" and task_ownership_lost(task_id):
+            # A replacement worker owns this retry; the stale worker must not mutate schedule history.
+            return
+        if task_is_cancelled(task_id):
+            autopilot_store.finish_run(TASK_DB, item["id"], "cancelled", "Kullanıcı tarafından iptal edildi",
+                                       task_id, task_id if task_id in jobs else None, [], None)
+            set_task(task_id, task_states.get(task_id, {}).get("percent", 0),
+                     "Autopilot iptal edildi", "cancelled", error="Cancelled by user")
+        else:
+            autopilot_store.finish_run(TASK_DB, item["id"], "failed", str(exc), task_id,
+                                       task_id if task_id in jobs else None, [], None)
+            set_task(task_id, 100, "Autopilot başarısız", "failed", error=str(exc)[:1000])
+
 
 def _autopilot_scheduler():
+    """Schedule due runs into SQLite; execution belongs exclusively to durable queue workers."""
     while not _scheduler_stop.is_set():
         try:
-            for item in autopilot_store.claim_due(TASK_DB):
-                if _scheduler_stop.is_set():
-                    break
-                run_autopilot_cycle(item)
-        except Exception:
+            autopilot_store.claim_due(TASK_DB)
+        except (sqlite3.Error, ValueError):
             pass
-        _scheduler_stop.wait(20)
+        _scheduler_stop.wait(5)
 
 
 def start_autopilot_scheduler():

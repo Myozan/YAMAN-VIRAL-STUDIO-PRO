@@ -25,7 +25,7 @@ The durable dispatcher is now used for:
 - Summary video generation.
 - Agent-team analysis and the existing agent retry route.
 
-Autopilot scheduling and other non-core background workflows still use their existing scheduling path; they are not claimed to be part of the durable queue yet.
+Autopilot manual and scheduled runs now use the same durable queue. The scheduler only claims due schedules and atomically enqueues them; content generation runs inside the queue worker. Other non-core background workflows may still use process-local scheduling.
 
 ## Queue contract
 
@@ -58,14 +58,18 @@ The task record and queue record are inserted in the same SQLite transaction for
 
 This queue supports multiple worker processes on one host sharing a local SQLite database and workspace. It does not provide multi-host coordination. A multi-host deployment requires PostgreSQL plus a durable distributed broker/worker architecture.
 
-## Validation still required
+## QA 3.8 additions
 
-- Full regression suite and static checks.
-- A controlled worker-termination test proving that a second worker reclaims an expired task.
-- Verify shutdown, lease renewal, retry exhaustion, cancellation and partial output behavior.
+- Global active-task concurrency is enforced inside the SQLite claim transaction. Default is one active task across all same-host Uvicorn processes (`YAMAN_QUEUE_MAX_CONCURRENT=1`).
+- Worker heartbeat rows are pruned after the stale threshold; a resumed process re-registers itself with an upsert heartbeat.
+- Queue health and metadata endpoints: `GET /api/queue/health` and `GET /api/queue/tasks`.
+- Autopilot schedule/manual enqueue, task journal and schedule state are committed atomically. Same due occurrence is not enqueued twice across processes.
+- Autopilot run-history writes are idempotent by durable task ID; stale workers cannot mutate schedule state after lease loss.
+- NAS backup stages SQLite online snapshots locally before copying them to the destination. Restore validates integrity and requires explicit confirmation.
 
 ## Verification
 
-- Full Windows/Python 3.12 suite: 98 passed, 2 skipped (100 total).
-- Python compileall, JavaScript syntax checks, PWA manifest parse and Git whitespace checks pass.
-- The two skipped cases are symlink-specific tests unavailable under the current Windows account privileges.
+- Real Windows smoke test starts two independent Uvicorn processes. The first worker is killed during a task; the second reclaims and completes it after a shortened test lease. Production lease default remains 90 seconds.
+- Backup/restore round trip verified with a disposable local workspace fixture. A physical NAS share rehearsal remains environment-specific.
+- Long real FFmpeg/Whisper process interruption remains a separate media-specific soak test; generic queue process failover is verified.
+- Full regression suite and static checks are recorded in the QA 3.8 operations page.

@@ -336,7 +336,7 @@ function showPage(name){
  if(name==="platforms") loadPlatforms();
  if(name==="settings"){loadSettings();loadVisualProviderStatus();const theme=$("themeSelect");if(theme)theme.value=document.documentElement.dataset.theme||"dark";}
   if(name==="content") loadTaskHistory();
- if(name==="autopilot") loadAutopilots();
+ if(name==="autopilot"){loadAutopilots();loadQueueMonitor();}
 }
 document.querySelectorAll("#sidebarNav a").forEach(a=>a.addEventListener("click",e=>{e.preventDefault();showPage(a.dataset.page);}));
 document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>showPage(b.dataset.go)));
@@ -522,7 +522,7 @@ async function loadAutopilots(){
    const outputs=(a.last_outputs||[]).map(o=>'<a href="'+escapeHtml(o.url)+'" target="_blank" rel="noopener">'+escapeHtml(o.type==="voiceover"?"MP3 Seslendirme":o.type==="script"?"Senaryo":o.type==="trend_research"?"Trend Raporu":"MP4 Çıktı")+'</a>').join("");
    return '<article class="autopilot-card"><div class="autopilot-card-head"><div><b>'+escapeHtml(a.name)+'</b><small>'+escapeHtml(a.niche)+' · '+(a.frequency==="weekly"?"Haftalık":"Her gün")+' · '+escapeHtml(a.publish_time)+' '+escapeHtml(a.timezone)+'</small></div><span class="autopilot-status '+escapeHtml(a.last_status)+'">'+escapeHtml(a.last_status==="ready"?"HAZIR":a.last_status==="running"?"ÇALIŞIYOR":a.last_status==="review"?"ONAY BEKLİYOR":a.last_status==="failed"?"HATA":a.last_status.toUpperCase())+'</span></div><p>'+escapeHtml(a.last_message||("Sonraki çalışma: "+new Date(a.next_run).toLocaleString("tr-TR")))+'</p><small>'+escapeHtml(a.platforms.join(" · "))+' · '+(a.enabled?"Zamanlama açık":"Duraklatıldı")+'</small>'+(outputs?'<div class="autopilot-output-links">'+outputs+'</div>':'')+'<div class="autopilot-card-actions"><button class="secondary" data-auto-run="'+a.id+'">Şimdi çalıştır</button><button class="secondary" data-auto-toggle="'+a.id+'" data-enabled="'+(!a.enabled)+'">'+(a.enabled?"Duraklat":"Etkinleştir")+'</button><button class="secondary danger" data-auto-delete="'+a.id+'">Sil</button></div></article>';
   }).join("");
-  box.querySelectorAll("[data-auto-run]").forEach(b=>b.addEventListener("click",async()=>{b.disabled=true;b.textContent="Kuyruğa alınıyor…";try{const x=await fetch("/api/autopilot/"+b.dataset.autoRun+"/run",{method:"POST"});const v=await x.json();if(!x.ok)throw new Error(v.detail);$("autopilotFeedback").textContent=v.message||"İşlem kuyruğa alındı."; }catch(e){$("autopilotFeedback").textContent=e.message;}finally{b.disabled=false;b.textContent="Şimdi çalıştır";loadAutopilots();}}));
+  box.querySelectorAll("[data-auto-run]").forEach(b=>b.addEventListener("click",async()=>{b.disabled=true;b.textContent="Kuyruğa alınıyor…";try{const x=await fetch("/api/autopilot/"+b.dataset.autoRun+"/run",{method:"POST"});const v=await x.json();if(!x.ok)throw new Error(v.detail);$("autopilotFeedback").textContent=v.message||"İşlem kuyruğa alındı."; }catch(e){$("autopilotFeedback").textContent=e.message;}finally{b.disabled=false;b.textContent="Şimdi çalıştır";loadAutopilots();loadQueueMonitor();}}));
   box.querySelectorAll("[data-auto-toggle]").forEach(b=>b.addEventListener("click",async()=>{const id=b.dataset.autoToggle;const item=d.autopilots.find(x=>x.id===id);const body={name:item.name,niche:item.niche,language:item.language,clips:item.clips,min_seconds:item.min_seconds,max_seconds:item.max_seconds,platforms:item.platforms,frequency:item.frequency,publish_time:item.publish_time,timezone:item.timezone,enabled:b.dataset.enabled==="true"};try{const x=await fetch("/api/autopilot/"+id,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});const v=await x.json();if(!x.ok)throw new Error(v.detail);loadAutopilots();}catch(e){$("autopilotFeedback").textContent=e.message;}}));
   box.querySelectorAll("[data-auto-delete]").forEach(b=>b.addEventListener("click",async()=>{if(!confirm("Bu Autopilot otomasyonunu silmek istiyor musun?"))return;const x=await fetch("/api/autopilot/"+b.dataset.autoDelete,{method:"DELETE"});if(x.ok)loadAutopilots();}));
  }catch(e){box.innerHTML='<div class="empty">Autopilot yüklenemedi: '+escapeHtml(e.message)+'</div>';}
@@ -536,6 +536,7 @@ $("autopilotForm")?.addEventListener("submit",async e=>{
  finally{btn.disabled=false;btn.textContent="Autopilot oluştur →";}
 });
 $("refreshAutopilot")?.addEventListener("click",loadAutopilots);
+$("refreshQueue")?.addEventListener("click",loadQueueMonitor);
 
 
 let latestTrendTopics=[];
@@ -723,3 +724,51 @@ document.getElementById("themeCycle")?.addEventListener("click",()=>{
  button.title="Tema: "+labels[next]+" · Değiştirmek için tıkla";
  button.setAttribute("aria-label",button.title);
 });
+
+
+async function loadQueueMonitor(){
+ const queuedEl=$("queueQueued"),runningEl=$("queueRunning");
+ if(!queuedEl||!runningEl)return;
+ const workerBox=$("queueWorkerList"),taskBox=$("queueTaskList"),feedback=$("queueMonitorFeedback");
+ if(feedback)feedback.textContent="Kuyruk durumu yenileniyor…";
+ try{
+  const [healthResponse,tasksResponse]=await Promise.all([
+   fetch("/api/queue/health",{cache:"no-store"}),
+   fetch("/api/queue/tasks?limit=12",{cache:"no-store"})
+  ]);
+  const health=await healthResponse.json(),taskData=await tasksResponse.json();
+  if(!healthResponse.ok)throw new Error(health.detail||"Kuyruk sağlığı okunamadı.");
+  if(!tasksResponse.ok)throw new Error(taskData.detail||"Görev listesi okunamadı.");
+  const counts=health.counts||{};
+  queuedEl.textContent=counts.queued??0;
+  runningEl.textContent=counts.running??0;
+  $("queueCompleted").textContent=counts.completed??0;
+  $("queueFailed").textContent=counts.failed??0;
+  $("queueWorkers").textContent=(health.worker_count??0)+" / "+(health.stale_worker_count??0)+" eski";
+  $("queueConcurrency").textContent=String(health.max_concurrent??1);
+  if(workerBox){
+   const workers=health.workers||[];
+   workerBox.innerHTML=workers.length?workers.map(w=>'<div class="queue-worker-row"><span class="queue-health-dot '+(w.healthy?'healthy':'stale')+'"></span><div><b>'+escapeHtml(w.hostname)+' · PID '+escapeHtml(w.pid)+'</b><small>'+escapeHtml(w.worker_id)+' · Son sinyal: '+escapeHtml(w.heartbeat_at||"bilinmiyor")+'</small></div><em class="'+(w.healthy?'healthy':'stale')+'">'+(w.healthy?'AKTİF':'ESKİ')+'</em></div>').join(""):'<div class="empty">Henüz kayıtlı worker yok. Uygulama worker servisini başlatmamış olabilir.</div>';
+  }
+  if(taskBox){
+   const tasks=taskData.tasks||[];
+   const labels={analyze:"Video analizi",render:"Video render",summary:"Özet video",agents:"Uzman ajanlar",autopilot:"Autopilot"};
+   const statuses={queued:"Kuyrukta",running:"Çalışıyor",completed:"Tamamlandı",failed:"Başarısız",cancelled:"İptal"};
+   taskBox.innerHTML=tasks.length?'<div class="queue-task-heading"><b>Son görevler</b><small>'+tasks.length+' kayıt</small></div>'+tasks.map(t=>'<div class="queue-task-row"><div><b>'+escapeHtml(labels[t.task_type]||t.task_type)+'</b><small>'+escapeHtml(String(t.task_id).slice(0,14))+' · Deneme '+escapeHtml(t.attempts)+'/'+escapeHtml(t.max_attempts)+'</small></div><span class="queue-task-status '+escapeHtml(t.status)+'">'+escapeHtml(statuses[t.status]||t.status)+'</span>'+(t.task_type==="agents"&&["failed","cancelled"].includes(t.status)?'<button type="button" class="secondary queue-retry-button" data-queue-retry="'+escapeHtml(t.task_id)+'">Yeniden dene</button>':'')+'</div>').join(""):'<div class="empty">Henüz görev kaydı yok.</div>';
+   taskBox.querySelectorAll("[data-queue-retry]").forEach(button=>button.addEventListener("click",async()=>{
+    button.disabled=true;button.textContent="Kuyruğa alınıyor…";
+    try{
+     const response=await fetch("/api/tasks/"+encodeURIComponent(button.dataset.queueRetry)+"/retry",{method:"POST"});
+     const result=await response.json();if(!response.ok)throw new Error(result.detail||"Görev yeniden kuyruğa alınamadı.");
+     if(feedback)feedback.textContent="Yeni görev oluşturuldu: "+result.task_id;
+     loadQueueMonitor();loadTaskHistory();
+    }catch(error){if(feedback)feedback.textContent=error.message;button.disabled=false;button.textContent="Yeniden dene";}
+   }));
+  }
+  if(feedback)feedback.textContent=(health.ok?"Worker sağlıklı":"Worker sağlığı uyarı veriyor")+" · Son kontrol: "+new Date(health.captured_at).toLocaleTimeString("tr-TR");
+ }catch(error){
+  if(feedback)feedback.textContent="Kuyruk izleme hatası: "+error.message;
+  if(workerBox)workerBox.innerHTML='<div class="empty">Worker bilgisi alınamadı.</div>';
+  if(taskBox)taskBox.innerHTML='<div class="empty">Görev listesi alınamadı.</div>';
+ }
+}

@@ -19,6 +19,8 @@
 | FFmpeg | `ffmpeg -version` | Version information |
 | FFprobe | `ffprobe -version` | Version information |
 | Auto-Editor | GET /api/auto-editor/status | Installed state reported |
+| Durable queue | GET /api/queue/health | `ok=true`, live worker and queue counts |
+| Queue tasks | GET /api/queue/tasks?limit=50 | Recent task metadata without private payloads |
 
 A healthy API does not imply all optional providers are configured. Third-party requests-based HTTPS APIs use the pinned transport; local Ollama remains a separate local-service connection, while yt-dlp and Edge TTS use their own client transports.
 
@@ -29,11 +31,14 @@ A healthy API does not imply all optional providers are configured. Third-party 
 - Each process registers a worker heartbeat every 10 seconds. Core media tasks also renew a task-specific 90-second execution lease every 15 seconds.
 - Analysis (remote/local), render, summary and agent tasks are stored in the durable SQLite queue and claimed by the process worker poller. If a worker disappears, another same-host worker requeues the task after its execution lease expires; worker-crash retry delay grows exponentially and is capped at five minutes, with three attempts by default. Application-level task failures remain failed for explicit review/retry.
 - Queue execution is at-least-once. A crash after an output is written but before completion is acknowledged can repeat the handler. Inspect partial outputs and confirm overwrite safety before manual intervention.
-- Autopilot and other non-core background workflows still use their existing in-process scheduling path; they are not part of the durable queue yet.
+- Autopilot manual and scheduled runs are now enqueued in the same durable SQLite queue. The scheduler thread only claims due schedules; content generation is performed by queue workers. Other non-core workflows may still use process-local scheduling.
 
 ## 4. Multi-worker operating boundary
 
-- Multiple Uvicorn workers may share the same local `workspace/orchestration.sqlite3` database on one host. Task state, queue payloads, leases, cancellation and saved job metadata are shared through SQLite/filesystem; core media tasks can be reclaimed by another worker process after lease expiry.
+- Multiple Uvicorn workers may share the same local `workspace/orchestration.sqlite3` database on one host. Task state, queue payloads, leases, cancellation, Autopilot schedules and saved job metadata are shared through SQLite/filesystem.
+- The default global queue concurrency is one task (`YAMAN_QUEUE_MAX_CONCURRENT=1`) to protect local CPU/GPU resources. Increase only after load testing the actual machine.
+- Queue lease defaults: 90 seconds, renewed every 15 seconds. Worker process heartbeats default to 10 seconds; stale worker registrations are pruned after 45 seconds.
+- The Autopilot page includes a live queue monitor with task counts, worker heartbeats, global concurrency and recent task metadata. Use its refresh action after starting or cancelling work.
 - SQLite WAL requires a local filesystem; do not place the database on a network share. Multi-host execution is not supported and requires PostgreSQL plus a durable distributed broker/worker system.
 
 ## 5. Backup
@@ -45,16 +50,17 @@ Recommended offline backup set:
 - `.oauth.key.rotated` if environment-managed OAuth key rotation has been performed.
 - Any externally managed key material referenced by environment variables (stored separately and securely).
 
-Stop the application before a plain file-copy backup of SQLite. Encrypt the backup and restrict access.
+Use `python tools/backup_workspace.py --destination "\\\\NAS\\YamanBackups"` for a consistent online SQLite snapshot followed by a copy to the NAS. The database snapshot is staged locally first; do not copy the live SQLite/WAL files directly. Back up `settings.local.json` and matching OAuth key material separately and securely. Encrypt the backup and restrict access.
 
 ## 6. Restore
 
-1. Restore into a separate working directory first.
-2. Restore workspace databases, job folders, encrypted vault files and key material as a matched set, including `.oauth.key.rotated` when present.
-3. Verify SQLite integrity using a read-only copy.
-4. Start the app and inspect task history, job loading and OAuth vault decryption.
-5. Open a sample output and verify it with FFprobe.
-6. Switch the production workspace only after validation.
+1. Stop every YAMAN/Uvicorn process before restoring.
+2. Restore into a separate working directory first when possible.
+3. Run `python tools/restore_workspace.py --snapshot "<snapshot-folder>" --workspace ".\\workspace" --confirm-restore`.
+4. Restore `settings.local.json` and matching OAuth key material as a matched set, including `.oauth.key.rotated` when present.
+5. Verify SQLite integrity, task history, job loading and OAuth vault decryption.
+6. Open a sample output and verify it with FFprobe.
+7. Switch the production workspace only after validation.
 
 ## 7. Common incidents
 
