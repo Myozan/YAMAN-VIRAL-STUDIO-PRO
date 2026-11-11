@@ -1,3 +1,26 @@
+/* YAMAN sidebar refresh — shared desktop/mobile navigation */
+.layout{grid-template-columns:270px minmax(0,1fr)!important}
+.layout>aside{position:sticky;top:0;height:100vh;min-height:100vh;overflow-y:auto;overflow-x:hidden;padding:28px 18px 18px!important;background:linear-gradient(180deg,#0b1422 0%,#080e18 100%);border-right:1px solid rgba(117,145,177,.18);box-shadow:12px 0 36px rgba(0,0,0,.12);z-index:20}
+.layout>aside .brand{padding:0 8px 25px;border-bottom:1px solid rgba(117,145,177,.13)}
+.layout>aside .mark{width:46px;height:46px;flex:0 0 46px;border-radius:14px;box-shadow:0 8px 24px rgba(91,220,204,.18)}
+.layout>aside .sidebar-caption{margin:26px 10px 12px;color:#6f819b;font-size:9px;font-weight:800;letter-spacing:2px}
+.layout>aside nav#sidebarNav{display:grid;gap:6px;margin:0;padding:0}
+.layout>aside nav#sidebarNav a{position:relative;display:flex;align-items:center;gap:11px;min-height:47px;padding:9px 11px;border:1px solid transparent;border-radius:12px;color:#a2b1c5;text-decoration:none;font-size:12px;font-weight:650;letter-spacing:.1px;transition:background .18s,border-color .18s,color .18s,transform .18s}
+.layout>aside nav#sidebarNav a:hover{background:rgba(116,145,180,.09);border-color:rgba(116,145,180,.14);color:#f0f6ff;transform:translateX(2px)}
+.layout>aside nav#sidebarNav a.active{background:linear-gradient(100deg,rgba(85,224,203,.15),rgba(62,109,143,.12));border-color:rgba(91,224,204,.28);color:#7cebd9;box-shadow:inset 3px 0 #69e5d1,0 8px 22px rgba(0,0,0,.12)}
+.layout>aside nav#sidebarNav .nav-icon{display:grid;place-items:center;flex:0 0 29px;width:29px;height:29px;border:1px solid rgba(148,166,196,.13);border-radius:9px;background:rgba(148,166,196,.06);font-size:15px;color:#9caec6}
+.layout>aside nav#sidebarNav a.active .nav-icon{color:#75ead7;background:rgba(103,234,212,.1);border-color:rgba(103,234,212,.22)}
+.layout>aside nav#sidebarNav .nav-label{flex:1;min-width:0;white-space:nowrap}
+.layout>aside nav#sidebarNav .nav-arrow{color:#60758e;font-size:18px;opacity:.7}
+.layout>aside .sidebar-bottom{margin-top:auto;padding-top:26px}
+.layout>aside .github-link{display:flex;align-items:center;gap:11px;margin:0 0 12px;padding:13px;border:1px solid rgba(148,166,196,.15);border-radius:13px;background:linear-gradient(145deg,rgba(25,39,57,.8),rgba(13,22,36,.9));color:var(--text);text-decoration:none;transition:border-color .2s,transform .2s}
+.layout>aside .github-link:hover{border-color:rgba(103,234,212,.4);transform:translateY(-2px)}
+.layout>aside .github-mark{display:grid;place-items:center;flex:0 0 34px;width:34px;height:34px;border-radius:10px;background:#e8f0fa;color:#101c2b;font-size:17px;font-weight:800}
+.layout>aside .github-link b{display:block;font-size:11px}.layout>aside .github-link small{display:block;margin-top:4px;color:#8799b1;font-size:9px}.layout>aside .github-link .external{margin-left:auto;color:#91a6bd}
+.layout>aside .local{margin:0;padding:13px;background:rgba(20,54,53,.35);border:1px solid rgba(91,224,204,.2);border-radius:12px}
+.layout>aside .sidebar-version{display:flex;justify-content:space-between;gap:8px;padding:16px 5px 0;color:#64758c;font-size:8px;letter-spacing:1.1px}.layout>aside .sidebar-version span{color:#a0b1c7}
+@media(max-width:1050px){.layout{grid-template-columns:230px minmax(0,1fr)}aside{padding-inline:14px}main{padding-inline:22px}.hero-art{width:118px;height:118px}}
+@media(max-width:760px){.layout{display:block!important}aside{position:relative;top:auto;height:auto;display:block;padding:14px 12px;border-right:0;border-bottom:1px solid var(--line)}.layout>aside .brand{padding:0 4px}.layout>aside .sidebar-caption{display:none}.layout>aside nav#sidebarNav{display:flex;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;margin-top:13px;padding:0 0 5px;gap:5px}.layout>aside nav#sidebarNav a{flex:0 0 auto;min-height:40px;padding:8px 10px;gap:7px;font-size:10px}.layout>aside nav#sidebarNav .nav-icon{width:22px;height:22px;flex-basis:22px;font-size:12px}.layout>aside nav#sidebarNav .nav-arrow{display:none}.layout>aside .sidebar-bottom{display:none}}
 /* Accessible collapsible sidebar and responsive off-canvas drawer */
 .layout{--sidebar-width:270px;grid-template-columns:var(--sidebar-width) minmax(0,1fr)!important;transition:grid-template-columns .24s ease}
 .layout>aside{width:var(--sidebar-width);min-width:0;transition:width .24s ease,padding .24s ease,transform .24s ease}
