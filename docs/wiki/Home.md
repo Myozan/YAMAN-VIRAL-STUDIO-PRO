@@ -2,31 +2,38 @@
 
 YAMAN VIRAL STUDIO PRO, Windows üzerinde çalışan yerel öncelikli bir AI video içerik üretim stüdyosudur. Uzun videoları analiz ederek YouTube Shorts, Instagram Reels ve TikTok için kısa dikey içerikler hazırlamaya yardımcı olur.
 
-**Ürün sürümü:** README'de tanımlanan v1.8.0  
+**Ürün sürümü:** v1.8.0  
 **Çalışma adresi:** http://127.0.0.1:8765  
 **Varsayılan yaklaşım:** Yerel işleme, kullanıcı kontrollü dışa aktarma ve yayınlama.
 
-## Dokümantasyon
+## Product guides
+- [Installation Guide](Installation)
+- [System Requirements](System-Requirements)
+- [Video Production](Video-Production)
+- [Autopilot Guide](Autopilot)
 
-- [Installation Guide](Installation) — Windows kurulumu ve ilk çalıştırma
-- [System Requirements](System-Requirements) — Donanım ve yazılım gereksinimleri
-- [Architecture](Architecture) — Uygulama bileşenleri ve veri akışı
-- [AI Engine](AI-Engine) — Ollama ve Faster-Whisper yapılandırması
-- [Video Production](Video-Production) — İçerik üretim hattı
-- [Troubleshooting](Troubleshooting) — Yaygın sorunlar ve çözümler
+## Engineering documentation
+- [Architecture](Architecture)
+- [API Reference](API-Reference)
+- [Agent System](Agent-System)
+- [Database Schema](Database-Schema)
+- [Security & Privacy](Security)
+- [Deployment Guide](Deployment)
+- [Developer Guide](Developer-Guide)
+- [Release Management](Release-Management)
+- [AI Engine Configuration](AI-Engine)
+- [Troubleshooting](Troubleshooting)
 
-## Üretim hattı
-
+## Core production pipeline
 1. Kaynak videoyu çalışma alanına alın.
 2. Faster-Whisper ile konuşmayı zaman damgalı metne dönüştürün.
 3. Ollama ile içerik ve klip adaylarını analiz edin.
 4. Klipleri düzenleyin, altyazı ve dikey kadrajı hazırlayın.
 5. FFmpeg ile MP4 çıktısı oluşturun.
-6. Çıktıyı inceleyin ve hedef platforma manuel olarak yükleyin.
+6. Çıktıyı inceleyin ve hedef platforma manuel olarak yükleyin veya desteklenen OAuth akışında açık onayla yayınlayın.
 
-## Önemli not
-
-Bu Wiki, depodaki README, requirements.txt, .env.example, başlatıcı ve mimari dokümanından doğrulanabilen bilgileri temel alır. Mimari dokümanında geçen bazı gelişmiş bileşenler hedeflenen/genişletilebilir mimariyi anlatabilir; her bileşenin mevcut sürümde etkin olduğu varsayılmamalıdır.
+## Documentation accuracy
+Bu Wiki, v1.8.0 kaynak kodundan doğrulanabilen özellikleri ve önerilen genişletmeleri ayırır. Mimari tasarımda bulunan ancak kurulumda etkin olmayan PostgreSQL, Redis, LangGraph ve çok kullanıcılı dağıtım bileşenleri mevcut ürün özelliği olarak değerlendirilmemelidir.
 
 ---
 **YAMAN SOFTWARE · Built for Creators**
