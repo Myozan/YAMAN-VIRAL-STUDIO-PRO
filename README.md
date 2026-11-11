@@ -87,6 +87,21 @@ Yeni arayüz; masaüstünde sabit ikonlu yan menü, üst bağlam çubuğu ve Git
 
 Bağımlılıkları elle kurmak için Python sanal ortamı oluşturup **pip install -r requirements.txt** komutunu çalıştır.
 
+## 📲 Ana ekrana yükleme (PWA)
+
+YAMAN VIRAL STUDIO PRO, desteklenen tarayıcılarda ana ekrana yüklenebilir.
+
+1. Uygulamayı aynı cihazda `http://127.0.0.1:8765` üzerinden aç veya telefonda erişilebilen güvenilir bir HTTPS adresi kullan.
+2. Desteklenen Chromium tarayıcılarında üst çubuktaki **Uygulamayı yükle** düğmesine bas. Alternatif olarak tarayıcı menüsündeki **Uygulamayı yükle** seçeneğini kullan.
+3. iPhone/iPad'de Safari paylaş menüsünü aç ve **Ana Ekrana Ekle** seçeneğini seç.
+4. Windows masaüstünde Edge/Chrome adres çubuğundaki yükleme simgesini de kullanabilirsin.
+
+**Önemli sınırlar:**
+- PWA kurulumu ve Service Worker için HTTPS veya localhost gerekir. Telefon, bilgisayardaki `127.0.0.1` adresine erişemez; telefon üzerinden kullanım için güvenilir HTTPS dağıtımı gerekir.
+- Windows başlatıcısı güvenlik nedeniyle varsayılan olarak yalnızca `127.0.0.1` üzerinde dinler. LAN'a otomatik açılmaz.
+- Çevrimdışı önbellek yalnızca uygulama kabuğunu (arayüz, CSS, JavaScript ve ikonlar) tutar. Video analizi, AI, OAuth, yükleme ve diğer API işlemleri için YAMAN sunucusu ve yerel servisler çalışır durumda olmalıdır.
+- API yanıtları ve özel `/workspace` dosyaları Service Worker önbelleğine alınmaz.
+
 ## 🌐 Dil ve görünüm ayarları
 
 Uygulama içinden **Ayarlar → Dil ve yerelleştirme** bölümüne git. Türkçe, English, Deutsch veya Español seçimini yap. Tercih tarayıcıda saklanır ve sonraki açılışta korunur. Görünüm teması ayrıca Gece, Açık ve Okyanus seçenekleriyle değiştirilebilir.
