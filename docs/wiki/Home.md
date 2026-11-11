@@ -13,6 +13,11 @@ YAMAN VIRAL STUDIO PRO, Windows üzerinde çalışan yerel öncelikli bir AI vid
 - [Autopilot Guide](Autopilot)
 
 ## Engineering documentation
+- [Engineering Architecture & Diagrams](Engineering-Architecture)
+- [Database ERD](Database-ERD)
+- [Workflow Sequence Diagrams](Workflow-Sequences)
+- [Testing Strategy](Testing-Strategy)
+- [Operations Runbook](Operations-Runbook)
 - [Architecture](Architecture)
 - [API Reference](API-Reference)
 - [Agent System](Agent-System)
