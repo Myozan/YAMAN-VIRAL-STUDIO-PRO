@@ -31,9 +31,14 @@ QA 3.9 hardens worker-crash cleanup and backup integrity on top of QA 3.8. Produ
 - Backup/restore round-trip test verifies restored file and SQLite contents.
 - Tampered snapshot test confirms checksum rejection occurs before any target workspace file is changed.
 - Existing FFmpeg render/replay smoke test remains in place.
-- The worker-kill test uses a synthetic live FFmpeg input; a full production-length Whisper transcription plus render interrupted mid-job remains a separate soak test.
-- Full Windows/Python 3.12 suite: **130 passed, 2 skipped (132 total)**. The two skips are the existing Windows symlink privilege tests.
+- Local end-to-end media validation used the cached Faster-Whisper `small` model on CPU to transcribe the 47.88-second demo input (10 English segments), then rendered a 12-second captioned vertical MP4 at 1080 x 1920 and verified it with FFprobe (9.08-second render, 308,080-byte output).
+- The worker-kill test uses a synthetic live FFmpeg input. A full production-length Whisper transcription plus render interrupted mid-job remains a separate soak test.
+- Full Windows/Python 3.12 suite after cross-platform path validation: **131 passed, 2 skipped (133 total)**. The two skips are the existing Windows symlink privilege tests.
 - Static validation passed: `compileall` for app/tests/tools, Node syntax checks for `web/app.js` and `web/sw.js`, PWA manifest JSON parsing and `git diff --check`.
+
+## CI follow-up
+
+The first GitHub Actions run showed that the Ubuntu runner lacked FFmpeg/FFprobe and exposed a Windows-drive-path validation mismatch on POSIX. The workflow now installs FFmpeg on both Linux and Windows runners, and the Auto-Editor endpoint rejects POSIX absolute paths, Windows drive/UNC paths and traversal before resolving workspace files. The Windows process-recovery CI job passed on the initial run; the updated full workflow must be rechecked after the follow-up push.
 
 ## NAS production rehearsal
 

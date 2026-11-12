@@ -94,6 +94,20 @@ def test_auto_editor_rejects_absolute_path_outside_workspace(tmp_path, monkeypat
     assert error.value.status_code == 400
 
 
+
+def test_auto_editor_rejects_windows_absolute_path_on_every_platform(tmp_path, monkeypatch):
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    monkeypatch.setattr(main, "WORK", workspace)
+    monkeypatch.setattr(main.shutil, "which", lambda _name: "auto-editor")
+
+    with pytest.raises(HTTPException) as error:
+        main.auto_editor_silence_remove(
+            main.AutoEditorRequest(file=r"C:\Users\Public\outside.mp4")
+        )
+    assert error.value.status_code == 400
+
+
 def test_auto_editor_rejects_symlink_escape(tmp_path, monkeypatch):
     workspace = tmp_path / "workspace"
     workspace.mkdir()

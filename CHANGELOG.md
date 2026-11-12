@@ -120,3 +120,10 @@
 - Upgrade workspace backup manifests to v2 with SHA-256 and byte-size metadata for copied files and SQLite snapshots.
 - Verify copied backup data and preflight all restore sources before modifying the target workspace.
 - Preserve backward compatibility with v1 backup snapshots.
+## [QA 3.9 CI follow-up] - 2026-11-12
+
+- Install FFmpeg/FFprobe explicitly in Linux and Windows GitHub Actions jobs.
+- Reject Windows drive and UNC absolute paths consistently on POSIX hosts in the Auto-Editor endpoint.
+- Route Auto-Editor media execution through the worker-owned process runner.
+- Add a cross-platform regression test for Windows absolute paths.
+- Validate a real local Faster-Whisper transcription and captioned 1080 x 1920 FFmpeg render using the cached small model.

@@ -17,6 +17,8 @@ jobs:
             requirements-dev.txt
       - name: Install application and test dependencies
         run: python -m pip install --upgrade pip && python -m pip install -r requirements.txt -r requirements-dev.txt
+      - name: Install FFmpeg tools
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - name: Compile Python modules
         run: python -m compileall -q app
       - name: Run unit and API integration tests
@@ -81,6 +83,8 @@ jobs:
             requirements-dev.txt
       - name: Install application and test dependencies
         run: python -m pip install --upgrade pip && python -m pip install -r requirements.txt -r requirements-dev.txt
+      - name: Install FFmpeg
+        run: choco install ffmpeg --no-progress -y
       - name: Compile process recovery modules
         run: python -m compileall -q app tests
       - name: Verify worker-kill cleanup and production lease recovery

@@ -1,6 +1,6 @@
 from __future__ import annotations
 import asyncio, ctypes, html, json, math, os, platform, re, secrets, hashlib, base64, shutil, sqlite3, subprocess, sys, time, uuid, threading
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from contextlib import asynccontextmanager
 from typing import Any
 from urllib.parse import urlencode
@@ -978,14 +978,20 @@ def auto_editor_silence_remove(req: AutoEditorRequest):
     binary = shutil.which("auto-editor") or shutil.which("auto-editor.exe")
     if not binary:
         raise HTTPException(503, "Auto-Editor kurulu değil. Resmî Windows sürümünü indirip PATH'e ekleyin.")
-    relative = req.file.replace("\\", "/").lstrip("/")
+    raw_path = req.file.strip().replace("\\", "/")
+    windows_path = PureWindowsPath(req.file.strip())
+    if raw_path.startswith("/") or windows_path.is_absolute() or windows_path.drive:
+        raise HTTPException(400, "Dosya yal\u0131zca yerel workspace i\u00e7inden se\u00e7ilebilir.")
+    relative = raw_path
     if relative.startswith("workspace/"):
         relative = relative[len("workspace/"):]
+    if any(part == ".." for part in relative.split("/")):
+        raise HTTPException(400, "Dosya yal\u0131zca yerel workspace i\u00e7inden se\u00e7ilebilir.")
     source = (WORK / relative).resolve()
     try:
         source.relative_to(WORK.resolve())
     except ValueError:
-        raise HTTPException(400, "Dosya yalnızca yerel workspace içinden seçilebilir.")
+        raise HTTPException(400, "Dosya yal\u0131zca yerel workspace i\u00e7inden se\u00e7ilebilir.")
     if not source.is_file() or source.suffix.lower() != ".mp4":
         raise HTTPException(404, "İşlenecek MP4 dosyası bulunamadı.")
     output = source.with_name(source.stem + "_SILENCE_CUT.mp4")
@@ -994,7 +1000,7 @@ def auto_editor_silence_remove(req: AutoEditorRequest):
     args = [binary, str(source), "-o", str(output), "--margin", f"{req.margin_seconds:g}sec",
             "--edit", f"audio:threshold={req.threshold}%"]
     try:
-        result = subprocess.run(args, capture_output=True, text=True, timeout=1800, cwd=str(source.parent))
+        result = run_media_process(args, capture_output=True, text=True, timeout=1800, cwd=str(source.parent))
     except subprocess.TimeoutExpired as exc:
         raise HTTPException(504, "Auto-Editor işlemi 30 dakika sonunda zaman aşımına uğradı.") from exc
     if result.returncode != 0 or not output.is_file() or output.stat().st_size == 0:
