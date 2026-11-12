@@ -32,6 +32,7 @@ QA 3.9 hardens worker-crash cleanup and backup integrity on top of QA 3.8. Produ
 - Tampered snapshot test confirms checksum rejection occurs before any target workspace file is changed.
 - Existing FFmpeg render/replay smoke test remains in place.
 - Local end-to-end media validation used the cached Faster-Whisper `small` model on CPU to transcribe the 47.88-second demo input (10 English segments), then rendered a 12-second captioned vertical MP4 at 1080 x 1920 and verified it with FFprobe (9.08-second render, 308,080-byte output).
+- A separate controlled crash rehearsal killed a worker after the Whisper model loaded and while transcription was active. The worker exited; a fresh process then repeated transcription (10 English segments) and produced a valid 12.03-second, 1080 x 1920 captioned MP4 in 24.31 seconds (308,080 bytes). This local model-backed rehearsal is not part of hosted CI because the model cache is machine-specific.
 - The worker-kill test uses a synthetic live FFmpeg input. A full production-length Whisper transcription plus render interrupted mid-job remains a separate soak test.
 - Full Windows/Python 3.12 suite after cross-platform path validation: **131 passed, 2 skipped (133 total)**. The two skips are the existing Windows symlink privilege tests.
 - Static validation passed: `compileall` for app/tests/tools, Node syntax checks for `web/app.js` and `web/sw.js`, PWA manifest JSON parsing and `git diff --check`.
