@@ -137,7 +137,8 @@ python -c "import json; json.load(open('web/manifest.webmanifest', encoding='utf
 ## 15. Remaining coverage priorities
 
 **P0**
-- End-to-end two-process Windows smoke test using the real 90-second lease interval and a media fixture, verifying output repeatability after failover.
+- Full production-length Whisper transcription and FFmpeg render interrupted mid-job, followed by task recovery and output integrity validation.
+- Physical NAS SMB backup/restore rehearsal with a real share, network interruption and restore into a separate workspace.
 - Windows symlink tests on a runner with symlink privileges.
 - Offline restore drill for encrypted vault backups, including rotated key material.
 - Multi-host deployment with a shared PostgreSQL database and durable broker; the current SQLite WAL design is intended for multiple workers on one host and a local filesystem.
@@ -175,3 +176,13 @@ The current local run is not a security certification. Two symlink tests were sk
 - Added a synthetic FFmpeg fixture test that renders twice to the same output path and validates the resulting MP4 with FFprobe.
 - Added consistent SQLite online backup staging and restore verification. The test uses a local disposable destination; physical NAS share rehearsal remains an environment-specific release check.
 - Static validation passed: Python compileall, Node syntax for app/service worker, PWA manifest JSON and Git whitespace checks.
+
+
+## 12. QA 3.9 process recovery and backup integrity
+
+- Full Windows/Python 3.12 suite: **130 passed, 2 skipped (132 total)**. The two skips are existing Windows symlink privilege cases.
+- Windows Job Object process ownership ensures FFmpeg exits when its worker is forcibly terminated. The lifecycle integration test verifies the child process is gone.
+- A separate two-Uvicorn-process soak test uses production defaults: 90-second task lease, 15-second lease heartbeat, 10-second worker heartbeat and 45-second stale-worker threshold.
+- Workspace backup manifest v2 records SHA-256 and byte size for all files and SQLite snapshots. Restore preflights every source before modifying the target and remains compatible with v1 snapshots.
+- Tampered backup data is rejected before workspace modification.
+- Physical NAS rehearsal and a representative long Whisper-plus-FFmpeg media interruption test remain production sign-off items.

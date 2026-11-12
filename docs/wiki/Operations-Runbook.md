@@ -28,6 +28,7 @@ A healthy API does not imply all optional providers are configured. Third-party 
 
 - Stop the application using its terminal window.
 - Avoid terminating during a render or database write.
+- Windows FFmpeg child processes are attached to a kill-on-job-close Job Object and are terminated if their worker is forcibly killed.
 - Each process registers a worker heartbeat every 10 seconds. Core media tasks also renew a task-specific 90-second execution lease every 15 seconds.
 - Analysis (remote/local), render, summary and agent tasks are stored in the durable SQLite queue and claimed by the process worker poller. If a worker disappears, another same-host worker requeues the task after its execution lease expires; worker-crash retry delay grows exponentially and is capped at five minutes, with three attempts by default. Application-level task failures remain failed for explicit review/retry.
 - Queue execution is at-least-once. A crash after an output is written but before completion is acknowledged can repeat the handler. Inspect partial outputs and confirm overwrite safety before manual intervention.
@@ -50,7 +51,7 @@ Recommended offline backup set:
 - `.oauth.key.rotated` if environment-managed OAuth key rotation has been performed.
 - Any externally managed key material referenced by environment variables (stored separately and securely).
 
-Use `python tools/backup_workspace.py --destination "\\\\NAS\\YamanBackups"` for a consistent online SQLite snapshot followed by a copy to the NAS. The database snapshot is staged locally first; do not copy the live SQLite/WAL files directly. Back up `settings.local.json` and matching OAuth key material separately and securely. Encrypt the backup and restrict access.
+Use `python tools/backup_workspace.py --destination "\\NAS\YamanBackups"` for a verified backup. Format v2 records SHA-256 and byte size for every workspace file and SQLite snapshot; copied files are re-read and checked before the manifest is atomically finalized. SQLite is snapshotted with the online backup API into local temporary storage first; never copy live SQLite/WAL files directly. Restore preflights every hash and SQLite integrity before changing the target workspace. Format v1 snapshots remain readable but do not contain file hashes. Back up `settings.local.json` and matching OAuth key material separately and securely. Encrypt the backup and restrict access.
 
 ## 6. Restore
 

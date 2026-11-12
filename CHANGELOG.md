@@ -109,3 +109,14 @@
 
 ## [1.2.1] - 2026-11-10
 - Repaired the Studio page and improved local video scanning, transcription and system metrics.
+## [QA 3.9] - 2026-11-12
+
+### Reliability
+- Tie FFmpeg subprocess lifetime to the Windows worker with a kill-on-close Job Object to prevent orphaned encoders after a worker crash.
+- Add a Windows integration test that forcibly terminates a worker and verifies its FFmpeg child exits.
+- Add a production-default 90-second lease failover soak test with two independent Uvicorn processes.
+
+### Backup integrity
+- Upgrade workspace backup manifests to v2 with SHA-256 and byte-size metadata for copied files and SQLite snapshots.
+- Verify copied backup data and preflight all restore sources before modifying the target workspace.
+- Preserve backward compatibility with v1 backup snapshots.

@@ -1,4 +1,5 @@
 ﻿import subprocess
+from app.process_control import run_media_process
 import shutil
 from pathlib import Path
 
@@ -32,7 +33,7 @@ def render_face_tracked(source, output, start, duration, width=1080, height=1920
         "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "160k",
         "-movflags", "+faststart", "-shortest", str(output),
     ]
-    result = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace")
+    result = run_media_process(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace")
     if result.returncode != 0 or not output.is_file() or output.stat().st_size == 0:
         output.unlink(missing_ok=True)
         detail = (result.stderr or result.stdout or "Bilinmeyen FFmpeg hatası")[-2500:]

@@ -24,6 +24,7 @@ from app import content_factory, visual_factory
 from app import updater as update_manager
 from app.secure_http import request_public_https
 from app import task_queue
+from app.process_control import run_media_process
 from app.update_api import router as update_router
 
 # Windows CUDA runtime DLLs are shipped inside this project's isolated venv.
@@ -467,7 +468,7 @@ class MetadataRequest(BaseModel):
     platforms: list[str] = Field(default_factory=lambda: ["youtube", "instagram", "tiktok"])
 
 def command(cmd: list[str]) -> None:
-    p = subprocess.run(cmd, capture_output=True, text=True)
+    p = run_media_process(cmd, capture_output=True, text=True)
     if p.returncode:
         raise RuntimeError((p.stderr or p.stdout)[-3000:])
 
@@ -2183,7 +2184,7 @@ def render_summary_video(job: dict, summary: dict, task_id: str) -> Path:
                "-c:v", "libx264", "-preset", "veryfast", "-crf", "22", "-pix_fmt", "yuv420p",
                "-c:a", "aac", "-b:a", "128k", "-ar", "44100", "-ac", "2",
                "-avoid_negative_ts", "make_zero", "-movflags", "+faststart", str(part)]
-        result = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace")
+        result = run_media_process(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace")
         if result.returncode or not part.is_file() or part.stat().st_size == 0:
             raise RuntimeError("Ozet bolum render hatasi: " + (result.stderr or "FFmpeg failed")[-1200:])
         parts.append(part)
@@ -2549,16 +2550,16 @@ def render_generated_content_video(folder: Path, title: str, scenes: list[dict],
         png=folder/f"visual_scene_{idx+1:02d}.png";bg.save(png);bg.close()
         clip=folder/f"visual_scene_{idx+1:02d}.mp4";frames=max(1,int(round(durations[idx]*30)))
         vf=f"scale=1080:1920,zoompan=z='min(zoom+0.00035,1.045)':d={frames}:s=1080x1920:fps=30,format=yuv420p"
-        run=subprocess.run(["ffmpeg","-hide_banner","-loglevel","error","-y","-loop","1","-i",str(png),"-t",f"{durations[idx]:.3f}","-vf",vf,"-an","-c:v","libx264","-preset","veryfast","-crf","22","-pix_fmt","yuv420p",str(clip)],capture_output=True,text=True,encoding="utf-8",errors="replace")
+        run=run_media_process(["ffmpeg","-hide_banner","-loglevel","error","-y","-loop","1","-i",str(png),"-t",f"{durations[idx]:.3f}","-vf",vf,"-an","-c:v","libx264","-preset","veryfast","-crf","22","-pix_fmt","yuv420p",str(clip)],capture_output=True,text=True,encoding="utf-8",errors="replace")
         if run.returncode or not clip.is_file(): raise RuntimeError("Sahne render hatası: "+run.stderr[-900:])
         clips.append(clip)
     concat=folder/"visual_scenes.txt"
     concat.write_text("".join("file '"+x.name.replace("'","")+"'\n" for x in clips),encoding="utf-8")
     joined=folder/"visuals_joined.mp4"
-    run=subprocess.run(["ffmpeg","-hide_banner","-loglevel","error","-y","-f","concat","-safe","0","-i",str(concat),"-c","copy",str(joined)],capture_output=True,text=True)
+    run=run_media_process(["ffmpeg","-hide_banner","-loglevel","error","-y","-f","concat","-safe","0","-i",str(concat),"-c","copy",str(joined)],capture_output=True,text=True)
     if run.returncode: raise RuntimeError("Sahneler birleştirilemedi: "+run.stderr[-900:])
     output=folder/"publish_ready_shorts.mp4"
-    run=subprocess.run(["ffmpeg","-hide_banner","-loglevel","error","-y","-i",str(joined),"-i",str(audio),"-map","0:v:0","-map","1:a:0","-t",f"{total:.3f}","-vf","fps=30,format=yuv420p","-c:v","libx264","-preset","veryfast","-crf","21","-c:a","aac","-b:a","160k","-shortest","-movflags","+faststart",str(output)],capture_output=True,text=True)
+    run=run_media_process(["ffmpeg","-hide_banner","-loglevel","error","-y","-i",str(joined),"-i",str(audio),"-map","0:v:0","-map","1:a:0","-t",f"{total:.3f}","-vf","fps=30,format=yuv420p","-c:v","libx264","-preset","veryfast","-crf","21","-c:a","aac","-b:a","160k","-shortest","-movflags","+faststart",str(output)],capture_output=True,text=True)
     if run.returncode or not output.is_file() or output.stat().st_size<1024: raise RuntimeError("Final MP4 render hatası: "+run.stderr[-1200:])
     return output
 
@@ -2577,13 +2578,13 @@ def render_cinematic_video(folder: Path, title: str, scenes: list[dict], voice: 
     for idx,source in enumerate(clips):
         target=folder/f"normalized_{idx+1:02d}.mp4"
         cmd=["ffmpeg","-hide_banner","-loglevel","error","-y","-stream_loop","-1","-i",str(source),"-t",f"{per_clip:.3f}","-vf","scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,fps=30,setsar=1,format=yuv420p","-an","-c:v","libx264","-preset","veryfast","-crf","20","-movflags","+faststart",str(target)]
-        run=subprocess.run(cmd,capture_output=True,text=True)
+        run=run_media_process(cmd,capture_output=True,text=True)
         if run.returncode: raise RuntimeError("B-roll dikey render hatası: "+run.stderr[-700:])
         normalized.append(target)
     concat=folder/"cinematic_scenes.txt"
     concat.write_text("".join("file '"+x.name+"'\n" for x in normalized),encoding="utf-8")
     joined=folder/"cinematic_broll.mp4"
-    run=subprocess.run(["ffmpeg","-hide_banner","-loglevel","error","-y","-f","concat","-safe","0","-i",str(concat),"-c","copy",str(joined)],capture_output=True,text=True)
+    run=run_media_process(["ffmpeg","-hide_banner","-loglevel","error","-y","-f","concat","-safe","0","-i",str(concat),"-c","copy",str(joined)],capture_output=True,text=True)
     if run.returncode: raise RuntimeError("Sahne montajı başarısız: "+run.stderr[-800:])
     font_path=Path(r"C:\Windows\Fonts\arial.ttf")
     def f(size): return ImageFont.truetype(str(font_path),size) if font_path.exists() else ImageFont.load_default()
@@ -2609,21 +2610,21 @@ def render_cinematic_video(folder: Path, title: str, scenes: list[dict], voice: 
         d.text((120,1650),"YAMAN VIRAL STUDIO PRO",font=f(24),fill=(130,150,180))
         image=folder/f"cinematic_card_{idx+1}.png";im.save(image);im.close()
         video=folder/f"cinematic_card_{idx+1}.mp4";seconds=2.2 if idx==0 else 2.8
-        run=subprocess.run(["ffmpeg","-hide_banner","-loglevel","error","-y","-loop","1","-i",str(image),"-t",str(seconds),"-vf",f"zoompan=z='min(zoom+0.0004,1.04)':d={int(seconds*30)}:s=1080x1920:fps=30,format=yuv420p","-an","-c:v","libx264","-preset","veryfast","-crf","22",str(video)],capture_output=True,text=True)
+        run=run_media_process(["ffmpeg","-hide_banner","-loglevel","error","-y","-loop","1","-i",str(image),"-t",str(seconds),"-vf",f"zoompan=z='min(zoom+0.0004,1.04)':d={int(seconds*30)}:s=1080x1920:fps=30,format=yuv420p","-an","-c:v","libx264","-preset","veryfast","-crf","22",str(video)],capture_output=True,text=True)
         if run.returncode: raise RuntimeError("Fragman başlık kartı oluşturulamadı: "+run.stderr[-500:])
         cards.append(video)
     final_parts=[cards[0],joined,cards[1]]
     listfile=folder/"final_cinematic_list.txt"
     listfile.write_text("".join("file '"+x.name+"'\n" for x in final_parts),encoding="utf-8")
     video_only=folder/"cinematic_video_only.mp4"
-    run=subprocess.run(["ffmpeg","-hide_banner","-loglevel","error","-y","-f","concat","-safe","0","-i",str(listfile),"-c","copy",str(video_only)],capture_output=True,text=True)
+    run=run_media_process(["ffmpeg","-hide_banner","-loglevel","error","-y","-f","concat","-safe","0","-i",str(listfile),"-c","copy",str(video_only)],capture_output=True,text=True)
     if run.returncode: raise RuntimeError("Final fragman birleştirilemedi: "+run.stderr[-500:])
     output=folder/"cinematic_trailer.mp4" if trailer else folder/"cinematic_shorts.mp4"
     if music and music.is_file():
         cmd=["ffmpeg","-hide_banner","-loglevel","error","-y","-i",str(video_only),"-i",str(voice),"-stream_loop","-1","-i",str(music),"-filter_complex","[1:a]volume=1.0,apad=pad_dur=5[voice];[2:a]volume=0.16,afade=t=in:st=0:d=1.2,afade=t=out:st="+str(max(1,total-2))+":d=2[music];[voice][music]amix=inputs=2:duration=first:dropout_transition=2[a]","-map","0:v:0","-map","[a]","-c:v","copy","-c:a","aac","-b:a","192k","-shortest","-movflags","+faststart",str(output)]
     else:
         cmd=["ffmpeg","-hide_banner","-loglevel","error","-y","-i",str(video_only),"-i",str(voice),"-filter:a","apad=pad_dur=5","-map","0:v:0","-map","1:a:0","-c:v","copy","-c:a","aac","-b:a","192k","-shortest","-movflags","+faststart",str(output)]
-    run=subprocess.run(cmd,capture_output=True,text=True)
+    run=run_media_process(cmd,capture_output=True,text=True)
     if run.returncode or not output.is_file(): raise RuntimeError("Final video ses miksajı başarısız: "+run.stderr[-900:])
     return output
 
